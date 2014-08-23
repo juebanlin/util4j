@@ -2,8 +2,6 @@ package net.jueb.tools.log.uiLog;
 
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-
-import org.apache.log4j.Layout;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.WriterAppender;
@@ -15,7 +13,6 @@ import org.apache.log4j.WriterAppender;
  */
 public class JTextAreaLogAppender extends WriterAppender{
 	
-	private JTextAreaLogWriter jw;
 	/**
 	 * 
 	 * @param name 附着器名字
@@ -24,13 +21,9 @@ public class JTextAreaLogAppender extends WriterAppender{
 	 * @param scroll 可以为null
 	 */
 	public JTextAreaLogAppender(String name,String pattern,JTextArea textArea, JScrollPane scroll) {
-		jw=new JTextAreaLogWriter(textArea, scroll);
-		this.name=name;
-		this.layout=new PatternLayout(pattern);//布局
-	}
-	@Override
-	public void activateOptions() {
-		setWriter(jw);
+		super.setName(name);
+		super.setLayout(new PatternLayout(pattern));
+		super.setWriter(new JTextAreaLogWriter(textArea, scroll));
 	}
 	public static void initRootLogger(String name,String pattern,JTextArea textArea, JScrollPane scroll)
 	{
