@@ -18,7 +18,7 @@ import javax.swing.JLabel;
  * @date 2011-12-20 创建
  * @version 1.0
  */
-public class LabelLogAppender extends LogAppender {
+public class LabelLogThread extends LogAppender {
 
     private JLabel label;
 
@@ -27,7 +27,7 @@ public class LabelLogAppender extends LogAppender {
      * @param label 记录器名称，该记录器输出的日志信息将被截取并输出到指定的JLabel组件
      * @throws IOException 
      */
-    public LabelLogAppender(JLabel label) throws IOException {
+    public LabelLogThread(JLabel label) throws IOException {
         super("label");
         this.label = label;
     }
@@ -38,7 +38,7 @@ public class LabelLogAppender extends LogAppender {
      * @param partten 打印格式 ：[%d{yyyy/MM/dd HH\:mm\:ss\:SSS}][%p]\:%n%m%n
      * @throws IOException
      */
-    public LabelLogAppender(JLabel label,String appenderName,String partten) throws IOException {
+    public LabelLogThread(JLabel label,String appenderName,String partten) throws IOException {
     	super(appenderName,partten);
         this.label = label;
     }

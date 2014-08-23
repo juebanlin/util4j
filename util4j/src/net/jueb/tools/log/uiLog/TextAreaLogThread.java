@@ -18,7 +18,7 @@ import javax.swing.JTextArea;
  * @date 2011-12-20 创建
  * @version 1.0
  */
-public class TextAreaLogAppender extends LogAppender {
+public class TextAreaLogThread extends LogAppender {
 
     private JTextArea textArea;
     private JScrollPane scroll;
@@ -29,7 +29,7 @@ public class TextAreaLogAppender extends LogAppender {
      * @param scroll JTextArea组件使用的滚动面板，因为在JTextArea中输出日志时，默认会使垂直滚动条自动向下滚动，若不需要此功能，此参数可省略
      * @throws IOException 
      */
-    public TextAreaLogAppender(JTextArea textArea, JScrollPane scroll) throws IOException {
+    public TextAreaLogThread(JTextArea textArea, JScrollPane scroll) throws IOException {
         super("textArea");
         this.textArea = textArea;
         this.scroll = scroll;
@@ -42,12 +42,12 @@ public class TextAreaLogAppender extends LogAppender {
      * @param partten 打印格式 ：[%d{yyyy/MM/dd HH\:mm\:ss\:SSS}][%p]\:%n%m%n
      * @throws IOException
      */
-    public TextAreaLogAppender(JTextArea textArea, JScrollPane scroll,String appenderName,String partten) throws IOException {
+    public TextAreaLogThread(JTextArea textArea, JScrollPane scroll,String appenderName,String partten) throws IOException {
         super(appenderName,partten);
         this.textArea = textArea;
         this.scroll = scroll;
     }
-    public TextAreaLogAppender(JTextArea textArea) throws IOException {
+    public TextAreaLogThread(JTextArea textArea) throws IOException {
         super("textArea");
         this.textArea = textArea;
     }
@@ -58,7 +58,7 @@ public class TextAreaLogAppender extends LogAppender {
      * @param partten 打印格式 ：[%d{yyyy/MM/dd HH\:mm\:ss\:SSS}][%p]\:%n%m%n
      * @throws IOException
      */
-    public TextAreaLogAppender(JTextArea textArea,String appenderName,String partten) throws IOException {
+    public TextAreaLogThread(JTextArea textArea,String appenderName,String partten) throws IOException {
     	super(appenderName,partten);
         this.textArea = textArea;
     }

@@ -6,7 +6,7 @@ import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
-public  class UiLogFactory {
+public  class UiLogThreadFactory {
 	
 	/**
 	 * 使用配置文件配置的打印器输出到textArea
@@ -14,9 +14,9 @@ public  class UiLogFactory {
 	 * @return
 	 * @throws IOException
 	 */
-	public static TextAreaLogAppender getTextAreaLogAppender(JTextArea textArea) throws IOException
+	public static TextAreaLogThread getTextAreaLogAppender(JTextArea textArea) throws IOException
 	{
-		return new TextAreaLogAppender(textArea);
+		return new TextAreaLogThread(textArea);
 	}
 	/**
 	 * 使用代码配置的打印器输出到控件
@@ -26,9 +26,9 @@ public  class UiLogFactory {
 	 * @return
 	 * @throws IOException
 	 */
-	public static TextAreaLogAppender getTextAreaLogAppender(JTextArea textArea,String appenderName,String partten) throws IOException
+	public static TextAreaLogThread getTextAreaLogAppender(JTextArea textArea,String appenderName,String partten) throws IOException
 	{
-		return new TextAreaLogAppender(textArea, appenderName, partten);
+		return new TextAreaLogThread(textArea, appenderName, partten);
 	}
 	/**
 	 * 使用配置文件配置的打印器输出到textArea,并自动滚动
@@ -37,9 +37,9 @@ public  class UiLogFactory {
 	 * @return
 	 * @throws IOException
 	 */
-	public static TextAreaLogAppender getTextAreaLogAppender(JTextArea textArea,JScrollPane scroll) throws IOException
+	public static TextAreaLogThread getTextAreaLogAppender(JTextArea textArea,JScrollPane scroll) throws IOException
 	{
-		return new TextAreaLogAppender(textArea, scroll);
+		return new TextAreaLogThread(textArea, scroll);
 	}
 	/**
 	 * 使用代码配置的打印器输出到textArea并自动滚动
@@ -50,9 +50,9 @@ public  class UiLogFactory {
 	 * @return
 	 * @throws IOException
 	 */
-	public static TextAreaLogAppender getTextAreaLogAppender(JTextArea textArea,JScrollPane scroll,String appenderName,String partten) throws IOException
+	public static TextAreaLogThread getTextAreaLogAppender(JTextArea textArea,JScrollPane scroll,String appenderName,String partten) throws IOException
 	{
-		return new TextAreaLogAppender(textArea,scroll, appenderName, partten);
+		return new TextAreaLogThread(textArea,scroll, appenderName, partten);
 	}
 	/**
 	 * 使用代码配置的打印器输出到标签
@@ -60,9 +60,9 @@ public  class UiLogFactory {
 	 * @return
 	 * @throws IOException 
 	 */
-	public static LabelLogAppender getLabelLogAppender(JLabel label) throws IOException
+	public static LabelLogThread getLabelLogAppender(JLabel label) throws IOException
 	{
-		return new LabelLogAppender(label);
+		return new LabelLogThread(label);
 	}
 	/**
 	 * 使用代码配置的打印器输出到标签
@@ -71,8 +71,8 @@ public  class UiLogFactory {
 	 * @param partten 打印格式 ：[%d{yyyy/MM/dd HH\:mm\:ss\:SSS}][%p]\:%n%m%n
 	 * @throws IOException 
 	 */
-	public static LabelLogAppender getLabelLogAppender(JLabel label,String appenderName,String partten) throws IOException
+	public static LabelLogThread getLabelLogAppender(JLabel label,String appenderName,String partten) throws IOException
 	{
-		return new LabelLogAppender(label, appenderName, partten);
+		return new LabelLogThread(label, appenderName, partten);
 	}
 }
