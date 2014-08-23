@@ -1,4 +1,4 @@
-package net.jueb.tools.log.uiLog;
+package net.jueb.tools.log.uiLog.ThreadMode;
 
 import java.io.IOException;
 

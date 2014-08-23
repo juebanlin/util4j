@@ -1,4 +1,4 @@
-package net.jueb.tools.log.uiLog2;
+package net.jueb.tools.log.uiLog;
 
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
