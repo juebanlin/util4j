@@ -4,6 +4,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
 import org.apache.log4j.Layout;
+import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.WriterAppender;
 
@@ -30,5 +31,9 @@ public class JTextAreaLogAppender extends WriterAppender{
 	@Override
 	public void activateOptions() {
 		setWriter(jw);
-	} 
+	}
+	public static void initRootLogger(String name,String pattern,JTextArea textArea, JScrollPane scroll)
+	{
+		Logger.getRootLogger().addAppender(new JTextAreaLogAppender(name, pattern, textArea, scroll));
+	}
 }
