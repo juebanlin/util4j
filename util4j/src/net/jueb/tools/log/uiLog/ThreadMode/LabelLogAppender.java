@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package net.jueb.tools.log.uiLog.ThreadMode;
 import java.io.IOException;
 import javax.swing.JLabel;

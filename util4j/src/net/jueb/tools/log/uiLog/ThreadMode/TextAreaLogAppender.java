@@ -8,7 +8,6 @@ public class TextAreaLogAppender extends LogAppender {
     private JTextArea textArea;
     private JScrollPane scroll;
     private boolean isScroll;
-   
 
     /**
      * 默认的构造
@@ -58,14 +57,11 @@ public class TextAreaLogAppender extends LogAppender {
         this.textArea = textArea;
     }
 	@Override
-	public void doOutLog(String log) {
-		System.out.println("textArea="+textArea+";scroll="+scroll);
-		this.textArea.append(log+"\n");
+	public void doOutLog(final String log) {
+		textArea.append(log+"\n");
         if(isScroll)
         {//使垂直滚动条自动向下滚动
-       	 this.scroll.getVerticalScrollBar().setValue(scroll.getVerticalScrollBar().getMaximum());
+       	scroll.getVerticalScrollBar().setValue(scroll.getVerticalScrollBar().getMaximum());
         }
 	}
-    
- 
 }

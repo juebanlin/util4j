@@ -78,11 +78,10 @@ public abstract class LogAppender extends Thread {
         			if(logs.isEmpty())
         			{//如果日志队列为空
         				try {
-							Thread.sleep(100);
+							Thread.sleep(100);//睡眠
 						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
 							e.printStackTrace();
-						}//睡眠
+						}
         				continue ;
         			}else
         			{
