@@ -3,11 +3,12 @@
  * and open the template in the editor.
  */
 package net.jueb.tools.log.uiLog.ThreadMode;
-
 import java.io.IOException;
 import java.io.PipedReader;
 import java.io.PipedWriter;
 import java.io.Writer;
+import java.util.Scanner;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.log4j.Appender;
 import org.apache.log4j.ConsoleAppender;
@@ -16,19 +17,13 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.WriterAppender;
 
-/**
- * 
- * 类描述：
- * 重置log4j的Appender的Writer
- * @author 杨胜寒
- * @date 2011-12-20 创建
- * @version 1.0
- */
+
 public abstract class LogAppender extends Thread {
 
-    protected PipedReader reader;
-    protected Layout layout;
-    protected Appender appender;
+    private PipedReader reader;
+    private Layout layout;
+    private Appender appender;
+    private LinkedBlockingQueue<String> logs=new LinkedBlockingQueue<String>();//日志队列
     
     /**
      * 使用代码创建打印器，
@@ -72,4 +67,54 @@ public abstract class LogAppender extends Thread {
         // 设置 appender 输出流
         ((WriterAppender) appender).setWriter(writer);
     }
+    
+    @Override
+    public final void run() {
+    	//创建日志提前输出线程
+    	Thread outLogs=new Thread(){
+        	public void run() {
+        		while(true)
+        		{
+        			if(logs.isEmpty())
+        			{//如果日志队列为空
+        				try {
+							Thread.sleep(100);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}//睡眠
+        				continue ;
+        			}else
+        			{
+        				String log=logs.poll();
+        				doOutLog(log);
+        			}
+        		}
+        	};
+        };
+        outLogs.start();//启动该线程
+        //继续当前的日志收集线程
+    	@SuppressWarnings("resource")
+		Scanner scanner = new Scanner(reader);
+        while (scanner.hasNextLine()) {
+            try {
+//	             Thread.sleep(100);//睡眠
+	             String log = scanner.nextLine();
+	             this.logs.add(log);//加入日志
+                } catch (Exception e) {
+                	e.printStackTrace();
+            }    
+        }
+    }
+    
+    
+    
+    
+    /**
+     * 父类的2个线程，一个线程负责收集日志并队列，另一个线程则负责取出日志并输出
+     * 该方法是具体的输出方法
+     * @param log 该日志未换行处理
+     */
+    protected abstract void doOutLog(String log);
+    
 }
