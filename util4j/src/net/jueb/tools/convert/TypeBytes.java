@@ -365,9 +365,8 @@ public class TypeBytes {
 	{
 		return new Byte(i[0]);
 	}
-	
-	
-	public void main(String[] args) {
+	public static void main(String[] args) {
+		HexStrBytes hb=new HexStrBytes();
 		TypeBytes tb=new TypeBytes();
 		System.out.println("***************char****************");
 		char c=Character.MAX_VALUE;
@@ -376,19 +375,20 @@ public class TypeBytes {
 		System.out.println("数据还原为值:"+tb.ByteArrayToChar(tb.CharToByteArray(c)));
 		
 		System.out.println("***************short****************");
-		short s=Short.MAX_VALUE;
+		short s=5837;
 		System.out.println("测试值:"+s);
 		System.out.println("值到数据:"+Arrays.toString(tb.ShortToByteArray(s)));
 		System.out.println("数据还原为值:"+tb.ByteArrayToShort(tb.ShortToByteArray(s)));
 		
 		System.out.println("***************int****************");
-		int i=Integer.MAX_VALUE;
+		int i=259;
 		System.out.println("测试值:"+i);
 		System.out.println("值到数据:"+Arrays.toString(tb.IntegerToByteArray(i)));
+		System.out.println(Arrays.toString(hb.toHexArray(tb.IntegerToByteArray(i))));
 		System.out.println("数据还原为值:"+tb.ByteArrayToInteger(tb.IntegerToByteArray(i)));
 		
 		System.out.println("***************long****************");
-		long l=Long.MAX_VALUE;
+		long l=System.currentTimeMillis();
 		System.out.println("测试值:"+l);
 		System.out.println("值到数据:"+Arrays.toString(tb.LongToByteArray(l)));
 		System.out.println("数据还原为值:"+tb.ByteArrayToLong(tb.LongToByteArray(l)));

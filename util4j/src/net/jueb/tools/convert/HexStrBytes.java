@@ -3,7 +3,6 @@ package net.jueb.tools.convert;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
-
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -451,7 +450,20 @@ public class HexStrBytes {
 		hexStr=hexStr.replaceAll("\\s", "");//去空格
 		hexStr=hexStr.replaceAll(",", "");
 		return hexStr;
-	}	
+	}
+	/**
+	 * 将一个16进制文本数组字符串转为16进制文本数组
+	 * "[01, 16, 1F, 0E]" ==> [01, 16, 1F, 0E]
+	 * @param hexArrayStr
+	 * @return
+	 */
+	public String[] toHexStrArray(String hexArrayStr)
+	{
+		String hexStr=StringUtils.substringBetween(hexArrayStr, "[", "]");
+		hexStr=hexStr.replaceAll("\\s", "");//去空格
+		String[] hexStrArray=hexStr.split(",");
+		return hexStrArray;
+	}
 	/**
 	 * 将10 30 33 00 1F 66 4A这样的hex文本转换为utf16le文本内容
 	 * @param hexStr
@@ -545,5 +557,12 @@ public class HexStrBytes {
 				outBuffer.append(aChar);
 		}
 		return outBuffer.toString();
+	}
+	public static void main(String[] args) {
+		HexStrBytes hb=new HexStrBytes();
+		String s="[FA, 16, C4, 7B]";
+		s="[FF, FF, FF, FF, FF, FF, FF, FF, 03, FF, FF, FF, FF, 00, EE, 7B]";
+		byte[] data=hb.toBtyeArray(hb.toHexStrArray(s));
+		System.out.println(new String(data));
 	}
 }

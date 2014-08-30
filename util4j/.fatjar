@@ -1,14 +1,14 @@
 #Fat Jar Configuration File
-#Tue Apr 15 16:18:06 GMT+08:00 2014
+#Sat Aug 30 13:38:29 CST 2014
 onejar.license.required=false
 manifest.classpath=
 manifest.removesigners=true
 onejar.checkbox=false
-jarname=C\:\\Users\\\u6797\\Desktop\\JuebTools_fat.jar
+jarname=C\:\\Users\\Administrator\\Desktop\\util4j.jar
 manifest.mergeall=true
 manifest.mainclass=
 manifest.file=<createnew>
 jarname.isextern=true
 onejar.expand=
-excludes=
+excludes=<jar|log4j-1.2.8.jar>
 includes=
