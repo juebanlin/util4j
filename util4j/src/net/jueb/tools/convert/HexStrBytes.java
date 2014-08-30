@@ -561,7 +561,6 @@ public class HexStrBytes {
 	public static void main(String[] args) {
 		HexStrBytes hb=new HexStrBytes();
 		String s="[FA, 16, C4, 7B]";
-		s="[FF, FF, FF, FF, FF, FF, FF, FF, 03, FF, FF, FF, FF, 00, EE, 7B]";
 		byte[] data=hb.toBtyeArray(hb.toHexStrArray(s));
 		System.out.println(new String(data));
 	}
