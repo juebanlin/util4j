@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package net.jueb.tools.log.uiLog.ThreadMode;
+package net.jueb.tools.log.uiLog.threadMode;
 import java.io.IOException;
 import java.io.PipedReader;
 import java.io.PipedWriter;

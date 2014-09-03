@@ -1,5 +1,6 @@
-package net.jueb.tools.log.uiLog.ThreadMode;
+package net.jueb.tools.log.uiLog.threadMode;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
@@ -58,10 +59,22 @@ public class TextAreaLogAppender extends LogAppender {
     }
 	@Override
 	public void doOutLog(final String log) {
-		textArea.append(log+"\n");
-        if(isScroll)
-        {//使垂直滚动条自动向下滚动
-       	scroll.getVerticalScrollBar().setValue(scroll.getVerticalScrollBar().getMaximum());
-        }
+		try {
+			javax.swing.SwingUtilities.invokeAndWait(new Runnable() { //向UI线程发消息。
+			    public void run() {
+			    	textArea.append(log+"\n");
+			        if(isScroll)
+			        {//使垂直滚动条自动向下滚动
+			        	scroll.getVerticalScrollBar().setValue(scroll.getVerticalScrollBar().getMaximum());
+			        }
+			    }
+			});
+		} catch (InvocationTargetException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
 	}
 }

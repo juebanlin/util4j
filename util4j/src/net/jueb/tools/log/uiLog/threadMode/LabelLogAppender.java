@@ -1,5 +1,7 @@
-package net.jueb.tools.log.uiLog.ThreadMode;
+package net.jueb.tools.log.uiLog.threadMode;
 import java.io.IOException;
+import java.util.concurrent.LinkedBlockingQueue;
+
 import javax.swing.JLabel;
 
 public class LabelLogAppender extends LogAppender {
