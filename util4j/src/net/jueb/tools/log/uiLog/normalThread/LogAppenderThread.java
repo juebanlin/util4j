@@ -1,15 +1,14 @@
 package net.jueb.tools.log.uiLog.normalThread;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.concurrent.LinkedBlockingQueue;
-
+import java.util.concurrent.ConcurrentLinkedQueue;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.WriterAppender;
 
 public abstract class LogAppenderThread extends Thread{
 	private WriterAppender wp;
-	private LinkedBlockingQueue<String> logs=new LinkedBlockingQueue<String>();//日志队列
+	private ConcurrentLinkedQueue<String> logs=new ConcurrentLinkedQueue<String>();//日志队列
 	
 	public LogAppenderThread(String name,String pattern) {
 		wp=new WriterAppender(new PatternLayout(pattern), new UiLogWriter());

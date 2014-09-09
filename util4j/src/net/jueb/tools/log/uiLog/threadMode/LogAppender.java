@@ -8,8 +8,7 @@ import java.io.PipedReader;
 import java.io.PipedWriter;
 import java.io.Writer;
 import java.util.Scanner;
-import java.util.concurrent.LinkedBlockingQueue;
-
+import java.util.concurrent.ConcurrentLinkedQueue;
 import org.apache.log4j.Appender;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Layout;
@@ -23,7 +22,7 @@ public abstract class LogAppender extends Thread {
     private PipedReader reader;
     private Layout layout;
     private Appender appender;
-    private LinkedBlockingQueue<String> logs=new LinkedBlockingQueue<String>();//日志队列
+    private ConcurrentLinkedQueue<String> logs=new ConcurrentLinkedQueue<String>();//日志队列
     
     /**
      * 使用代码创建打印器，

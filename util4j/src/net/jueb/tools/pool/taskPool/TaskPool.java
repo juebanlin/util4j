@@ -1,19 +1,16 @@
 package net.jueb.tools.pool.taskPool;
-import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-
 import net.jueb.tools.log.Log;
-
 import org.apache.log4j.Logger;
 
 public class TaskPool {
 	public Logger log=Log.getLog(this.getClass().getName());
 	private final ExecutorService inThread=Executors.newSingleThreadExecutor();
 	private Thread currentTask;//当前正在执行的任务
-	//双缓冲任务队列,用于存储当前排队的
-	private final BlockingQueue<Task> tasks=new LinkedBlockingQueue<Task>();
+	//缓冲任务队列,用于存储当前排队的
+	private final ConcurrentLinkedQueue<Task> tasks=new ConcurrentLinkedQueue<Task>();
 	public TaskPool()
 	{
 		//创建内部调度线程
