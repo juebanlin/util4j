@@ -50,10 +50,12 @@ public final class NFalse extends NObjectBase implements NObject{
 		return new NFalse();
 	}
 	
+	@Override
 	public Boolean value() {
 		return this.value;
 	}
 	
+	@Override
 	public boolean equals(Object obj) {
 		if(obj instanceof NTrue)
 		{

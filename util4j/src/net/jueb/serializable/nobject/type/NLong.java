@@ -53,10 +53,12 @@ public final class NLong extends NObjectBase implements NObject{
 		return new NLong(arg);
 	}
 	
+	@Override
 	public Long value() {
 		return this.value;
 	}
 	
+	@Override
 	public boolean equals(Object obj) {
 		if(obj instanceof NLong)
 		{

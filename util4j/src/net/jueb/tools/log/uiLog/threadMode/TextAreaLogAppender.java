@@ -61,7 +61,8 @@ public class TextAreaLogAppender extends LogAppender {
 	public void doOutLog(final String log) {
 		try {
 			javax.swing.SwingUtilities.invokeAndWait(new Runnable() { //向UI线程发消息。
-			    public void run() {
+			    @Override
+				public void run() {
 			    	textArea.append(log+"\n");
 			        if(isScroll)
 			        {//使垂直滚动条自动向下滚动

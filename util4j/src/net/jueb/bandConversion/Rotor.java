@@ -2,31 +2,30 @@ package net.jueb.bandConversion;
 import java.util.Vector;
 
 /**
- * ÊıÖµ·ûºÅ×ªÅÌ£¬´øÓĞ·ûºÅµÄ»·ĞÎÅÌ
+ * ç¬¦å·è½¬ç›˜
  * @author Administrator
  *
  */
 public class Rotor{
 	
 	/**
-	 * ¸½×ÅÔÚ×ª×ÓÉÏµÄ·ûºÅ¼¯ºÏ
-	 * ¸Ã·ûºÅ¼¯ºÏ×ÔÉíÓĞĞò
+	 * ç¬¦å·é›†åˆ
 	 */
 	private final Vector<Numeral> numerals;
 	
 	private final int radix;
 	
 	/**
-	 * µ±Ç°Ö¸ÏòµÄ»ùÊı·ûºÅµÄĞòºÅ
+	 * å½“å‰æŒ‡å‘ç¬¦å·ç´¢å¼•
 	 */
 	private volatile int currenIndex;
 	private volatile int maxIndex;
 	
 	
 	public Rotor(Vector<Numeral> numerals) {
-		if(numerals.size()<=0)
+		if(numerals.size()<=1)
 		{
-			throw new RuntimeException("ÎŞ·¨´´½¨Ã»ÓĞ»ùÊı·ûºÅµÄ×ªÅÌ");
+			throw new RuntimeException("åŸºæ•°è½¬ç›˜è‡³å°‘æœ‰2ä¸ªç¬¦å·");
 		}else
 		{
 			this.numerals=numerals;
@@ -36,7 +35,7 @@ public class Rotor{
 		}
 	}	
 	/**
-	 * »ñÈ¡µ±Ç°Ö¸ÏòµÄ»ùÊı·ûºÅµÄË÷Òı
+	 * è·å–å½“å‰è½¬ç›˜æŒ‡å‘çš„ç¬¦å·ç´¢å¼•
 	 * @return
 	 */
 	public synchronized int getCurrentIndex()
@@ -51,7 +50,7 @@ public class Rotor{
 	
 	
 	/**
-	 * »ñÈ¡µ±Ç°Ö¸ÏòµÄ»ùÊı·ûºÅ
+	 * ï¿½ï¿½È¡ï¿½ï¿½Ç°Ö¸ï¿½ï¿½Ä»ï¿½ï¿½ï¿½ï¿½ï¿½
 	 * @return
 	 */
 	public synchronized Numeral getCurrentNumeral()
@@ -60,7 +59,7 @@ public class Rotor{
 	}
 	
 	/**
-	 * »ñÈ¡×ªÅÌµÄ½øÖÆÊı
+	 * ï¿½ï¿½È¡×ªï¿½ÌµÄ½ï¿½ï¿½ï¿½ï¿½ï¿½
 	 * @return
 	 */
 	public synchronized int getRadix() {
@@ -68,14 +67,14 @@ public class Rotor{
 	}
 	
 	/**
-	 * »ñÈ¡×î´ó½øÖÆ·ûºÅË÷Òı
+	 * ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½Æ·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	 * @return
 	 */
 	public synchronized int getMaxIndex() {
 		return this.maxIndex;
 	}
 	/**
-	 * »ñÈ¡µ±Ç°Ö¸ÏòµÄ»ùÊı·ûºÅ×Ö·û´®
+	 * ï¿½ï¿½È¡ï¿½ï¿½Ç°Ö¸ï¿½ï¿½Ä»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½
 	 * @return
 	 */
 	public synchronized String getCurrentViewStr()
@@ -83,15 +82,15 @@ public class Rotor{
 		return this.numerals.get(currenIndex).getViewStr();
 	}	
 	/**
-	 * »ñÈ¡·ûºÅ¼¯ºÏ
+	 * ï¿½ï¿½È¡ï¿½ï¿½Å¼ï¿½ï¿½ï¿½
 	 * @return
 	 */
 	public synchronized Vector<Numeral> getNumerals() {
 		return numerals;
 	}
 	/**
-	 * Ê¹×ªÅÌËù´ú±íµÄ»ùÊı¼ÓÒ»
-	 * Èç¹ûÊÇÓÉ×î´ó·ûºÅ¼ÓÒ»£¬Ôò·µ»Øtrue,Í¬Ê±µ±Ç°Î»ÖÃ»Øµ½×îĞ¡·ûºÅ
+	 * Ê¹×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä»ï¿½ï¿½ï¿½ï¿½Ò»
+	 * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å¼ï¿½Ò»ï¿½ï¿½ï¿½ò·µ»ï¿½true,Í¬Ê±ï¿½ï¿½Ç°Î»ï¿½Ã»Øµï¿½ï¿½ï¿½Ğ¡ï¿½ï¿½ï¿½
 	 */
 	public synchronized boolean add()
 	{
@@ -100,12 +99,13 @@ public class Rotor{
 			this.currenIndex++;
 			return false;
 		}else
-		{//Èç¹ûÔö¼ÓÖ®Ç°ÒÑ¾­ÊÇ×î´óĞòºÅµÄ»ùÊı·ûºÅ£¬ÔòÒı·¢½øÎ»
+		{//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö®Ç°ï¿½Ñ¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÅµÄ»ï¿½ï¿½ï¿½ï¿½Å£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»
 			this.currenIndex=0;
 			return true;
 		}
 	}
 
+	@Override
 	public String toString() {
 		StringBuffer sb=new StringBuffer();
 		for(int i=0;i<this.numerals.size();i++)

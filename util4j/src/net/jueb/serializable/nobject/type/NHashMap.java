@@ -104,6 +104,7 @@ public final class NHashMap extends  HashMap<NObject,NObject> implements NObject
 	 * map的flagHead + map中对象的内存形式数据 + map的flagEnd
 	 * @return
 	 */
+	@Override
 	public byte[] getBytes()
 	{
 		byte[] bytes=new byte[]{};

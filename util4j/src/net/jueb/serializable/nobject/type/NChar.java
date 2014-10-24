@@ -53,10 +53,12 @@ public final class NChar extends NObjectBase implements NObject{
 		return new NChar(arg);
 	}
 	
+	@Override
 	public Character value() {
 		return this.value;
 	}
 	
+	@Override
 	public boolean equals(Object obj) {
 		if(obj instanceof NChar)
 		{

@@ -3,13 +3,13 @@ package net.jueb.bandConversion;
 import java.util.Arrays;
 
 /**
- * ÊıÑ§·ûºÅ
+ * æ•°å­¦ç¬¦å·
  * @author Administrator
  *
  */
 public class Numeral {
 	/**
-	 * ¸Ã·ûºÅ¶ÔÓ¦µÄ³Ö¾Ã»¯Êı¾İ
+	 * ç¬¦å·å¯¹åº”çš„æŒä¹…åŒ–å­—èŠ‚æ•°æ®
 	 */
 	private final byte[] data;
 	private  String viewStr="null";
@@ -21,7 +21,7 @@ public class Numeral {
 	public Numeral(byte[] data) {
 		if(data.length<=0)
 		{
-			throw new RuntimeException("Ò»¸ö·ûºÅ»ùÊı±ØĞëÓĞ¶ÔÓ¦µÄ³Ö¾Ã»¯Êı¾İ");
+			throw new RuntimeException("ä¸€ä¸ªç¬¦å·å¿…é¡»æœ‰ä¸€ä¸ªå”¯ä¸€å¯¹åº”çš„å­—èŠ‚è¡¨ç¤º");
 		}else
 		{
 			this.data=data;
@@ -34,7 +34,7 @@ public class Numeral {
 	}
 	
 	/**
-	 * »ñÈ¡·ûºÅµÄ×Ö·û´®±íÊ¾ĞÎÊ½
+	 * è·å–è¯¥ç¬¦å·çš„å­—ç¬¦ä¸²å½¢å¼
 	 * @return
 	 */
 	public String getViewStr()

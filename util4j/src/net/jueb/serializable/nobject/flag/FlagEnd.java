@@ -1,7 +1,6 @@
 package net.jueb.serializable.nobject.flag;
 /**
- * 标记头注册
- * 一个字节
+ * 标记结尾符注册
  * @author juebanlin
  *
  */

@@ -149,6 +149,7 @@ public class UiLog {
 		public UiOutPutStream(JTextComponent textUi) {
 			this.textUi=textUi;
 		}
+		@Override
 		public void flush() throws IOException {
 			this.textUi.setText(toString());
 		}

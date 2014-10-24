@@ -4,34 +4,33 @@ import java.math.BigDecimal;
 import java.util.Vector;
 
 /**
- * ×°ÓĞ»ùÊı·ûºÅ×ªÅÌµÄ±íÅÌ
+ * å¸¦æœ‰è‹¥å¹²ä¸ªç¬¦å·è½¬ç›˜çš„è¡¨ç›˜ï¼Œç”¨äºè¡¨ç¤ºæ•°å€¼
  * @author Administrator
  *
  */
 public class ClockDial {
 	
 	/**
-	 * ±íÅÌÉÏÃæµÄ×ªÅÌ
+	 * ç¬¦å·è½¬ç›˜
 	 */
 	private final Vector<Rotor> rotors;
 	/**
-	 *±íÅÌÊ¹ÓÃµÄÊıÑ§·ûºÅ¼¯ºÏ
+	 *æ‰€æœ‰è½¬ç›˜ä½¿ç”¨çš„ç›¸åŒçš„ç¬¦å·é›†åˆ
 	 */
 	private final Vector<Numeral> numerals;
 	
 	/**
-	 * ±íÅÌËùÊ¹ÓÃµÄ½øÖÆ»ùÊı
+	 * è¡¨ç›˜çš„è¿›åˆ¶æ•°ï¼Œå³ç¬¦åˆé›†åˆçš„å¤§å°
 	 */
 	private final int radix;
 	/**
-	 * ±íÅÌÊıÖµÎ»Êı
+	 * è¡¨ç›˜è¡¨ç¤ºçš„ä½æ•°ï¼Œå³ç¬¦åˆè½¬ç›˜çš„ä¸ªæ•°
 	 */
 	private final int digit;
 	
 	/**
-	 * ±íÅÌÎ»Êı
-	 * @param rotor
-	 * @param digit
+	 * @param rotor è½¬ç›˜
+	 * @param digit è½¬ç›˜ä¸ªæ•°
 	 */
 	public ClockDial(Rotor rotor,int digit) {
 		this(rotor.getNumerals(), digit);
@@ -39,24 +38,24 @@ public class ClockDial {
 	
 	
 	/**
-	 * @param numerals ÊıÖµ·ûºÅ×ªÅÌ¼¯ºÏ
-	 * @param digit ±íÅÌÎ»Êı£¬¼´»ùÊıÅÌ¸öÊı
+	 * @param numerals ç¬¦å·é›†åˆ
+	 * @param digit è¡¨ç›˜æ•°å€¼ä½æ•°
 	 */
 	public ClockDial(Vector<Numeral> numerals,int digit) {
 		if(digit<=0)
 		{
-			throw new RuntimeException("ÎŞ·¨´´½¨Ã»ÓĞ·ûºÅ×ªÅÌµÄ±íÅÌ");
+			throw new RuntimeException("è‡³å°‘æœ‰ä¸€ä½è½¬ç›˜");
 		}else if(numerals!=null && numerals.size()<=1)
 		{
-			throw new RuntimeException("ÎŞ·¨´´½¨µÍÓÚ2ÖÖ·ûºÅµÄ±íÅÌ");
+			throw new RuntimeException("è‡³å°‘æ˜¯2è¿›åˆ¶");
 		}else
 		{
 			this.numerals=numerals;
-			this.radix=numerals.size();//»ùÊı(½øÖÆ)
-			this.digit=digit;//Î»Êı
+			this.radix=numerals.size();
+			this.digit=digit;
 			this.rotors=new Vector<Rotor>();
 			for(int i=0;i<digit;i++)
-			{//×°ÔØ¶ÁÊıÅÌ
+			{
 				this.rotors.add(new Rotor(numerals));
 			}
 		}
@@ -64,9 +63,7 @@ public class ClockDial {
 	
 	
 	/**
-	 * ±íÅÌËù±íÊ¾Öµ¼Ó1
-	 * Èç¹û·µ»Øtrue,±íÊ¾×îºóÒ»¸ö×ªÅÌµÄ»ùÊıÂúÁË·¢ÉúÁË½øÎ»
-	 * ¿ÉÄÜ»áµ¼ÖÂÈ«²¿¹éÎª³õÊ¼ĞòºÅ
+	 * ç»™è¡¨ç›˜æ‰€ç¤ºæ•°å€¼+1
 	 */
 	public synchronized boolean add()
 	{
@@ -76,15 +73,14 @@ public class ClockDial {
 				Rotor r=rotors.get(i);
 				boolean addNext=r.add();
 				if(addNext)
-				{//Èç¹û·¢Éú½øÎ»,Ôò¶ÔÏÂÒ»¸ö×ªÅÌ+1
+				{
 					if(i==rotors.size())
 					{
-						//Èç¹ûÏÖÔÚÊÇ×îºóÒ»¸ö×ªÅÌ,ÇÒ±»¼Ó1£¬Ôò·µ»Øtrue¸æÖª·¢ÉúÒç³ö
 						return true;
 					}
 					continue;
 				}else
-				{//Èç¹ûÃ»ÓĞ·¢Éú½øÎ»£¬ÔòÍË³ö
+				{
 					break;
 				}
 			}
@@ -94,14 +90,14 @@ public class ClockDial {
 	
 	
 	/**
-	 * Ò»´ÎĞÔÔö¼Ó
-	 * @param num
-	 * @return
+	 * ç»™è¡¨ç›˜åŠ ä¸Šä¸€ç‚¹æ•°å€¼
+	 * @param value åŠ ä¸Šå»çš„å€¼ï¼Œè¯¥å€¼å¯ä»¥ä¸ºæ­£è´Ÿæ•°
+	 * @return è¿”å›å¯èƒ½æº¢å‡ºçš„æ•°å€¼
 	 */
-	public synchronized boolean add(int num)
+	public synchronized BigDecimal add(BigDecimal value)
 	{
-		//ÏÈÒ»¸öÒ»¸ö³ı
-		return false;
+		BigDecimal result=getValue().add(value);
+		return this.setValue(result);
 	}
 	
 	public Vector<Rotor> getRotors() {
@@ -125,7 +121,7 @@ public class ClockDial {
 
 
 	/**
-	 * »ñÈ¡±íÅÌ¶ÁÊı×Ö·û´®
+	 * è·å–è¡¨ç›˜æ‰€ç¤ºå­—ç¬¦ä¸²å½¢å¼
 	 * @return
 	 */
 	public String getViewStrs()
@@ -139,7 +135,7 @@ public class ClockDial {
 	}
 	
 	/**
-	 * »ñÈ¡±íÅÌ10½øÖÆÊıÖµ
+	 *è·å–è¡¨ç›˜è¡¨ç¤ºçš„åè¿›åˆ¶æ•°å€¼
 	 * @return
 	 */
 	public synchronized BigDecimal getValue()
@@ -147,8 +143,8 @@ public class ClockDial {
 		BigDecimal value=new BigDecimal(0);
 		for(int i=0;i<rotors.size();i++)
 		{
-			int v=rotors.get(i).getCurrentIndex();//µ±Ç°×ªÅÌÖµ
-			int m=i;//µ±Ç°Î»Êı,¼´¿É×÷Îª½øÖÆµÄÖ¸Êı
+			int v=rotors.get(i).getCurrentIndex();
+			int m=i;
 			BigDecimal vb=new BigDecimal(v);
 			value=value.add(vb.multiply(new BigDecimal(radix).pow(m)));
 		}
@@ -156,32 +152,34 @@ public class ClockDial {
 	}
 	
 	/**
-	 * ÉèÖÃÖ¸¶¨ÊıÖµ£¬Ö»ÄÜÊÇÕıÊı
+	 * è®¾ç½®è¡¨ç›˜æ•°å€¼
 	 * @param value
-	 * @return ·µ»ØÒç³öµÄÊıÖµ
+	 * @return è¿”å›æº¢å‡ºçš„å€¼
 	 */
 	public synchronized BigDecimal setValue(BigDecimal value)
 	{
-		BigDecimal in=value.abs();//È¡ÕıÊı
-		BigDecimal br=new BigDecimal(radix);//½øÖÆ
+		BigDecimal in=value.abs();
+		BigDecimal br=new BigDecimal(radix);
 		for(int i=rotors.size()-1;i>=0;i--)
 		{
-			BigDecimal v=new BigDecimal(radix).pow(i);//µ±Ç°Î»Ëù´ú±íÖµ£¬±ÈÈç10½øÖÆµÄ1100ÖĞµÄ×î¸ßÎ»Îª1000
-			BigDecimal count=in.divide(v,3);//¿ÉÌî³äµ±Ç°Î»ÖµµÄÊıÁ¿
+			BigDecimal v=new BigDecimal(radix).pow(i);
+			BigDecimal count=in.divide(v,3);
+			Rotor rotor=rotors.get(i);
 			if(count.compareTo(new BigDecimal(0))==0)
-			{//Èç¹ûÓĞ0¸öµ±Ç°Î»µÄÖµ
-				in=in.remainder(v);//½«ÓàÊıÓÃÓÚÏÂÒ»¸ö¼ÆËã
+			{
+				rotor.setCurrenIndex(0);
+				in=in.remainder(v);
 			}else if(count.compareTo(new BigDecimal(0))>0 && count.compareTo(br)<0)
-			{//Èç¹ûÓĞ0-½øÖÆ¸öµ±Ç°Î»µÄÖµ£¬(²»°üÀ¨½øÎ»Öµ£¬±ÈÈç10½øÖÆµÄ10)
-				rotors.get(i).setCurrenIndex(count.intValue());//ÉèÖÃ¸ÃÎ»·ûºÅË÷ÒıÎªÉÌµÄÖµ
-				in=in.subtract(v.multiply(count));//Ê£ÓàµÄÊı
+			{
+				rotor.setCurrenIndex(count.intValue());
+				in=in.subtract(v.multiply(count));
 			}else if(count.compareTo(br)>=0)
-			{//Èç¹û´óÓÚµÈÓÚ½øÖÆµÄµ±Ç°Î»µÄÖµÊı(±ÈÈç10,11¸öÇ§·ÖÎ»)
-				rotors.get(i).setCurrenIndex(rotors.get(i).getMaxIndex());//ÉèÖÃ¸ÃÎ»·ûºÅË÷ÒıÎªÉÌÈ¥µôÒç³ö²¿·ÖºóµÄÖµ(¼´×î´óË÷Òı)
-				in=in.remainder(v);//È¡³öÓàÊı
-				in=in.add(v.multiply(count.subtract(br).add(new BigDecimal(1))));//ÓàÊı¼ÓÉÏÒç³öµÄÖµ¼ÌĞøÏÂÒ»Î»Öµ
+			{
+				rotor.setCurrenIndex(rotor.getMaxIndex());
+				in=in.remainder(v);
+				in=in.add(v.multiply(count.subtract(br).add(new BigDecimal(1))));
 			}
 		}
-		return in;//·µ»ØÊ£ÓàµÄÖµ
+		return in;
 	}
 }

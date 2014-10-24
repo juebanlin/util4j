@@ -1,4 +1,3 @@
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -12,11 +11,9 @@ import net.jueb.serializable.nobject.type.NFloat;
 import net.jueb.serializable.nobject.type.NHashMap;
 import net.jueb.serializable.nobject.type.NInteger;
 import net.jueb.serializable.nobject.type.NLong;
-import net.jueb.serializable.nobject.type.NNull;
 import net.jueb.serializable.nobject.type.NShort;
 import net.jueb.serializable.nobject.type.NString;
 import net.jueb.serializable.nobject.type.NTrue;
-import net.jueb.tools.io.FileStreamBytes;
 
 
 

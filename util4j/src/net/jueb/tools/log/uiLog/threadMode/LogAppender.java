@@ -71,7 +71,8 @@ public abstract class LogAppender extends Thread {
     public final void run() {
     	//创建日志提前输出线程
     	Thread outLogs=new Thread(){
-        	public void run() {
+        	@Override
+			public void run() {
         		while(true)
         		{
         			if(logs.isEmpty())

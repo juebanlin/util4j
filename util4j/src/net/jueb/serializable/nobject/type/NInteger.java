@@ -53,10 +53,12 @@ public final class NInteger extends NObjectBase implements NObject{
 		return new NInteger(arg);
 	}
 	
+	@Override
 	public Integer value() {
 		return this.value;
 	}
 	
+	@Override
 	public boolean equals(Object obj) {
 		if(obj instanceof NInteger)
 		{

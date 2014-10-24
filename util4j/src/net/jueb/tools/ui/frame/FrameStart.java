@@ -11,6 +11,7 @@ public class FrameStart {
 		if(frame!=null)
 		{
 			EventQueue.invokeLater(new Runnable() {
+				@Override
 				public void run() {
 					try {
 						final JFrame ui=frame;

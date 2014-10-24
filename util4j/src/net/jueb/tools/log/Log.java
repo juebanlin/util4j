@@ -20,6 +20,6 @@ public class Log {
 	@SuppressWarnings("static-access")
 	public static Logger getLog(String name)
 	{
-		return rootLog.getLogger(name);
+		return Logger.getLogger(name);
 	}
 }

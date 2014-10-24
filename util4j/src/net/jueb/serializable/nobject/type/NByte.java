@@ -53,10 +53,12 @@ public final class NByte extends NObjectBase implements NObject{
 		return new NByte(arg);
 	}
 	
+	@Override
 	public Byte value() {
 		return this.value;
 	}
 	
+	@Override
 	public boolean equals(Object obj) {
 		if(obj instanceof NByte)
 		{

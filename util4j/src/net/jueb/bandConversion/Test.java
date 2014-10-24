@@ -1,7 +1,6 @@
 package net.jueb.bandConversion;
 import java.math.BigDecimal;
 import java.util.Vector;
-
 import net.jueb.bandConversion.ClockDial;
 import net.jueb.bandConversion.Numeral;
 import net.jueb.bandConversion.Rotor;
@@ -12,7 +11,6 @@ import net.jueb.bandConversion.Rotor;
 public class Test {
 
 	public static void main(String[] args) {
-		//¶¨Òå»ùÊý·ûºÅ¼¯ºÏ
 		Vector<Numeral> Numeral=new Vector<Numeral>();
 		for(int i=0;i<10;i++)
 		{
@@ -27,24 +25,27 @@ public class Test {
 			Numeral.add(rd);
 		}
 		
-		//¶¨Òå»ùÊý×ªÅÌ
 		Rotor rt=new Rotor(Numeral);
-		System.out.println("»ùÊý×ªÅÌ¶¨ÒåÍê±Ï:");
-		System.out.println(rt.toString());
+		System.out.println("ç¬¦å·é›†åˆ:\n"+rt.toString());
 		
-		//¶¨Òå±íÅÌ
 		final ClockDial cd=new ClockDial(rt, 10);
-		System.out.println("±íÅÌ¶¨ÒåÍê±Ï");
-		System.out.println(cd.getViewStrs());
+		System.out.println("å½“å‰è¡¨ç›˜è¯»æ•°:"+cd.getViewStrs());
+		System.out.println("å½“å‰è¡¨ç›˜10è¿›åˆ¶æ•°å€¼:"+cd.getValue().toString());
 		
-		System.out.println("µ±Ç°±íÅÌ¶ÁÊý:"+cd.getViewStrs());
-		System.out.println("µ±Ç°±íÅÌÊ®½øÖÆÖµ:"+cd.getValue().intValue());
+		long a1=Long.MAX_VALUE;
+		System.out.println("è®¾ç½®è¡¨ç›˜æ•°å€¼ä¸º:"+a1);
+		BigDecimal out=cd.setValue(new BigDecimal(a1));
+		System.out.println("å½“å‰è¡¨ç›˜è¯»æ•°:"+cd.getViewStrs());
+		System.out.println("å½“å‰è¡¨ç›˜10è¿›åˆ¶æ•°å€¼:"+cd.getValue().toString());
+		System.out.println("æº¢å‡ºæ•°å€¼ï¼š"+out.toString());
 		
-		System.out.println("ÉèÖÃ±íÅÌÖµÎªLong.MAX_VALUE");
-		BigDecimal out=cd.setValue(new BigDecimal(Long.MAX_VALUE));
-		System.out.println("µ±Ç°±íÅÌ¶ÁÊý:"+cd.getViewStrs());
-		System.out.println("µ±Ç°±íÅÌÊ®½øÖÆÖµ:"+cd.getValue().longValue());
-		System.out.println("Òç³öÊýÖµ£º"+out.longValue());
+		long a2=1;
+		System.out.println("è¡¨ç›˜æ•°å€¼åŠ :"+a2);
+		out=cd.add(new BigDecimal(a2));
+		System.out.println("å½“å‰è¡¨ç›˜è¯»æ•°:"+cd.getViewStrs());
+		System.out.println("å½“å‰è¡¨ç›˜10è¿›åˆ¶æ•°å€¼:"+cd.getValue().toString());
+		System.out.println("æº¢å‡ºæ•°å€¼ï¼š"+out.toString());
+		
 		
 	}
 }

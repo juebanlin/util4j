@@ -50,10 +50,12 @@ public final class NString extends NObjectBase implements NObject{
 		return new NString(arg);
 	}
 	
+	@Override
 	public String value() {
 		return this.value;
 	}
 	
+	@Override
 	public boolean equals(Object obj) {
 		if(obj instanceof NString)
 		{

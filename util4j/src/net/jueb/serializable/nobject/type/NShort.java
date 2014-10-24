@@ -54,10 +54,12 @@ public final class NShort extends NObjectBase implements NObject{
 		return new NShort(arg);
 	}
 	
+	@Override
 	public Short value() {
 		return this.value;
 	}
 	
+	@Override
 	public boolean equals(Object obj) {
 		if(obj instanceof NShort)
 		{

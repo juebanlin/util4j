@@ -53,10 +53,12 @@ public final class NFloat extends NObjectBase implements NObject{
 		return new NFloat(arg);
 	}
 	
+	@Override
 	public Float value() {
 		return this.value;
 	}
 	
+	@Override
 	public boolean equals(Object obj) {
 		if(obj instanceof NFloat)
 		{

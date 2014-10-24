@@ -50,10 +50,12 @@ public final class NUTF16LEString extends NObjectBase implements NObject{
 		return new NUTF16LEString(arg);
 	}
 	
+	@Override
 	public String value() {
 		return this.value;
 	}
 	
+	@Override
 	public boolean equals(Object obj) {
 		if(obj instanceof NUTF16LEString)
 		{

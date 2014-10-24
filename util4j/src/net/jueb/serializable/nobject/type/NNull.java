@@ -56,10 +56,12 @@ public final class NNull  extends NObjectBase implements NObject{
 		return null;
 	}
 	
+	@Override
 	public Byte value() {
 		return null;
 	}
 	
+	@Override
 	public boolean equals(Object obj) {
 		return obj==value;
 	}

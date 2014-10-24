@@ -54,13 +54,16 @@ public interface  NObject extends java.io.Serializable {
 	 * @param obj
 	 * @return
 	 */
+	@Override
 	public boolean equals(Object obj);
 	/**
 	 * 用于map的toString
 	 * @return
 	 */
+	@Override
 	public String toString();
 	
+	@Override
 	public int hashCode();
 	
 }

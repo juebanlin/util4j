@@ -53,10 +53,12 @@ public final class NDouble extends NObjectBase implements NObject{
 		return new NDouble(arg);
 	}
 	
+	@Override
 	public Double value() {
 		return this.value;
 	}
 	
+	@Override
 	public boolean equals(Object obj) {
 		if(obj instanceof NDouble)
 		{
