@@ -27,16 +27,21 @@ public class NHashMapFactory extends NObjectBase{
 	public Logger log=Log.getLog(this.getClass().getName());
 	private static int flagHead=FlagHead.NHashMap;
 	private  TypeBytes tb=new TypeBytes();
-	
 	private boolean error;
 	/**
 	 * NHashMap最小值 标记加容量值
 	 */
 	private  int minSize=5;
 	
+	/**
+	 * 根据字节数组解析一个map对象
+	 * @param bytes
+	 * @return
+	 */
 	public  NHashMap getNHashMap (byte[] bytes)
 	{
-		return getNHashMap(bytes,new P(0));
+		final P p=new P(0);
+		return getNHashMap(bytes,p);
 	}
 	/**
 	 * 根据bytes的P位置开始,解析一个NHashMap对象

@@ -121,6 +121,10 @@ public final class NString extends NObjectBase implements NObject{
 			}else
 			{
 				byte[] data=readByteArrayByEndArray(bytes, p, flagEnd);
+				if(data.length==flagEnd.length)
+				{//空字符串
+					return new NString("");
+				}
 				byte[] value=hsb.subByteArray(data, 0, data.length-flagEnd.length-1);
 				if(value!=null)
 				{

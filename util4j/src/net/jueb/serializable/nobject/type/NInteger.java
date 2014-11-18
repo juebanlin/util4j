@@ -7,7 +7,11 @@ import net.jueb.serializable.nobject.flag.FlagEnd;
 import net.jueb.serializable.nobject.flag.FlagHead;
 
 
-
+/**
+ * 
+ * @author Administrator
+ *
+ */
 public final class NInteger extends NObjectBase implements NObject{
 	
 	/**

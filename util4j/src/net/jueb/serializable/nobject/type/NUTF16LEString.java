@@ -1,5 +1,7 @@
 package net.jueb.serializable.nobject.type;
 
+import java.io.UnsupportedEncodingException;
+
 import net.jueb.serializable.nobject.base.NObject;
 import net.jueb.serializable.nobject.base.NObjectBase;
 import net.jueb.serializable.nobject.base.P;
@@ -76,11 +78,16 @@ public final class NUTF16LEString extends NObjectBase implements NObject{
 	@Override
 	public byte[] getBytes()
 	{
-		return hsb.addByteArray(hsb.addByteArray(new byte[]{flagHead}, (value).getBytes()), flagEnd);
+		return hsb.addByteArray(hsb.addByteArray(new byte[]{flagHead}, valueBytes()), flagEnd);
 	}
 	@Override
 	public byte[] valueBytes() {
-		return this.value.getBytes();
+		try {
+			return value.getBytes("UTF-16LE");
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}	
 	@Override
 	public String toString() {
