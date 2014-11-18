@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+
 import net.jueb.serializable.nmap.falg.Flag;
 
 /**
@@ -65,6 +66,10 @@ public class NMap extends NType<Map<NType<?>,NType<?>>> implements Map<NType<?>,
 
 	@Override
 	public NType<?> put(NType<?> key, NType<?> value) {
+		if(key==this || value==this)
+		{
+			throw new RuntimeException("不能将map自身作为key或者value");
+		}
 		return obj.put(key, value);
 	}
 
