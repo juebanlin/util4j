@@ -20,19 +20,10 @@ import net.jueb.tools.convert.HexStrBytes;
 import net.jueb.tools.convert.TypeBytes;
 
 public interface  NObject extends java.io.Serializable {
+	
 	public static HexStrBytes hsb=new HexStrBytes();
 	public static TypeBytes tb=new TypeBytes();
 	
-
-	/**
-	 * 标记尾注册
-	 * @author juebanlin
-	 *
-	 */
-	public static interface flagEnd
-	{
-		
-	}
 
 	/**
 	 * 内部维护对象的值
