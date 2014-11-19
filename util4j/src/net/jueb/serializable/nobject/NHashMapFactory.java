@@ -17,7 +17,7 @@ import net.jueb.serializable.nobject.type.NShort;
 import net.jueb.serializable.nobject.type.NString;
 import net.jueb.serializable.nobject.type.NTrue;
 import net.jueb.serializable.nobject.type.NUTF16LEString;
-import net.jueb.tools.convert.TypeBytes;
+import net.jueb.tools.convert.typebytes.TypeBytes;
 import net.jueb.tools.log.Log;
 
 import org.apache.log4j.Logger;

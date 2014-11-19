@@ -17,7 +17,7 @@ Boolean			1*8
 NHashMap		……    		08
  */
 import net.jueb.tools.convert.HexStrBytes;
-import net.jueb.tools.convert.TypeBytes;
+import net.jueb.tools.convert.typebytes.TypeBytes;
 
 public interface  NObject extends java.io.Serializable {
 	

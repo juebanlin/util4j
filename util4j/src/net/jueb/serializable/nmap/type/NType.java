@@ -1,9 +1,8 @@
 package net.jueb.serializable.nmap.type;
 
 import java.io.ByteArrayOutputStream;
-
 import net.jueb.tools.convert.HexStrBytes;
-import net.jueb.tools.convert.TypeBytes;
+import net.jueb.tools.convert.typebytes.TypeBytes;
 
 /**
  * 一个任意类型
