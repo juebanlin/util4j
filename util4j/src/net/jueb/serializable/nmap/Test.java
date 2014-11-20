@@ -1,9 +1,6 @@
 package net.jueb.serializable.nmap;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -14,17 +11,27 @@ import net.jueb.serializable.nmap.type.NUTF8String;
 
 public class Test {
 
-	public static void main(String[] args) throws IOException {
-		ByteArrayOutputStream bos=new ByteArrayOutputStream();
-		DataOutputStream dos=new DataOutputStream(bos);
-		dos.writeInt(4);
-		dos.flush();
-		dos.close();
-		System.out.println(Arrays.toString(bos.toByteArray()));
-//		Test.test1();
+	public static void main(String[] args) throws Exception {
+		Test t=new Test();
+		File f=new File("d:/map.data");
+		long i=System.currentTimeMillis();
+		NMap nmap=new NMap().load(f);
+		long x=System.currentTimeMillis()-i;
+		System.out.println(nmap);
+		System.out.println("解码耗时:"+x);
+//		t.showMap(nmap);
 		
+		i=System.currentTimeMillis();
+		nmap.saveTo(new File("d:/map2.data"));
+		x=System.currentTimeMillis()-i;
+		System.out.println("编码耗时:"+x);
+		
+		nmap=nmap.load(new File("d:/map2.data"));
+		t.showMap(nmap);
+		System.out.println("解码耗时:"+x);
+		t.showMap(nmap);
 	}
-	public static void test1()
+	public static NMap  build()
 	{
 		long i=System.currentTimeMillis();
 		NUTF8String nameKey=new NUTF8String("name");
@@ -46,15 +53,19 @@ public class Test {
 		nmap3.put(ageKey, ageValue);
 		nmap3.put(isWorkKey, isWorkValue);
 		nmap.put(nmap2,nmap3);
+		try {
+			nmap2.saveTo(new File("d:/2.data"));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return nmap2;
+	}
+	
+	public static void showMap(NMap nmap)
+	{
 		byte[] data=nmap.getBytes();
 		System.out.println(nmap.toString());
 		System.out.println(Arrays.toString(data));
-		long x=System.currentTimeMillis()-i;
-		System.out.println("耗时:"+x);
-		System.out.println("数据长度："+data.length);
-		ByteArrayInputStream bis=new ByteArrayInputStream(data);
-		
-		DataInputStream dis=new DataInputStream(bis);
-		System.out.println(dis.markSupported());
 	}
 }

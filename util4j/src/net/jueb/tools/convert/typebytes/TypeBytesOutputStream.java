@@ -1,16 +1,14 @@
 package net.jueb.tools.convert.typebytes;
+import java.io.ByteArrayOutputStream;
 import java.io.DataOutput;
-import java.io.FilterOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.UTFDataFormatException;
-
 /**
  * 采用无符号左移方式写入位数值
  * @author Administrator
  *
  */
-public final class TypeBytesOutputStream extends FilterOutputStream implements DataOutput {
+public final class TypeBytesOutputStream extends ByteArrayOutputStream implements DataOutput {
     
 	/**
 	 * 是否为小端模式
@@ -18,32 +16,16 @@ public final class TypeBytesOutputStream extends FilterOutputStream implements D
 	 */
 	private boolean isLittleEndian=false;
 	
-	/**
-     * The number of bytes written to the data output stream so far.
-     * If this counter overflows, it will be wrapped to Integer.MAX_VALUE.
-     */
-    protected int written;
 
     /**
      * bytearr is initialized on demand by writeUTF
      */
     private byte[] bytearr = null;
 
-    /**
-     * 创建一个新的大端模式的数据输出流，将数据写入指定基础输出流。计数器 written 被设置为零。
-     * @param out
-     */
-    public TypeBytesOutputStream(OutputStream out) {
-        super(out);
+    public TypeBytesOutputStream() {
     }
-    /**
-     * 创建一个新的指定模式的数据输出流，将数据写入指定基础输出流。计数器 written 被设置为零。
-     * @param out
-     * @param isLittleEndian 是否是小端模式
-     */
-    public TypeBytesOutputStream(OutputStream out,boolean isLittleEndian) {
-        super(out);
-        this.isLittleEndian=isLittleEndian;
+    public TypeBytesOutputStream(boolean isLittleEndian) {
+    	this.isLittleEndian=isLittleEndian;
     }
     
     public boolean isLittleEndian()
@@ -52,60 +34,19 @@ public final class TypeBytesOutputStream extends FilterOutputStream implements D
     }
     
     /**
-     * Increases the written counter by the specified value
-     * until it reaches Integer.MAX_VALUE.
-     */
-    private void incCount(int value) {
-        int temp = written + value;
-        if (temp < 0) {
-            temp = Integer.MAX_VALUE;
-        }
-        written = temp;
-    }
-
-    /**
-     *将指定字节（参数 b 的八个低位）写入基础输出流。如果没有抛出异常，则计数器 written 增加 1。 
-	 *实现 OutputStream 的 write 方法。 
-     */
-    public synchronized void write(int b) throws IOException {
-        out.write(b);
-        incCount(1);
-    }
-
-    /**
-     *将指定 byte 数组中从偏移量 off 开始的 len 个字节写入基础输出流。
-     *如果没有抛出异常，则计数器 written 增加 len。 
-     */
-    public synchronized void write(byte b[], int off, int len)
-        throws IOException
-    {
-        out.write(b, off, len);
-        incCount(len);
-    }
-
-    /**
-     *清空此数据输出流。这迫使所有缓冲的输出字节被写出到流中。 
-     */
-    public void flush() throws IOException {
-        out.flush();
-    }
-
-    /**
      *将一个 boolean 值以 1-byte 值形式写入基础输出流。
      *值 true 以值 (byte)1 的形式被写出；值 false 以值 (byte)0 的形式被写出。
      *如果没有抛出异常，则计数器 written 增加 1。 
      */
     public final void writeBoolean(boolean v) throws IOException {
-        out.write(v ? 1 : 0);
-        incCount(1);
+        write(v ? 1 : 0);
     }
 
     /**
      * 将一个 byte 值以 1-byte 值形式写出到基础输出流中。如果没有抛出异常，则计数器 written 增加 1。
      */
     public final void writeByte(int v) throws IOException {
-        out.write(v);
-        incCount(1);
+        write(v);
     }
 
     /**
@@ -115,14 +56,13 @@ public final class TypeBytesOutputStream extends FilterOutputStream implements D
     public final void writeShort(int v) throws IOException {
        if(isLittleEndian)
        {
-    	   out.write((v >>> 0) & 0xFF);
-	       out.write((v >>> 8) & 0xFF);
+    	   write((v >>> 0) & 0xFF);
+	       write((v >>> 8) & 0xFF);
        }else 
        {
-    	   out.write((v >>> 8) & 0xFF);
-	       out.write((v >>> 0) & 0xFF);  
+    	   write((v >>> 8) & 0xFF);
+	       write((v >>> 0) & 0xFF);  
        }
-       incCount(2);
     }
 
     /**
@@ -132,14 +72,13 @@ public final class TypeBytesOutputStream extends FilterOutputStream implements D
     public final void writeChar(int v) throws IOException {
     	if(isLittleEndian)
         {
-    	   out.write((v >>> 0) & 0xFF);
-   	       out.write((v >>> 8) & 0xFF);
+    	   write((v >>> 0) & 0xFF);
+   	       write((v >>> 8) & 0xFF);
         }else 
         {
-           out.write((v >>> 8) & 0xFF);
-   	       out.write((v >>> 0) & 0xFF);
+           write((v >>> 8) & 0xFF);
+   	       write((v >>> 0) & 0xFF);
         }
-        incCount(2);
     }
 
     /**
@@ -148,26 +87,24 @@ public final class TypeBytesOutputStream extends FilterOutputStream implements D
     public final void writeInt(int v) throws IOException {
     	if(isLittleEndian)
         {
-    	   out.write((v >>> 0) & 0xFF);
-   	       out.write((v >>> 8) & 0xFF);
-   	       out.write((v >>> 16) & 0xFF);
-   	       out.write((v >>> 24) & 0xFF);
+    	   write((v >>> 0) & 0xFF);
+   	       write((v >>> 8) & 0xFF);
+   	       write((v >>> 16) & 0xFF);
+   	       write((v >>> 24) & 0xFF);
         }else 
         {
-           out.write((v >>> 24) & 0xFF);
-           out.write((v >>> 16) & 0xFF);
-       	   out.write((v >>> 8) & 0xFF);
-   	       out.write((v >>> 0) & 0xFF);
+           write((v >>> 24) & 0xFF);
+           write((v >>> 16) & 0xFF);
+       	   write((v >>> 8) & 0xFF);
+   	       write((v >>> 0) & 0xFF);
         }
-        incCount(4);
     }
-
-    private byte writeBuffer[] = new byte[8];
 
     /**
      * 将一个 long 值以 8-byte 值形式写入基础输出流中。如果没有抛出异常，则计数器 written 增加 8。 
      */
     public final void writeLong(long v) throws IOException {
+    	byte writeBuffer[] = new byte[8];
     	if(isLittleEndian)
         {
     		writeBuffer[0] = (byte)(v >>> 0);
@@ -189,8 +126,7 @@ public final class TypeBytesOutputStream extends FilterOutputStream implements D
             writeBuffer[6] = (byte)(v >>>  8);
             writeBuffer[7] = (byte)(v >>>  0);
         }
-        out.write(writeBuffer, 0, 8);
-        incCount(8);
+        write(writeBuffer, 0, 8);
     }
 
     /**
@@ -217,9 +153,8 @@ public final class TypeBytesOutputStream extends FilterOutputStream implements D
     public final void writeBytes(String s) throws IOException {
         int len = s.length();
         for (int i = 0 ; i < len ; i++) {
-            out.write((byte)s.charAt(i));
+           write((byte)s.charAt(i));
         }
-        incCount(len);
     }
 
     /**
@@ -229,10 +164,9 @@ public final class TypeBytesOutputStream extends FilterOutputStream implements D
         int len = s.length();
         for (int i = 0 ; i < len ; i++) {
             int v = s.charAt(i);
-            out.write((v >>> 8) & 0xFF);
-            out.write((v >>> 0) & 0xFF);
+            write((v >>> 8) & 0xFF);
+            write((v >>> 0) & 0xFF);
         }
-        incCount(len * 2);
     }
 
     /**
@@ -306,14 +240,4 @@ public final class TypeBytesOutputStream extends FilterOutputStream implements D
         out.write(bytearr, 0, utflen+2);
         return utflen + 2;
     }
-
-    /**
-     *返回计数器 written 的当前值，即到目前为止写入此数据输出流的字节数。
-     *如果计数器溢出，则将它包装到 Integer.MAX_VALUE。
-     * @return
-     */
-    public final int size() {
-        return written;
-    }
-    
 }

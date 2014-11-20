@@ -1,11 +1,18 @@
 package net.jueb.serializable.nmap.type;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-
+import java.util.TreeMap;
 import net.jueb.serializable.nmap.falg.Flag;
+import net.jueb.tools.convert.typebytes.TypeBytesInputStream;
 
 /**
  * 内部封装一个hashmap
@@ -15,22 +22,28 @@ import net.jueb.serializable.nmap.falg.Flag;
 public class NMap extends NType<Map<NType<?>,NType<?>>> implements Map<NType<?>, NType<?>>{
 
 	public NMap() {
-		super(new HashMap<NType<?>, NType<?>>(), Flag.Head.NMap, Flag.End.NMap);
+		super(new TreeMap<NType<?>, NType<?>>(), Flag.Head.NMap, Flag.End.NMap);
 	}
 	
 	@Override
 	public byte[] getBytes() {
 		int size=obj.size();//加入当前map的第一层大小
-		return addByteArray(getFlagHead(),tb.IntegerToByteArray(size),getObjectBytes(),getFlagEnd());
+		return addByteArray(getFlagHead(),tb.getBytes(size),getObjectBytes(),getFlagEnd());
 	}
 	
 	@Override
 	public byte[] getObjectBytes() {
 		byte[] data=new byte[]{};
-		for(NType<?> key:obj.keySet())
-		{//不管key和value是什么类型，只管取数据,如果类型是NMap，会自动嵌套调用它getBytes
-			data=addByteArray(data,key.getBytes(),obj.get(key).getBytes());
+		Iterator<Entry<NType<?>, NType<?>>> it=obj.entrySet().iterator();
+		while(it.hasNext())
+		{
+			Entry<NType<?>, NType<?>> kv=it.next();
+			data=addByteArray(data,kv.getKey().getBytes(),kv.getValue().getBytes());
 		}
+//		for(NType<?> key:obj.keySet())
+//		{//不管key和value是什么类型，只管取数据,如果类型是NMap，会自动嵌套调用它getBytes
+//			data=addByteArray(data,key.getBytes(),obj.get(key).getBytes());
+//		}
 		return data;
 	}
 	
@@ -103,4 +116,123 @@ public class NMap extends NType<Map<NType<?>,NType<?>>> implements Map<NType<?>,
 		return obj.entrySet();
 	}
 
+	private NType<?> readKey(TypeBytesInputStream ti) throws Exception
+	{
+		byte head=ti.readNextByte();
+		return readNTypeByHead(ti, head);
+	}
+	private NType<?> readValue(TypeBytesInputStream ti) throws Exception
+	{
+		byte head=ti.readNextByte();
+		return readNTypeByHead(ti, head);
+	}
+	/**
+	 * 解析NType对象到map
+	 * @param map
+	 * @param ti
+	 * @throws Exception 
+	 */
+	private void readNTypesToNMap(final NMap map,TypeBytesInputStream ti) throws Exception
+	{
+		int num=ti.readInt();
+		for(int i=0;i<num;i++)
+		{	
+			log(Integer.toHexString(ti.getReadIndex())+"-StartReadkey");
+			NType<?> key=readKey(ti);
+			log(Integer.toHexString(ti.getReadIndex())+"-ReadkeyEnd:"+key);
+			
+			log(Integer.toHexString(ti.getReadIndex())+"-StartReadValue");
+			NType<?> value=readValue(ti);
+			log(Integer.toHexString(ti.getReadIndex())+"-ReadVauleEnd:"+value);
+			map.put(key, value);
+		}
+	}
+	/**
+	 * 根据头得到类型
+	 * @param ti 这里的ti必须是没有读过head的
+	 * @param head
+	 * @return
+	 * @throws IOException 
+	 */
+	private NType<?> readNTypeByHead(TypeBytesInputStream ti,byte head) throws Exception
+	{
+		NType<?> type=null;
+		switch (head) {
+		case Flag.Head.NNull:
+			type=new NNull().decoderByStream(ti);
+			break;
+		case Flag.Head.NTrue:
+			type=new NBoolean(true).decoderByStream(ti);
+			break;
+		case Flag.Head.NFalse:
+			type=new NBoolean(false).decoderByStream(ti);
+			break;
+		case Flag.Head.NInteger:
+			type=new NInteger(0).decoderByStream(ti);
+			break;
+		case Flag.Head.NUTF8String:
+			type=new NUTF8String("").decoderByStream(ti);
+			break;
+		case Flag.Head.NUTF16LEString:
+			type=new NUTF16LEString("").decoderByStream(ti);
+			break;
+		case Flag.Head.NMap:
+			type=new NMap().decoderByStream(ti);
+			break;
+		default:
+			break;
+		}
+		return type;
+	}
+
+	@Override
+	protected NType<Map<NType<?>, NType<?>>> decoder(TypeBytesInputStream ti)throws Exception {
+		if(checkHead(ti))
+		{
+			final NMap map=new NMap();
+			readNTypesToNMap(map, ti);
+			return map;
+		}
+		return null;
+	}
+	
+	public final void saveTo(File file) throws IOException
+	{
+		FileOutputStream fos=new FileOutputStream(file);
+		fos.write(getBytes());
+		fos.flush();
+		fos.close();
+	}
+	
+	/**
+	 * 根据文件解码一个新nmap对象
+	 * @param file
+	 * @return
+	 * @throws Exception
+	 */
+	public final NMap load(File file) throws Exception
+	{
+		if(file.exists())
+		{
+			FileInputStream fis=new FileInputStream(file);
+			BufferedInputStream bis=new BufferedInputStream(fis);
+			ByteArrayOutputStream bos=new ByteArrayOutputStream();//定义一个内存输出流
+			int i=-1;
+			while(true)
+			{
+				i=bis.read();
+				if(i==-1)
+				{
+					break;
+				}
+				bos.write(i);//保存到内存数组
+			}
+			bos.flush();
+			bos.close();
+			bis.close();
+			return (NMap) decoder(bos.toByteArray());
+		}
+		return null;
+	}
+	
 }

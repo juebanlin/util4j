@@ -404,7 +404,7 @@ public class HexStrBytes {
 	{
 		if(data==null||data.length<=0)
 		{
-			System.out.println("参数错误!");
+			System.out.println("toHexArray：参数错误!");
 			return null;
 		}
 		String[] hex=new String[data.length];

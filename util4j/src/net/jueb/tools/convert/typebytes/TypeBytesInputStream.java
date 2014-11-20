@@ -2,9 +2,7 @@ package net.jueb.tools.convert.typebytes;
 import java.io.ByteArrayInputStream;
 import java.io.DataInput;
 import java.io.EOFException;
-import java.io.FilterInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PushbackInputStream;
 import java.io.UTFDataFormatException;
 
@@ -12,7 +10,7 @@ import java.io.UTFDataFormatException;
  * 默认的字节都以执行& 0xff
  * @author Administrator
  */
-public final class TypeBytesInputStream extends FilterInputStream implements DataInput {
+public final class TypeBytesInputStream extends ByteArrayInputStream implements DataInput {
 
 	/**
 	 * 是否为小端模式
@@ -26,32 +24,12 @@ public final class TypeBytesInputStream extends FilterInputStream implements Dat
 	 * @param buf
 	 */
 	public TypeBytesInputStream(byte[] buf) {
-        super(new ByteArrayInputStream(buf));
+		super(buf);
     }
-	
-	/**
-	 * 以ByteArrayInputStream初始化一个数组为输入流
-	 * @param buf
-	 * @param mode
-	 */
 	public TypeBytesInputStream(byte[] buf,boolean isLittleEndian) {
-        super(new ByteArrayInputStream(buf));
-        this.isLittleEndian=isLittleEndian;
+		super(buf);
+		this.isLittleEndian=isLittleEndian;
     }
-	
-	/**
-	 * 创建一个新的大端模式的数据输入流
-	 * @param in
-	 */
-	public TypeBytesInputStream(InputStream in) {
-        super(in);
-    }
-	
-    public TypeBytesInputStream(InputStream in,boolean isLittleEndian) {
-        super(in);
-        this.isLittleEndian=isLittleEndian;
-    }
-    
     public boolean isLittleEndian()
     {
     	return this.isLittleEndian;
@@ -63,36 +41,44 @@ public final class TypeBytesInputStream extends FilterInputStream implements Dat
     private byte bytearr[] = new byte[80];
     private char chararr[] = new char[80];
 
-    /**
-     *从包含的输入流中读取一定数量的字节，并将它们存储到缓冲区数组 b 中。
-     *以整数形式返回实际读取的字节数。在输入数据可用、检测到文件末尾 (end of file) 或抛出异常之前，此方法将一直阻塞。 
-     *如果 b 为 null，则抛出 NullPointerException。
-     *如果 b 的长度为 0，则不读取字节并返回 0；否则，尝试读取至少一个字节。
-     *如果因为流位于文件末尾而没有字节可用，则返回值 -1；否则至少读取一个字节并将其存储到 b 中。 
-     *将读取的第一个字节存储到元素 b[0] 中，将下一个字节存储到 b[1] 中，依此类推。
-     *读取的字节数至多等于 b 的长度。设 k 为实际读取的字节数；
-     *这些字节将存储在从 b[0] 到 b[k-1] 的元素中，b[k] 到 b[b.length-1] 的元素不受影响。 
-     *read(b) 方法与以下方法的效果相同： 
-     *read(b, 0, b.length) 
-     */
-    public final int read(byte b[]) throws IOException {
-        return in.read(b, 0, b.length);
+    @Override
+    @Deprecated
+    public void mark(int readAheadLimit) {
+    	super.mark(readAheadLimit);
     }
-
+    
     /**
-     *从包含的输入流中将最多 len 个字节读入一个 byte 数组中。尽量读取 len 个字节，但读取的字节数可能少于 len 个，也可能为零。
-     *以整数形式返回实际读取的字节数。 在输入数据可用、检测到文件末尾或抛出异常之前，此方法将阻塞。 
-	 *如果 len 为零，则不读取任何字节并返回 0；否则，尝试读取至少一个字节。
-	 *如果因为流位于文件未尾而没有字节可用，则返回值 -1；否则，至少读取一个字节并将其存储到 b 中。 
-	 *将读取的第一个字节存储到元素 b[off] 中，将下一个字节存储到 b[off+1] 中，依此类推。
-	 *读取的字节数至多等于 len。设 k 为实际读取的字节数；
-	 *这些字节将存储在 b[off] 到 b[off+k-1] 的元素中，b[off+k] 到 b[off+len-1] 的元素不受影响。 
-	 *在所有情况下，b[0] 到 b[off] 的元素和 b[off+len] 到 b[b.length-1] 的元素都不受影响。 
-	 *参数：b - 存储读取数据的缓冲区。;off - 目标数组 b 中的起始偏移量 ;len - 读取的最大字节数。
+     * 记录当前读取位置
+     * 并返回当前位置值
      */
-    public final int read(byte b[], int off, int len) throws IOException {
-        return in.read(b, off, len);
+    public synchronized int markReadIndex() {
+    	mark = pos;
+    	return mark;
     }
+    /**
+     * 获取当前该读取位置的索引
+     * @return
+     */
+    public synchronized int getReadIndex()
+    {
+    	return pos;
+    }
+   
+    /**
+     * 重置到最近一次的标记
+     * pos = mark_;
+     */
+    public synchronized void resetTo(int mark_)
+    {
+    	if(mark_<count)
+    	{
+    		pos = mark_;
+    	}else
+    	{
+    		throw new RuntimeException("位置设置错误");
+    	}
+    }
+    
 
     /**
      *从输入流中读取一些字节，并将它们存储在缓冲区数组 b 中。读取的字节数等于 b 的长度。 
@@ -137,7 +123,7 @@ public final class TypeBytesInputStream extends FilterInputStream implements Dat
             throw new IndexOutOfBoundsException();
         int n = 0;
         while (n < len) {
-            int count = in.read(b, off + n, len - n);
+            int count = read(b, off + n, len - n);
             if (count < 0)
                 throw new EOFException();
             n += count;
@@ -160,7 +146,7 @@ public final class TypeBytesInputStream extends FilterInputStream implements Dat
         int total = 0;
         int cur = 0;
 
-        while ((total<n) && ((cur = (int) in.skip(n-total)) > 0)) {
+        while ((total<n) && ((cur = (int) skip(n-total)) > 0)) {
             total += cur;
         }
 
@@ -178,7 +164,7 @@ public final class TypeBytesInputStream extends FilterInputStream implements Dat
      * @see        java.io.FilterInputStream#in
      */
     public final boolean readBoolean() throws IOException {
-        int ch = in.read();
+        int ch = read();
         if (ch < 0)
             throw new EOFException();
         return !(ch == 0);
@@ -196,9 +182,23 @@ public final class TypeBytesInputStream extends FilterInputStream implements Dat
      * @see        java.io.FilterInputStream#in
      */
     public final byte readByte() throws IOException {
-        int ch = in.read();
+        int ch = read();
         if (ch < 0)
             throw new EOFException();
+        return (byte)(ch);
+    }
+    /**
+     * 读取下一个字节，但是不移动位置
+     * @return 返回读取的字节
+     * @throws IOException 如果没有下一个字节，则抛出异常
+     */
+    public synchronized byte readNextByte() throws IOException{
+    	int ch=(pos < count) ? (buf[pos++] & 0xff) : -1;
+        if (ch < 0)
+        {
+        	 throw new EOFException();
+        }
+        pos--;
         return (byte)(ch);
     }
 
@@ -213,7 +213,7 @@ public final class TypeBytesInputStream extends FilterInputStream implements Dat
      * @see         java.io.FilterInputStream#in
      */
     public final int readUnsignedByte() throws IOException {
-        int ch = in.read();
+        int ch = read();
         if (ch < 0)
             throw new EOFException();
         return ch;
@@ -232,8 +232,8 @@ public final class TypeBytesInputStream extends FilterInputStream implements Dat
      * @see        java.io.FilterInputStream#in
      */
     public final short readShort() throws IOException {
-        int ch1 = in.read();
-        int ch2 = in.read();
+        int ch1 = read();
+        int ch2 = read();
         if ((ch1 | ch2) < 0)
         	throw new EOFException();
         if(isLittleEndian)
@@ -260,8 +260,8 @@ public final class TypeBytesInputStream extends FilterInputStream implements Dat
      * @see        java.io.FilterInputStream#in
      */
     public final int readUnsignedShort() throws IOException {
-        int ch1 = in.read();
-        int ch2 = in.read();
+        int ch1 = read();
+        int ch2 = read();
         if ((ch1 | ch2) < 0)
             throw new EOFException();
         if(isLittleEndian)
@@ -286,8 +286,8 @@ public final class TypeBytesInputStream extends FilterInputStream implements Dat
      * @see        java.io.FilterInputStream#in
      */
     public final char readChar() throws IOException {
-        int ch1 = in.read();
-        int ch2 = in.read();
+        int ch1 = read();
+        int ch2 = read();
         if ((ch1 | ch2) < 0)
             throw new EOFException();
         if(isLittleEndian)
@@ -310,10 +310,10 @@ public final class TypeBytesInputStream extends FilterInputStream implements Dat
      * @see        java.io.FilterInputStream#in
      */
     public final int readInt() throws IOException {
-        int ch1 = in.read();
-        int ch2 = in.read();
-        int ch3 = in.read();
-        int ch4 = in.read();
+        int ch1 = read();
+        int ch2 = read();
+        int ch3 = read();
+        int ch4 = read();
         if ((ch1 | ch2 | ch3 | ch4) < 0)
             throw new EOFException();
         if(isLittleEndian)
@@ -400,63 +400,6 @@ public final class TypeBytesInputStream extends FilterInputStream implements Dat
     }
 
     private char lineBuffer[];
-
-    /**
-     * 从输入流中读取下一文本行。该方法读取连续的字节，将每个字节分别转换成一个字符，直到遇到行结尾符或到达末尾；
-     * 然后以 String 形式返回读取的字符。注意，因为此方法用于处理字符，所以它不支持整个 Unicode 字符集的输入。 
-     * 如果在一个字节都没有读取的时候就到达文件末尾，则返回 null。否则，通过左侧补零将读取的每个字节转换成 char 类型的值。
-     * 如果遇到字符 '\n'，则丢弃它并且停止读取。如果遇到字符 '\r' 则丢弃它，如果后续字节转变成字符 '\n'，则同样丢弃它并停止读取。
-     * 如果在遇到字符 '\n' 和 '\r' 之一前到达文件末尾，则停止读取。一旦已停止读取，则返回一个 String，它按顺序包含所有已读取且未丢弃的字符。
-     * 注意，此字符串中的每个字符的值都将小于 \u0100（即 (char)256）的值。 
-     * @return     输入流中文本的下一行，如果还没有读取一个字节就到达文件末尾，则返回 null。
-     * @exception  IOException  if an I/O error occurs.
-     * @see        java.io.BufferedReader#readLine()
-     * @see        java.io.FilterInputStream#in
-     */
-    @Deprecated
-    public final String readLine() throws IOException {
-        char buf[] = lineBuffer;
-
-        if (buf == null) {
-            buf = lineBuffer = new char[128];
-        }
-
-        int room = buf.length;
-        int offset = 0;
-        int c;
-
-loop:   while (true) {
-            switch (c = in.read()) {
-              case -1:
-              case '\n':
-                break loop;
-
-              case '\r':
-                int c2 = in.read();
-                if ((c2 != '\n') && (c2 != -1)) {
-                    if (!(in instanceof PushbackInputStream)) {
-                        this.in = new PushbackInputStream(in);
-                    }
-                    ((PushbackInputStream)in).unread(c2);
-                }
-                break loop;
-
-              default:
-                if (--room < 0) {
-                    buf = new char[offset + 128];
-                    room = buf.length - offset - 1;
-                    System.arraycopy(lineBuffer, 0, buf, 0, offset);
-                    lineBuffer = buf;
-                }
-                buf[offset++] = (char) c;
-                break;
-            }
-        }
-        if ((c == -1) && (offset == 0)) {
-            return null;
-        }
-        return String.copyValueOf(buf, 0, offset);
-    }
 
     /**
      * 读入一个已使用 UTF-8 修改版格式编码的字符串。readUTF 的常规协定是：
@@ -590,4 +533,50 @@ loop:   while (true) {
         // The number of chars produced may be less than utflen
         return new String(chararr, 0, chararr_count);
     }
+
+	@Override
+	public String readLine() throws IOException {
+		char buf[] = lineBuffer;
+
+        if (buf == null) {
+            buf = lineBuffer = new char[128];
+        }
+
+        int room = buf.length;
+        int offset = 0;
+        int c;
+
+loop:   while (true) {
+            switch (c = read()) {
+              case -1:
+              case '\n':
+                break loop;
+
+              case '\r':
+                int c2 = read();
+                if ((c2 != '\n') && (c2 != -1)) {
+                    (new PushbackInputStream(this)).unread(c2);
+                }
+                break loop;
+
+              default:
+                if (--room < 0) {
+                    buf = new char[offset + 128];
+                    room = buf.length - offset - 1;
+                    System.arraycopy(lineBuffer, 0, buf, 0, offset);
+                    lineBuffer = buf;
+                }
+                buf[offset++] = (char) c;
+                break;
+            }
+        }
+        if ((c == -1) && (offset == 0)) {
+            return null;
+        }
+        return String.copyValueOf(buf, 0, offset);
+	}
+	
+	public static void main(String[] args) throws IOException {
+		
+	}
 }

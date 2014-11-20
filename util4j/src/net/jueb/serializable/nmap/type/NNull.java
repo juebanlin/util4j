@@ -1,27 +1,37 @@
 package net.jueb.serializable.nmap.type;
 
 import net.jueb.serializable.nmap.falg.Flag;
+import net.jueb.tools.convert.typebytes.TypeBytesInputStream;
 
 public final class NNull extends NType<Object>{
 
 	public NNull() 
 	{
-		super(null,Flag.Head.NNull,Flag.End.NNull);
+		super(new Object(),Flag.Head.NNull,Flag.End.NNull);
 	}
 
 	@Override
 	public byte[] getBytes() {
-		return getFlagEnd();
+		return addByteArray(getFlagHead(),getFlagEnd());
 	}
 	
 	@Override
 	public byte[] getObjectBytes() {
-		return getFlagEnd();
+		return new byte[]{getFlagHead()};
 	}
 
 	@Override
 	public String getString() {
 		return "NULL";
+	}
+
+	@Override
+	protected NType<Object> decoder(TypeBytesInputStream ti) throws Exception {
+		if(checkHead(ti))
+		{//NULL的head就等于值
+			return new NNull();
+		}
+		return null;
 	}
 
 }
