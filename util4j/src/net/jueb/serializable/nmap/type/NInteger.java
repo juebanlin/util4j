@@ -1,6 +1,7 @@
 package net.jueb.serializable.nmap.type;
 
 import java.util.Arrays;
+
 import net.jueb.serializable.nmap.falg.Flag;
 import net.jueb.serializable.nmap.util.TypeBytesInputStream;
 
@@ -45,6 +46,10 @@ public class NInteger extends NType<Integer>{
 		}
 		return null;
 	}
-
+	
+	@Override
+	public Object getConvertValue() {
+		return obj.intValue();
+	}
 
 }

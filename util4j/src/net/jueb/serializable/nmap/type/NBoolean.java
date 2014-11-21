@@ -39,5 +39,9 @@ public final class NBoolean extends NType<Boolean>{
 		return null;
 	}
 
+	@Override
+	public Object getConvertValue() {
+		return obj.booleanValue();
+	}
 
 }

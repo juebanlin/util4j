@@ -2,10 +2,11 @@ package net.jueb.serializable.nmap.util;
 
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
+import java.util.TreeMap;
+
 import net.jueb.serializable.nmap.type.NMap;
 import net.jueb.serializable.nmap.type.NNull;
 import net.jueb.serializable.nmap.type.NType;
@@ -40,35 +41,24 @@ public class NMapConvert {
 		}
 	}
 	
-	public final LinkedHashMap<Object, Object> toMap(final NMap nmap)
-	{
-		final LinkedHashMap<Object, Object> map=new LinkedHashMap<Object, Object>();
-		Set<Entry<NType<?>, NType<?>>> set=nmap.entrySet();
-		for(Entry<NType<?>, NType<?>> kv:set)
-		{
-			map.put(toObject(kv.getKey()),toObject(kv.getValue()));
-		}
-		return map;
-	}
-	
 	/**
 	 * 将nmap对象转换为object到目标map
 	 * 目标map将被清空
 	 * @param nmap
 	 * @param map
 	 */
-	public final void toMap(final NMap nmap,final Map<Object,Object> map)
+	public final void toTreeMap(NMap nmap,TreeMap<Object,Object> map)
 	{
 		map.clear();
 		Set<Entry<NType<?>, NType<?>>> set=nmap.entrySet();
 		for(Entry<NType<?>, NType<?>> kv:set)
 		{
-			map.put(toObject(kv.getKey()),toObject(kv.getValue()));
+			map.put(toTreeMapObject(kv.getKey()),toTreeMapObject(kv.getValue()));
 		}
 	}
 	
 	
-	public final Object toObject(NType<?> ntype)
+	public final Object toTreeMapObject(NType<?> ntype)
 	{
 		if(ntype instanceof NNull)
 		{
@@ -76,7 +66,9 @@ public class NMapConvert {
 		}
 		else if(ntype instanceof NMap)
 		{
-			return toMap((NMap) ntype);
+			TreeMap<Object,Object> tmap=new TreeMap<Object, Object>();
+			toTreeMap((NMap) ntype,tmap);
+			return (Object)tmap;
 		}
 		return ntype.getConvertValue();
 	}
@@ -87,7 +79,7 @@ public class NMapConvert {
 	 * @throws Exception
 	 */
 	@Deprecated
-	public  final NMap toNMap(final Map<Object,Object> map) throws Exception
+	public  final NMap toNMap(Map<Object,Object> map) throws Exception
 	{
 		final NMap nmap=new NMap();
 		Set<Entry<Object, Object>> set=map.entrySet();

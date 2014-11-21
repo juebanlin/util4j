@@ -3,6 +3,7 @@ package net.jueb.serializable.nmap.type;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
+
 import net.jueb.serializable.nmap.util.TypeBytes;
 import net.jueb.serializable.nmap.util.TypeBytesInputStream;
 import net.jueb.serializable.nmap.util.TypeBytesOutputStream;
@@ -159,6 +160,7 @@ public abstract class NType<T> implements ValueConvert{
 	
 	/**
 	 * 如果子类解码出现错误，发生异常或者返回null则重置读取位置
+	 * 注意,该方法不影响当前map内数据
 	 * @param data 
 	 * @return null表示无法解码
 	 * @throws Exception 

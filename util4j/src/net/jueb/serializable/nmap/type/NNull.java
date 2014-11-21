@@ -33,5 +33,9 @@ public final class NNull extends NType<Object>{
 		}
 		return null;
 	}
+	@Override
+	public Object getConvertValue() {
+		return null;
+	}
 
 }

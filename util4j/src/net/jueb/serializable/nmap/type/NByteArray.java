@@ -73,5 +73,4 @@ public class NByteArray extends NType<byte[]>{
 		}
 		return null;
 	}
-
 }

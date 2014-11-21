@@ -2,11 +2,7 @@ package net.jueb.serializable.nmap.util;
 
 import java.io.EOFException;
 import java.util.Arrays;
-
-import net.jueb.tools.convert.HexStrBytes;
-
 import org.apache.commons.lang3.StringUtils;
-
 
 /**
  * 基础数据类型与字节数组互转
@@ -276,7 +272,6 @@ public final class TypeBytes {
 	
 	public static void main(String[] args) throws EOFException {
 		
-		HexStrBytes hb=new HexStrBytes();
 		TypeBytes tb=new TypeBytes(true);
 		System.out.println("***************char****************");
 		char c=222;
@@ -294,7 +289,6 @@ public final class TypeBytes {
 		int i=30821;
 		System.out.println("测试值:"+i);
 		System.out.println("值到数据:"+Arrays.toString(tb.getBytes(i)));
-		System.out.println("hex："+Arrays.toString(hb.toHexArray(tb.getBytes(i))));
 		System.out.println("数据还原为值:"+tb.readInt(tb.getBytes(i)));
 		
 		System.out.println("***************long****************");
