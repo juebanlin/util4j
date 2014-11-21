@@ -1,7 +1,7 @@
 package net.jueb.serializable.nmap.type;
 
 import net.jueb.serializable.nmap.falg.Flag;
-import net.jueb.tools.convert.typebytes.TypeBytesInputStream;
+import net.jueb.serializable.nmap.util.TypeBytesInputStream;
 
 /**
  * 用头表示

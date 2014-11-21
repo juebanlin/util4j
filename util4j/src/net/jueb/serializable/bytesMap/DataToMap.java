@@ -47,7 +47,7 @@ public class DataToMap extends DataToMapBase{
 	 * @param type
 	 * @throws IOException
 	 */
-	public void start(int type) throws IOException
+	private void start(int type) throws IOException
 	{
 		//根据类型读取内容
 		readObject(type,this.map);
@@ -59,7 +59,7 @@ public class DataToMap extends DataToMapBase{
 	 * @param p Oject标记的位置
 	 * @throws IOException 
 	 */
-	public void readObject(int objType,Map<Object, Object> map) throws IOException
+	private void readObject(int objType,Map<Object, Object> map) throws IOException
 	{
 		switch (objType) {
 		case _OBJ://凡事P=08的都会进来

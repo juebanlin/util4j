@@ -4,7 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.LinkedList;
 import net.jueb.serializable.nmap.falg.Flag;
-import net.jueb.tools.convert.typebytes.TypeBytesInputStream;
+import net.jueb.serializable.nmap.util.TypeBytesInputStream;
 
 public class NUTF16LEString extends NType<String>{
 

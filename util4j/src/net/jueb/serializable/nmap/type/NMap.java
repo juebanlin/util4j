@@ -13,7 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import net.jueb.serializable.nmap.falg.Flag;
-import net.jueb.tools.convert.typebytes.TypeBytesInputStream;
+import net.jueb.serializable.nmap.util.TypeBytesInputStream;
 
 /**
  * 内部封装一个hashmap
@@ -255,7 +255,6 @@ public class NMap extends NType<Map<NType<?>,NType<?>>> implements Map<NType<?>,
 		fos.flush();
 		fos.close();
 	}
-	
 	/**
 	 * 根据文件解码一个新nmap对象
 	 * @param file
@@ -286,5 +285,30 @@ public class NMap extends NType<Map<NType<?>,NType<?>>> implements Map<NType<?>,
 		}
 		return null;
 	}
+	
+	/**
+	 * 解码为普通对象map
+	 * @return
+	 */
+	public final Map<Object,Object> decoderToObjectMap()
+	{
+		return null;
+	}
+	
+	/**
+	 * 判断类型并包装编码
+	 * @param map
+	 * @return
+	 */
+	public final byte[] getBytes(Map<Object,Object> map)
+	{
+		Set<Entry<Object, Object>> set=map.entrySet();
+		for(Entry<Object, Object> kv:set)
+		{
+			kv.getKey();
+		}
+		return null;
+	}
+	
 	
 }

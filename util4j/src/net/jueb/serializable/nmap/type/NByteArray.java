@@ -2,7 +2,7 @@ package net.jueb.serializable.nmap.type;
 
 import java.util.Arrays;
 import net.jueb.serializable.nmap.falg.Flag;
-import net.jueb.tools.convert.typebytes.TypeBytesInputStream;
+import net.jueb.serializable.nmap.util.TypeBytesInputStream;
 
 /**
  * 字节数组以头+长度+数据+尾巴

@@ -3,7 +3,7 @@ package net.jueb.serializable.nmap.type;
 import java.io.ByteArrayOutputStream;
 import java.util.LinkedList;
 import net.jueb.serializable.nmap.falg.Flag;
-import net.jueb.tools.convert.typebytes.TypeBytesInputStream;
+import net.jueb.serializable.nmap.util.TypeBytesInputStream;
 
 public class NString extends NType<String>{
 

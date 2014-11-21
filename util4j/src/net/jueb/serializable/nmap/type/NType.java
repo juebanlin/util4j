@@ -3,12 +3,9 @@ package net.jueb.serializable.nmap.type;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
-
-import net.jueb.tools.convert.HexStrBytes;
-import net.jueb.tools.convert.typebytes.TypeBytes;
-import net.jueb.tools.convert.typebytes.TypeBytesInputStream;
-import net.jueb.tools.convert.typebytes.TypeBytesOutputStream;
-
+import net.jueb.serializable.nmap.util.TypeBytes;
+import net.jueb.serializable.nmap.util.TypeBytesInputStream;
+import net.jueb.serializable.nmap.util.TypeBytesOutputStream;
 
 /**
  * 一个任意类型
@@ -26,7 +23,6 @@ public abstract class NType<T>{
 		}
 	}
 	
-	public final HexStrBytes hsb=new HexStrBytes();
 	/**
 	 * 小端模式转换器
 	 */
