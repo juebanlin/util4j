@@ -40,9 +40,9 @@ public class NMapConvert {
 		}
 	}
 	
-	public final Map<Object,Object> toMap(final NMap nmap)
+	public final LinkedHashMap<Object, Object> toMap(final NMap nmap)
 	{
-		final Map<Object,Object> map=new LinkedHashMap<Object, Object>();
+		final LinkedHashMap<Object, Object> map=new LinkedHashMap<Object, Object>();
 		Set<Entry<NType<?>, NType<?>>> set=nmap.entrySet();
 		for(Entry<NType<?>, NType<?>> kv:set)
 		{
@@ -50,6 +50,23 @@ public class NMapConvert {
 		}
 		return map;
 	}
+	
+	/**
+	 * 将nmap对象转换为object到目标map
+	 * 目标map将被清空
+	 * @param nmap
+	 * @param map
+	 */
+	public final void toMap(final NMap nmap,final Map<Object,Object> map)
+	{
+		map.clear();
+		Set<Entry<NType<?>, NType<?>>> set=nmap.entrySet();
+		for(Entry<NType<?>, NType<?>> kv:set)
+		{
+			map.put(toObject(kv.getKey()),toObject(kv.getValue()));
+		}
+	}
+	
 	
 	public final Object toObject(NType<?> ntype)
 	{

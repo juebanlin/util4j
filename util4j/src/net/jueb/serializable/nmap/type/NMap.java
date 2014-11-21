@@ -12,6 +12,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+
 import net.jueb.serializable.nmap.falg.Flag;
 import net.jueb.serializable.nmap.util.NMapConvert;
 import net.jueb.serializable.nmap.util.TypeBytesInputStream;
@@ -301,8 +302,15 @@ public class NMap extends NType<Map<NType<?>,NType<?>>> implements Map<NType<?>,
 	 * 但是无法从map转换到nmap,比如string这种同类型多形式的
 	 * @return
 	 */
-	public final Map<Object,Object> toMap()
+	public final LinkedHashMap<Object, Object> toMap()
 	{
 		return mapConvert.toMap(this);
 	}
+	
+	public final void toMap(final Map<Object,Object> map)
+	{
+		mapConvert.toMap(this, map);
+	}
+	
+	
 }
