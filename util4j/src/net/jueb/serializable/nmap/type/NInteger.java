@@ -5,7 +5,7 @@ import net.jueb.serializable.nmap.falg.Flag;
 import net.jueb.serializable.nmap.util.TypeBytesInputStream;
 
 public class NInteger extends NType<Integer>{
-	public NInteger(int i) {
+	public NInteger(Integer i) {
 		super(i, Flag.Head.NInteger, Flag.End.NInteger);
 	}
 

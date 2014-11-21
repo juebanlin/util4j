@@ -13,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import net.jueb.serializable.nmap.falg.Flag;
+import net.jueb.serializable.nmap.util.NMapConvert;
 import net.jueb.serializable.nmap.util.TypeBytesInputStream;
 
 /**
@@ -164,37 +165,44 @@ public class NMap extends NType<Map<NType<?>,NType<?>>> implements Map<NType<?>,
 	/**
 	 * 注册的NTYpe类型
 	 */
-	private final HashMap<Byte, NType<?>> registHeads=new HashMap<Byte, NType<?>>();
-		
+	private final static HashMap<Byte, NType<?>> registHeads=new HashMap<Byte, NType<?>>();
+	
 	{	registNType(this);//默认注册自身类型
 		registNType(new NNull());
 		registNType(new NBoolean(true));
 		registNType(new NBoolean(false));
-		registNType(new NInteger(0));
-		registNType(new NUTF8String(""));
-		registNType(new NUTF16LEString(""));
-		registNType(new NByteArray(new byte[]{}));
+		registNType(new NInteger(1111));
+		registNType(new NUTF8String("UTF8"));
+		registNType(new NUTF16LEString("UTF16L4"));
+		registNType(new NByteArray(new byte[]{1,0,1,0}));
+		//TODO
 	}
+	
+	public final HashMap<Byte, NType<?>> getRegisgHeads()
+	{
+		return registHeads;
+	}
+	
 	/**
 	 * 注册NType类型 决定了该map能解码出哪些对象类型
 	 * @param ntype
 	 */
-	public final void registNType(NType<?> ntype)
+	public final static void registNType(NType<?> ntype)
 	{
 		if(ntype!=null)
 		{
-			this.registHeads.put(ntype.getFlagHead(), ntype);
+			registHeads.put(ntype.getFlagHead(), ntype);
 		}
 	}
 	
 	private NType<?> readNTypeByHeadsMap(TypeBytesInputStream ti,byte head) throws Exception
 	{
-		if(!this.registHeads.containsKey(head))
+		if(!registHeads.containsKey(head))
 		{
 			String index=Integer.toHexString(ti.getReadIndex());
 			throw new RuntimeException("Known Head by readIndex:"+index);
 		}
-		return this.registHeads.get(head).decoderByStream(ti);
+		return registHeads.get(head).decoderByStream(ti);
 	}
 	/**
 	 * 根据头得到类型
@@ -286,29 +294,15 @@ public class NMap extends NType<Map<NType<?>,NType<?>>> implements Map<NType<?>,
 		return null;
 	}
 	
-	/**
-	 * 解码为普通对象map
-	 * @return
-	 */
-	public final Map<Object,Object> decoderToObjectMap()
-	{
-		return null;
-	}
+	public final NMapConvert mapConvert=new NMapConvert(this);
 	
 	/**
-	 * 判断类型并包装编码
-	 * @param map
+	 * 解码当前NMap为普通对象map
+	 * 但是无法从map转换到nmap,比如string这种同类型多形式的
 	 * @return
 	 */
-	public final byte[] getBytes(Map<Object,Object> map)
+	public final Map<Object,Object> toMap()
 	{
-		Set<Entry<Object, Object>> set=map.entrySet();
-		for(Entry<Object, Object> kv:set)
-		{
-			kv.getKey();
-		}
-		return null;
+		return mapConvert.toMap(this);
 	}
-	
-	
 }

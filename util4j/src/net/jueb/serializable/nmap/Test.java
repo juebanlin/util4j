@@ -3,6 +3,7 @@ package net.jueb.serializable.nmap;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Map;
 
 import net.jueb.serializable.nmap.type.NBoolean;
 import net.jueb.serializable.nmap.type.NInteger;
@@ -26,10 +27,22 @@ public class Test {
 		nmap.saveTo(new File("d:/map2.data"));
 		x=System.currentTimeMillis()-i;
 		System.out.println("编码耗时:"+x);
-		
 		nmap=nmap.load(new File("d:/map2.data"));
-//		System.out.println(nmap);
+		System.out.println(nmap);
 		System.out.println("解码耗时:"+x);
+		
+		i=System.currentTimeMillis();
+		Map<Object, Object> map=nmap.toMap();
+		System.out.println(map.toString());
+		x=System.currentTimeMillis()-i;
+		System.out.println("nmap转换为map耗时:"+x);
+		
+		i=System.currentTimeMillis();
+		nmap=nmap.mapConvert.toNMap(map);
+		System.out.println(nmap.toString());
+		x=System.currentTimeMillis()-i;
+		System.out.println("map转换为nmap耗时:"+x);
+		
 	}
 	public static NMap  build()
 	{
@@ -56,7 +69,6 @@ public class Test {
 		try {
 			nmap2.saveTo(new File("d:/2.data"));
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return nmap2;

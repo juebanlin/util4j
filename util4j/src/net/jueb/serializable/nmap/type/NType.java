@@ -11,7 +11,7 @@ import net.jueb.serializable.nmap.util.TypeBytesOutputStream;
  * 一个任意类型
  * @author Administrator
  */
-public abstract class NType<T>{
+public abstract class NType<T> implements ValueConvert{
 
 	public static boolean showLog=false;
 	
@@ -129,10 +129,21 @@ public abstract class NType<T>{
 		return flagEnd;
 	}
 
-	public final T getObj()
+	public final T getObjectValue()
 	{
 		return obj;
 	}
+	
+	/**
+	 * 获取Ntype的转换类型-即存储在Map<Object,Object>中的类型
+	 * 默认是getObjectValue()即obj本身
+	 * @return
+	 */
+	public Object getConvertValue()
+	{
+		return getObjectValue();
+	}
+	
 	@Override
 	public final String toString() {
 		return getString();
@@ -256,8 +267,9 @@ public abstract class NType<T>{
 		if(obj instanceof NType<?>)
 		{
 			NType<?> n=(NType<?>)obj;
-			return n.getObj().equals(this.obj);
+			return n.getObjectValue().equals(this.obj);
 		}
 		return super.equals(obj);
 	}
+	
 }

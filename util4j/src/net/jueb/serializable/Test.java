@@ -11,7 +11,7 @@ import net.jueb.tools.io.FileStreamBytes;
 public class Test {
 
 	public static void main(String[] args) throws IOException {
-//		Test.test2();
+		Test.test1();
 	}
 	
 	public static void test1()throws IOException
