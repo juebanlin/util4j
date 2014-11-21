@@ -7,7 +7,7 @@ public final class NNull extends NType<Object>{
 
 	public NNull() 
 	{
-		super(new Object(),Flag.Head.NNull,Flag.End.NNull);
+		super(0xFF,Flag.Head.NNull,Flag.End.NNull);
 	}
 
 	@Override

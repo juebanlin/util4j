@@ -12,14 +12,15 @@ import net.jueb.serializable.nmap.type.NUTF8String;
 public class Test {
 
 	public static void main(String[] args) throws Exception {
+		
+		
 		Test t=new Test();
 		File f=new File("d:/map.data");
 		long i=System.currentTimeMillis();
 		NMap nmap=new NMap().load(f);
 		long x=System.currentTimeMillis()-i;
-		System.out.println(nmap);
+//		System.out.println(nmap);
 		System.out.println("解码耗时:"+x);
-//		t.showMap(nmap);
 		
 		i=System.currentTimeMillis();
 		nmap.saveTo(new File("d:/map2.data"));
@@ -27,9 +28,8 @@ public class Test {
 		System.out.println("编码耗时:"+x);
 		
 		nmap=nmap.load(new File("d:/map2.data"));
-		t.showMap(nmap);
+//		System.out.println(nmap);
 		System.out.println("解码耗时:"+x);
-		t.showMap(nmap);
 	}
 	public static NMap  build()
 	{

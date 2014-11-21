@@ -3,6 +3,7 @@ package net.jueb.serializable.nmap.type;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
+
 import net.jueb.tools.convert.HexStrBytes;
 import net.jueb.tools.convert.typebytes.TypeBytes;
 import net.jueb.tools.convert.typebytes.TypeBytesInputStream;
@@ -13,9 +14,9 @@ import net.jueb.tools.convert.typebytes.TypeBytesOutputStream;
  * 一个任意类型
  * @author Administrator
  */
-public abstract class NType<T> implements Comparable<T>{
+public abstract class NType<T>{
 
-	public static boolean showLog;
+	public static boolean showLog=false;
 	
 	public static void log(String log)
 	{
@@ -52,7 +53,7 @@ public abstract class NType<T> implements Comparable<T>{
 		super();
 		if(obj==null)
 		{
-			throw new RuntimeException("对象不能为空");
+			throw new RuntimeException("描述对象不能为空");
 		}
 		this.obj=obj;
 		this.flagHead = flagHead;
@@ -246,7 +247,21 @@ public abstract class NType<T> implements Comparable<T>{
 	}
 	
 	@Override
-	public final int compareTo(T o) {
-		return o.hashCode();
+	public final int hashCode() {
+		return obj.hashCode();
+	}
+	
+	@Override
+	public final boolean equals(Object obj) {
+		if(this==obj)
+		{
+			return true;
+		}
+		if(obj instanceof NType<?>)
+		{
+			NType<?> n=(NType<?>)obj;
+			return n.getObj().equals(this.obj);
+		}
+		return super.equals(obj);
 	}
 }
