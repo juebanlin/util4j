@@ -1,4 +1,4 @@
-package test;
+package net.jueb.classLoader.loader;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -13,13 +13,12 @@ import java.util.HashSet;
  *1.className和对应编译的.class文件的类名称必须一致，不然会出现：java.lang.NoClassDefFoundError: test/H1 (wrong name: test/H2)
  *只有被定义过的类才能被加载
  */
-public class HotSwapClassLoder extends ClassLoader {
+public class MyClassLoder extends ClassLoader {
 	
 	private HashSet<String> loadedClass=new HashSet<String>(); // 需要由该类加载器直接加载的类名
 	
-    public HotSwapClassLoder(String basedir,String[] classNames) throws IOException {
+    public MyClassLoder() throws IOException {
 		super(null);
-		defineClassByDir(basedir,classNames);
 	}
 	
 	/**
@@ -59,7 +58,7 @@ public class HotSwapClassLoder extends ClassLoader {
 	 * @return
 	 * @throws IOException
 	 */
-	private Class<?> defineClassByFile(String className,File classFile) throws IOException
+	public Class<?> defineClassByFile(String className,File classFile) throws IOException
 	{ 
 		FileInputStream fis=new FileInputStream(classFile);
 		long len=classFile.length();
@@ -69,9 +68,6 @@ public class HotSwapClassLoder extends ClassLoader {
         return defineClassByBytes(className, raw); 
     }
 	
-	
-	
-	
 	/**
 	 * 根据字节数组定义一个class对象,成功则记录
 	 * @param className
@@ -80,14 +76,12 @@ public class HotSwapClassLoder extends ClassLoader {
 	 */
 	private Class<?> defineClassByBytes(String className,byte[] raw)
 	{
-		System.out.println("InputStream:"+getResource(className));
-		
 		Class<?> cls = null; 
 		cls=defineClass(className,raw,0,raw.length);
 		if(cls!=null)
 		{
 			loadedClass.add(className);
-			System.out.println("Class:"+className+"被定义!");
+			System.out.println("类:"+className+"被定义!");
 		}
 		return cls;
 	}

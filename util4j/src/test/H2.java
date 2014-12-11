@@ -1,19 +1,15 @@
 package test;
 
-public class H1 extends HotSwap{
+public class H2 extends HotSwap{
 	
-	H2 h2=new H2();
-	
-	@Override
+@Override
 	public void show() {
 		super.show();
-		h2.show();
-		System.out.println(h2.getClass().getClassLoader().toString());
 	}
 
 	protected String getTestStr()
 	{
-		return "testStr";
+		return "H2:testStr";
 	}
 	
 	@Override

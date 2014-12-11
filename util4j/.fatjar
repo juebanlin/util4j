@@ -1,14 +1,14 @@
 #Fat Jar Configuration File
-#Sat Aug 30 13:38:29 CST 2014
+#Thu Dec 11 14:07:52 CST 2014
 onejar.license.required=false
 manifest.classpath=
 manifest.removesigners=true
 onejar.checkbox=false
-jarname=C\:\\Users\\Administrator\\Desktop\\util4j.jar
+jarname=D\:\\util4j.jar
 manifest.mergeall=true
 manifest.mainclass=
-manifest.file=<createnew>
+manifest.file=src\\META-INF\\MAINIFEST.MF
 jarname.isextern=true
 onejar.expand=
-excludes=<jar|log4j-1.2.8.jar>
+excludes=<po|util4j>~net/~jueb/~bandConversion/;<po|util4j>~net/~jueb/~serializable/;<po|util4j>~net/~jueb/~tools/;<po|util4j>~test/;<po|util4j>~log4j.properties;<jar|commons-lang3-3.1.jar>;<jar|log4j-1.2.8.jar>;<jar|tools.jar>
 includes=

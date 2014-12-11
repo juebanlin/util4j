@@ -17,6 +17,6 @@ public abstract class HotSwap {
 	
 	public void show()
 	{
-		System.out.println("类名H1"+",类版本:"+getVersion()+",date:"+new Date());
+		System.out.println("类名："+getClass()+",类版本:"+getVersion()+",date:"+new Date());
 	}
 }
