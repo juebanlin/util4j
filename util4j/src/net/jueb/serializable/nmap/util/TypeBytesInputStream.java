@@ -94,7 +94,8 @@ public final class TypeBytesInputStream extends ByteArrayInputStream implements 
      * @exception  该流已关闭并且包含的输入流在关闭后不支持读取操作，或者发生其他 I/O 错误。
      * @see        java.io.FilterInputStream#in
      */
-    public final void readFully(byte b[]) throws IOException {
+    @Override
+	public final void readFully(byte b[]) throws IOException {
         readFully(b, 0, b.length);
     }
 
@@ -118,7 +119,8 @@ public final class TypeBytesInputStream extends ByteArrayInputStream implements 
      *             another I/O error occurs.
      * @see        java.io.FilterInputStream#in
      */
-    public final void readFully(byte b[], int off, int len) throws IOException {
+    @Override
+	public final void readFully(byte b[], int off, int len) throws IOException {
         if (len < 0)
             throw new IndexOutOfBoundsException();
         int n = 0;
@@ -142,7 +144,8 @@ public final class TypeBytesInputStream extends ByteArrayInputStream implements 
      *             the contained input stream does not support
      *             reading after close, or another I/O error occurs.
      */
-    public final int skipBytes(int n) throws IOException {
+    @Override
+	public final int skipBytes(int n) throws IOException {
         int total = 0;
         int cur = 0;
 
@@ -163,7 +166,8 @@ public final class TypeBytesInputStream extends ByteArrayInputStream implements 
      *             another I/O error occurs.
      * @see        java.io.FilterInputStream#in
      */
-    public final boolean readBoolean() throws IOException {
+    @Override
+	public final boolean readBoolean() throws IOException {
         int ch = read();
         if (ch < 0)
             throw new EOFException();
@@ -181,7 +185,8 @@ public final class TypeBytesInputStream extends ByteArrayInputStream implements 
      *             another I/O error occurs.
      * @see        java.io.FilterInputStream#in
      */
-    public final byte readByte() throws IOException {
+    @Override
+	public final byte readByte() throws IOException {
         int ch = read();
         if (ch < 0)
             throw new EOFException();
@@ -212,7 +217,8 @@ public final class TypeBytesInputStream extends ByteArrayInputStream implements 
      *             another I/O error occurs.
      * @see         java.io.FilterInputStream#in
      */
-    public final int readUnsignedByte() throws IOException {
+    @Override
+	public final int readUnsignedByte() throws IOException {
         int ch = read();
         if (ch < 0)
             throw new EOFException();
@@ -231,7 +237,8 @@ public final class TypeBytesInputStream extends ByteArrayInputStream implements 
      *             another I/O error occurs.
      * @see        java.io.FilterInputStream#in
      */
-    public final short readShort() throws IOException {
+    @Override
+	public final short readShort() throws IOException {
         int ch1 = read();
         int ch2 = read();
         if ((ch1 | ch2) < 0)
@@ -259,7 +266,8 @@ public final class TypeBytesInputStream extends ByteArrayInputStream implements 
      *             another I/O error occurs.
      * @see        java.io.FilterInputStream#in
      */
-    public final int readUnsignedShort() throws IOException {
+    @Override
+	public final int readUnsignedShort() throws IOException {
         int ch1 = read();
         int ch2 = read();
         if ((ch1 | ch2) < 0)
@@ -285,7 +293,8 @@ public final class TypeBytesInputStream extends ByteArrayInputStream implements 
      *             another I/O error occurs.
      * @see        java.io.FilterInputStream#in
      */
-    public final char readChar() throws IOException {
+    @Override
+	public final char readChar() throws IOException {
         int ch1 = read();
         int ch2 = read();
         if ((ch1 | ch2) < 0)
@@ -309,7 +318,8 @@ public final class TypeBytesInputStream extends ByteArrayInputStream implements 
      *             another I/O error occurs.
      * @see        java.io.FilterInputStream#in
      */
-    public final int readInt() throws IOException {
+    @Override
+	public final int readInt() throws IOException {
         int ch1 = read();
         int ch2 = read();
         int ch3 = read();
@@ -338,7 +348,8 @@ public final class TypeBytesInputStream extends ByteArrayInputStream implements 
      *             another I/O error occurs.
      * @see        java.io.FilterInputStream#in
      */
-    public final long readLong() throws IOException {
+    @Override
+	public final long readLong() throws IOException {
         readFully(readBuffer, 0, 8);
         if(isLittleEndian)
         {//小端模式，先取到低位
@@ -377,7 +388,8 @@ public final class TypeBytesInputStream extends ByteArrayInputStream implements 
      * @see        java.io.DataInputStream#readInt()
      * @see        java.lang.Float#intBitsToFloat(int)
      */
-    public final float readFloat() throws IOException {
+    @Override
+	public final float readFloat() throws IOException {
         return Float.intBitsToFloat(readInt());
     }
 
@@ -395,7 +407,8 @@ public final class TypeBytesInputStream extends ByteArrayInputStream implements 
      * @see        java.io.DataInputStream#readLong()
      * @see        java.lang.Double#longBitsToDouble(long)
      */
-    public final double readDouble() throws IOException {
+    @Override
+	public final double readDouble() throws IOException {
         return Double.longBitsToDouble(readLong());
     }
 
@@ -433,7 +446,8 @@ public final class TypeBytesInputStream extends ByteArrayInputStream implements 
      *             modified UTF-8 encoding of a string.
      * @see        java.io.DataInputStream#readUTF(java.io.DataInput)
      */
-    public final String readUTF() throws IOException {
+    @Override
+	public final String readUTF() throws IOException {
         return readUTF(this);
     }
 
@@ -482,14 +496,14 @@ public final class TypeBytesInputStream extends ByteArrayInputStream implements 
         in.readFully(bytearr, 0, utflen);
 
         while (count < utflen) {
-            c = (int) bytearr[count] & 0xff;
+            c = bytearr[count] & 0xff;
             if (c > 127) break;
             count++;
             chararr[chararr_count++]=(char)c;
         }
 
         while (count < utflen) {
-            c = (int) bytearr[count] & 0xff;
+            c = bytearr[count] & 0xff;
             switch (c >> 4) {
                 case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
                     /* 0xxxxxxx*/
@@ -502,7 +516,7 @@ public final class TypeBytesInputStream extends ByteArrayInputStream implements 
                     if (count > utflen)
                         throw new UTFDataFormatException(
                             "malformed input: partial character at end");
-                    char2 = (int) bytearr[count-1];
+                    char2 = bytearr[count-1];
                     if ((char2 & 0xC0) != 0x80)
                         throw new UTFDataFormatException(
                             "malformed input around byte " + count);
@@ -515,8 +529,8 @@ public final class TypeBytesInputStream extends ByteArrayInputStream implements 
                     if (count > utflen)
                         throw new UTFDataFormatException(
                             "malformed input: partial character at end");
-                    char2 = (int) bytearr[count-2];
-                    char3 = (int) bytearr[count-1];
+                    char2 = bytearr[count-2];
+                    char3 = bytearr[count-1];
                     if (((char2 & 0xC0) != 0x80) || ((char3 & 0xC0) != 0x80))
                         throw new UTFDataFormatException(
                             "malformed input around byte " + (count-1));

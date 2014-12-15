@@ -92,6 +92,7 @@ public class MyClassLoder extends ClassLoader {
 	 * 父类的loadClass(String name)方法要调用该方法
 	 * className-(二进制名称)有效类名称的示例包括： "java.lang.String"
 	 */
+	@Override
 	protected Class<?> loadClass(String className, boolean resolve) throws ClassNotFoundException { 
         Class<?> cls = null; 
         cls = findLoadedClass(className);//如果是由本加载器defineClass过的class,则能找到

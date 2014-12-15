@@ -140,6 +140,7 @@ public abstract class NType<T> implements ValueConvert{
 	 * 默认是getObjectValue()即obj本身
 	 * @return
 	 */
+	@Override
 	public Object getConvertValue()
 	{
 		return getObjectValue();

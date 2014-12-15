@@ -38,14 +38,16 @@ public final class TypeBytesOutputStream extends ByteArrayOutputStream implement
      *值 true 以值 (byte)1 的形式被写出；值 false 以值 (byte)0 的形式被写出。
      *如果没有抛出异常，则计数器 written 增加 1。 
      */
-    public final void writeBoolean(boolean v) throws IOException {
+    @Override
+	public final void writeBoolean(boolean v) throws IOException {
         write(v ? 1 : 0);
     }
 
     /**
      * 将一个 byte 值以 1-byte 值形式写出到基础输出流中。如果没有抛出异常，则计数器 written 增加 1。
      */
-    public final void writeByte(int v) throws IOException {
+    @Override
+	public final void writeByte(int v) throws IOException {
         write(v);
     }
 
@@ -53,7 +55,8 @@ public final class TypeBytesOutputStream extends ByteArrayOutputStream implement
      * 将一个 short 值以 2-byte 值形式写入基础输出流中。
      * 如果没有抛出异常，则计数器 written 增加 2。
      */
-    public final void writeShort(int v) throws IOException {
+    @Override
+	public final void writeShort(int v) throws IOException {
        if(isLittleEndian)
        {
     	   write((v >>> 0) & 0xFF);
@@ -69,7 +72,8 @@ public final class TypeBytesOutputStream extends ByteArrayOutputStream implement
      * 将一个 char 值以 2-byte 值形式写入基础输出流中。
      * 如果没有抛出异常，则计数器 written 增加 2。 
      */
-    public final void writeChar(int v) throws IOException {
+    @Override
+	public final void writeChar(int v) throws IOException {
     	if(isLittleEndian)
         {
     	   write((v >>> 0) & 0xFF);
@@ -84,7 +88,8 @@ public final class TypeBytesOutputStream extends ByteArrayOutputStream implement
     /**
     * 将一个 int 值以 4-byte 值形式写入基础输出流中。如果没有抛出异常，则计数器 written 增加 4。 
     */
-    public final void writeInt(int v) throws IOException {
+    @Override
+	public final void writeInt(int v) throws IOException {
     	if(isLittleEndian)
         {
     	   write((v >>> 0) & 0xFF);
@@ -103,7 +108,8 @@ public final class TypeBytesOutputStream extends ByteArrayOutputStream implement
     /**
      * 将一个 long 值以 8-byte 值形式写入基础输出流中。如果没有抛出异常，则计数器 written 增加 8。 
      */
-    public final void writeLong(long v) throws IOException {
+    @Override
+	public final void writeLong(long v) throws IOException {
     	byte writeBuffer[] = new byte[8];
     	if(isLittleEndian)
         {
@@ -134,7 +140,8 @@ public final class TypeBytesOutputStream extends ByteArrayOutputStream implement
      * 然后将该 int 值以 4-byte 值形式写入基础输出流中。
      * 如果没有抛出异常，则计数器 written 增加 4。 
      */
-    public final void writeFloat(float v) throws IOException {
+    @Override
+	public final void writeFloat(float v) throws IOException {
         writeInt(Float.floatToIntBits(v));
     }
 
@@ -143,14 +150,16 @@ public final class TypeBytesOutputStream extends ByteArrayOutputStream implement
      * 然后将该 long 值以 8-byte 值形式写入基础输出流中，
      * 如果没有抛出异常，则计数器 written 增加 8。
      */
-    public final void writeDouble(double v) throws IOException {
+    @Override
+	public final void writeDouble(double v) throws IOException {
         writeLong(Double.doubleToLongBits(v));
     }
 
     /**
      * 将字符串按字节顺序写出到基础输出流中。
      */
-    public final void writeBytes(String s) throws IOException {
+    @Override
+	public final void writeBytes(String s) throws IOException {
         int len = s.length();
         for (int i = 0 ; i < len ; i++) {
            write((byte)s.charAt(i));
@@ -160,7 +169,8 @@ public final class TypeBytesOutputStream extends ByteArrayOutputStream implement
     /**
      * 将字符串按字符顺序写入基础输出流。
      */
-    public final void writeChars(String s) throws IOException {
+    @Override
+	public final void writeChars(String s) throws IOException {
         int len = s.length();
         for (int i = 0 ; i < len ; i++) {
             int v = s.charAt(i);
@@ -177,7 +187,8 @@ public final class TypeBytesOutputStream extends ByteArrayOutputStream implement
 	 * 如果没有抛出异常，则计数器 written 增加写入输出流的字节总数。
 	 * 该值至少是 2 加 str 的长度，最多是 2 加 str 的三倍长度。 
      */
-    public final void writeUTF(String str) throws IOException {
+    @Override
+	public final void writeUTF(String str) throws IOException {
         writeUTF(str, this);
     }
 

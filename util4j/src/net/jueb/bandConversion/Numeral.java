@@ -42,6 +42,7 @@ public class Numeral {
 		return this.viewStr;
 	}
 	
+	@Override
 	public String toString() {
 		return "Radix [data=" + Arrays.toString(data) + ", viewStr=" + viewStr
 				+ "]";

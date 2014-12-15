@@ -68,7 +68,7 @@ public class NMapConvert {
 		{
 			TreeMap<Object,Object> tmap=new TreeMap<Object, Object>();
 			toTreeMap((NMap) ntype,tmap);
-			return (Object)tmap;
+			return tmap;
 		}
 		return ntype.getConvertValue();
 	}

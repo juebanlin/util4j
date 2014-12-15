@@ -69,6 +69,7 @@ public class ClassUtil {
 			{
 				File path = stack.pop();
 				File[] classFiles = path.listFiles(new FileFilter() {
+					@Override
 					public boolean accept(File pathname) {
 						return pathname.isDirectory() || pathname.getName().endsWith(".class");
 					}
@@ -124,6 +125,7 @@ public class ClassUtil {
 			{
 				File path = stack.pop();
 				File[] jarFiles = path.listFiles(new FileFilter() {
+				@Override
 				public boolean accept(File pathname) 
 					{// 获取所有的.jar
 						return pathname.isDirectory() || pathname.getName().endsWith(".jar");

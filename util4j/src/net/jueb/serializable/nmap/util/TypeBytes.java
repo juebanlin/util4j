@@ -71,7 +71,7 @@ public final class TypeBytes {
 	}
 	public byte[] getBytes(byte i)
 	{
-		return new byte[]{(byte)i};
+		return new byte[]{i};
 	}
 	
 	public byte[] getBytes(boolean i)
