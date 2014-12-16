@@ -3,6 +3,7 @@ package net.jueb.classLoader.util;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.net.URL;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -43,6 +44,26 @@ public class ClassUtil {
 	public static final File getProjectBin2()
 	{
 		return new File(ClassLoader.getSystemResource(".").getFile());
+	}
+	
+	/**
+	 * 获取第三方class类所在目录地址
+	 * @param clazz
+	 * @return
+	 */
+	public static final URL getClassDir(Class<?> clazz)
+	{
+		return clazz.getResource("");
+	}
+	
+	/**
+	 * 获取第三方class类的文件形式
+	 * @param clazz
+	 * @return
+	 */
+	public static final File getClassFile(Class<?> clazz)
+	{
+		return new File(getClassDir(clazz).getFile()+clazz.getSimpleName()+".class");
 	}
 	
 	/**
