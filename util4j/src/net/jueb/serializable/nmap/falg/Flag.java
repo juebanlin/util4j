@@ -43,5 +43,4 @@ public interface Flag
 		public static byte[] NByteArray={};
 		public static byte[] NNull={};
 	}
-	
 }
