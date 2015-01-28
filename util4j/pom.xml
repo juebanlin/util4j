@@ -32,4 +32,21 @@
 		<version>1.2.17</version>
 	</dependency>
   </dependencies>
+  <build>
+  	<plugins>
+  		<plugin>
+  			<groupId>org.apache.maven.plugins</groupId>
+  			<artifactId>maven-compiler-plugin</artifactId>
+	  		<configuration>  
+	          <source>1.7</source>  
+	          <target>1.7</target>  
+	          <encoding>${project.build.sourceEncoding}</encoding>  
+	          <compilerArguments>  
+	              <verbose />  
+	              <bootclasspath>${java.home}/lib/rt.jar;${java.home}/lib/jce.jar</bootclasspath>  
+	          </compilerArguments>
+	        </configuration>  
+  		</plugin>
+  	</plugins>
+  </build>
 </project>
