@@ -52,5 +52,20 @@
 	        </configuration>  
   		</plugin>
   	</plugins>
+  	<resources>
+      <resource>
+        <directory>src/main/java</directory>
+        <includes>
+          <include>**/*.properties</include>
+        </includes>
+        <!-- 排除  -->
+        <excludes>
+        	<exclude>log4j.properties</exclude>
+        </excludes>
+      </resource>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+    </resources>
   </build>
 </project>
