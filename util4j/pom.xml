@@ -39,6 +39,20 @@
       <scope>system</scope>
       <systemPath>${env.JAVA_HOME}/lib/tools.jar</systemPath>
   	</dependency>
+	<dependency>
+  	  <groupId>com.sun</groupId>
+      <artifactId>rt</artifactId>
+      <version>1.7.0</version>
+      <scope>system</scope>
+      <systemPath>${java.home}/lib/rt.jar</systemPath>
+  	</dependency>
+	<dependency>
+  	  <groupId>com.sun</groupId>
+      <artifactId>jce</artifactId>
+      <version>1.7.0</version>
+      <scope>system</scope>
+      <systemPath>${java.home}/lib/jce.jar</systemPath>
+  	</dependency>
   </dependencies>
   <build>
   	<plugins>
