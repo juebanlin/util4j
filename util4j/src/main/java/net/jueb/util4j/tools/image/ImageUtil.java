@@ -6,7 +6,9 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;    
 import java.io.File;    
 import java.io.FileOutputStream;    
+
 import javax.imageio.ImageIO;    
+
 import com.sun.image.codec.jpeg.JPEGCodec;
 import com.sun.image.codec.jpeg.JPEGImageEncoder;
 /**
