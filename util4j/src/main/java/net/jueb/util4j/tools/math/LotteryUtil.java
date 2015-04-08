@@ -1,10 +1,8 @@
 package net.jueb.util4j.tools.math;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 /**
  * 概率随机工具
@@ -37,8 +35,8 @@ public class LotteryUtil {
 	
 	/**
 	 * 随机物品
-	 * @param lotterItems
-	 * @return
+	 * @param lotterItems 带有概率属性的对象集合
+	 * @return 以各自概率分配随机返回一个对象
 	 */
 	public static <M> LotterItem<M> lotteryItem(List<LotterItem<M>> lotterItems)
 	{ 	if (lotterItems == null || lotterItems.isEmpty()) {
@@ -51,21 +49,17 @@ public class LotteryUtil {
     	{
     		sumProbability += item.getProbability();
     	}
-    	double nextDouble = Math.random()/sumProbability;//随机一个概率值
+    	double nextDouble = Math.random()*sumProbability;//随机一个概率值[0,1)*N
     	// 计算每个物品在总概率的基础下的概率情况
     	Double tempSumRate = 0d;
     	for (LotterItem<M> item: lotterItems) 
-    	{
-    		tempSumRate += item.getProbability();
+    	{//叠加概率
+    		tempSumRate += item.getProbability();//增加区块
     		if(nextDouble<=tempSumRate)
     		{// 根据区块值来获取抽取到的物品索引
     			result=item;
     			break;
     		}
-    	}
-    	if(result==null)
-    	{
-    		result=lotterItems.get(new Random().nextInt(lotterItems.size()));
     	}
     	return result;
 	}
