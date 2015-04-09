@@ -1,5 +1,7 @@
 package net.jueb.util4j.tools.math;
 
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -72,19 +74,21 @@ public class LotteryUtil {
 	
     public static void main(String[] args) {
 		ArrayList<LotterItem<String>> fruits=new ArrayList<LotteryUtil.LotterItem<String>>();
-		LotterItem<String> fruit1=new LotterItem<String>("a", 0.296666667);
-		LotterItem<String> fruit2=new LotterItem<String>("b", 0.296666667);
-		LotterItem<String> fruit3=new LotterItem<String>("c", 0.1468333336);
-		LotterItem<String> fruit4=new LotterItem<String>("d", 0.1468333336);
-		LotterItem<String> fruit5=new LotterItem<String>("e", 0.11);
+		//以总概率为200为例子
+		LotterItem<String> fruit1=new LotterItem<String>("a", 20);
+		LotterItem<String> fruit2=new LotterItem<String>("b", 30);
+		LotterItem<String> fruit3=new LotterItem<String>("c", 40);
+		LotterItem<String> fruit4=new LotterItem<String>("d", 50);
+		LotterItem<String> fruit5=new LotterItem<String>("e",60);
 		fruits.add(fruit1);
 		fruits.add(fruit2);
 		fruits.add(fruit3);
 		fruits.add(fruit4);
 		fruits.add(fruit5);
-		int count=100000000;
+		int allCount=10000000;
 		Map<String,Integer> map=new HashMap<String, Integer>();
-		for(int i=0;i<count;i++)
+		//统计元素出现次数
+		for(int i=0;i<allCount;i++)
 		{
 			String item=LotteryUtil.lotteryItem(fruits).getItem();
 			if(map.containsKey(item))
@@ -98,6 +102,16 @@ public class LotteryUtil {
 				map.put(item, 1);
 			}
 		}
-		System.out.println(map.toString());
+		//计算概率
+		for(String key:map.keySet())
+		{
+			int count=map.get(key);
+			DecimalFormat df = new DecimalFormat();  
+		    df.setMaximumFractionDigits(2);// 设置精确2位小数   
+		    df.setRoundingMode(RoundingMode.HALF_UP); //模式 例如四舍五入   
+		    double p = (double)count/(double)allCount*100;//以100为计算概率200为实际总概率,则计算的概率会减半 
+			System.out.println("元素:"+key+"出现次数"+count+"/"+allCount+",出现概率:"+df.format(p)+"%");
+		}
+		
 	}
 }
