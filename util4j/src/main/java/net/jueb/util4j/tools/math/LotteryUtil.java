@@ -1,4 +1,5 @@
 package net.jueb.util4j.tools.math;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -49,38 +50,43 @@ public class LotteryUtil {
     	{
     		sumProbability += item.getProbability();
     	}
-    	double nextDouble = Math.random()*sumProbability;//随机一个概率值[0,1)*N
+    	double nextDouble = Math.random();//随机一个概率值[0,1)
+    	nextDouble=nextDouble*sumProbability;//如果随机概率是20%,则换算成总概率的随机概率值:20%*N
     	// 计算每个物品在总概率的基础下的概率情况
     	Double tempSumRate = 0d;
     	for (LotterItem<M> item: lotterItems) 
     	{//叠加概率
     		tempSumRate += item.getProbability();//增加区块
-    		if(nextDouble<=tempSumRate)
+    		if(tempSumRate>=nextDouble)
     		{// 根据区块值来获取抽取到的物品索引
     			result=item;
     			break;
     		}
     	}
+    	if(result==null)
+    	{
+    		System.out.println("found null");
+    	}
     	return result;
 	}
 	
     public static void main(String[] args) {
-		ArrayList<LotterItem<FruitType>> fruits=new ArrayList<LotteryUtil.LotterItem<FruitType>>();
-		LotterItem<FruitType> fruit1=new LotterItem<FruitType>(FruitType.Apple, 0.296666667);
-		LotterItem<FruitType> fruit2=new LotterItem<FruitType>(FruitType.Orange, 0.296666667);
-		LotterItem<FruitType> fruit3=new LotterItem<FruitType>(FruitType.Pineapple, 0.1468333336);
-		LotterItem<FruitType> fruit4=new LotterItem<FruitType>(FruitType.Pitaya, 0.1468333336);
-		LotterItem<FruitType> fruit5=new LotterItem<FruitType>(FruitType.Watermelon, 0.11);
+		ArrayList<LotterItem<String>> fruits=new ArrayList<LotteryUtil.LotterItem<String>>();
+		LotterItem<String> fruit1=new LotterItem<String>("a", 0.296666667);
+		LotterItem<String> fruit2=new LotterItem<String>("b", 0.296666667);
+		LotterItem<String> fruit3=new LotterItem<String>("c", 0.1468333336);
+		LotterItem<String> fruit4=new LotterItem<String>("d", 0.1468333336);
+		LotterItem<String> fruit5=new LotterItem<String>("e", 0.11);
 		fruits.add(fruit1);
 		fruits.add(fruit2);
 		fruits.add(fruit3);
 		fruits.add(fruit4);
 		fruits.add(fruit5);
-		int count=1000000;
-		Map<FruitType,Integer> map=new HashMap<FruitType, Integer>();
+		int count=100000000;
+		Map<String,Integer> map=new HashMap<String, Integer>();
 		for(int i=0;i<count;i++)
 		{
-			FruitType item=LotteryUtil.lotteryItem(fruits).getItem();
+			String item=LotteryUtil.lotteryItem(fruits).getItem();
 			if(map.containsKey(item))
 			{
 				int tmp=map.get(item);
