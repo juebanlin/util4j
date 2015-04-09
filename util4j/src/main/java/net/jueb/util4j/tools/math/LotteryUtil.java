@@ -11,7 +11,7 @@ import java.util.Map;
  */
 public class LotteryUtil {
 	
-	static class LotterItem<M>
+	public static class LotterItem<M>
 	{
 		private M item;//物品
 		private double probability;//概率
