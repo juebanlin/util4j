@@ -193,4 +193,8 @@ public class ClassUtil {
 		}
 		return map;
 	}
+	
+	public static String getRootDic() {
+		return System.getProperty("user.dir");
+	}
 }
