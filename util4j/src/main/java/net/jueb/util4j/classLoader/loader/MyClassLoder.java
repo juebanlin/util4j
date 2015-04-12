@@ -83,59 +83,67 @@ public class MyClassLoder extends ClassLoader {
 	}
 	
 	/**
-	 * 只有先执行了类的定义，才能加载到该类
-	 * 使用二进制名称的className加载类
-	 * 父类的loadClass(String name)方法要调用该方法
-	 * className-(二进制名称)有效类名称的示例包括： "java.lang.String"
+	 * 加载类,如果是系统类则交给系统加载
+	 * 如果当前类已经加载则返回类
+	 * 如果当前类没有加载则定义并返回
 	 */
 	@Override
-	protected Class<?> loadClass(String className, boolean resolve) throws ClassNotFoundException { 
-		System.out.println("开始加载类:"+className);
+	protected Class<?> loadClass(String className, boolean resolve)
+			throws ClassNotFoundException {
 		Class<?> clazz=null;
 		if(className.startsWith("java.")||className.startsWith("javax."))
 		{//如果是系统类加载器
-			System.out.println("交给系统类加载器加载:"+className);
-//			clazz=super.loadClass(name);
 			clazz=findSystemClass(className);
 			if (clazz != null) 
 			{//解析类结构
-				if (resolve)
-					resolveClass(clazz);
-				return (clazz);
+				syso("系统类加载器加载:"+className+"完成!");
 			}
-			return clazz;
+		}
+		//查找当前类加载中已加载的
+		if (clazz == null) 
+		{//解析类结构
+			clazz=findLoadedClass(className);
+			if(clazz!=null)
+			{
+				syso(getClass()+"加载:"+className+"完成!");
+			}
 		}
 		if(clazz==null)
 		{
-			System.out.println("交给当前类加载器加载:"+className);
-			clazz=findLoadedClass(className);
-			if (clazz != null) 
-			{//解析类结构
-				if (resolve) 
+			//查找当前类加载器urls或者当前类加载器所属线程类加载器
+			try {
+				clazz=findClass(className);
+				if(clazz!=null)
 				{
-					resolveClass(clazz);
+					syso(getClass()+"加载:"+className+"完成!");
+				}
+			} catch (Exception e) {
+				//如果该类没有加载过，并且不属于必须由该类加载器加载之列都委托给系统加载器进行加载。
+				ClassLoader loader=Thread.currentThread().getContextClassLoader();
+				clazz=loader.loadClass(className);
+				if(clazz!=null)
+				{
+					syso(loader.getClass().getName()+"加载:"+className+"完成!");
 				}
 			}
 		}
 		if(clazz==null)
 		{
-			System.out.println("交给当前类加载器定义:"+className);
-			try {
-				clazz=findClass(className);
-			} catch (Exception e) {
-				//如果该类没有加载过，并且不属于必须由该类加载器加载之列都委托给系统加载器进行加载。
-				System.out.println("交给当前线程类加载器加载:"+className);
-				clazz=Thread.currentThread().getContextClassLoader().loadClass(className);
-			}
-		}
-		if(clazz==null)
-		{
-			System.out.println("交给当前系统类加载器加载:"+className);
+			//查找系统类加载器
 			clazz=findSystemClass(className);
+			System.out.println("系统类加载器加载:"+className+"完成!");
 		}
-		System.out.println("类:"+clazz+"被"+clazz.getClassLoader()+"成功加载!");
+		if (clazz != null) 
+		{//解析类结构
+			if (resolve)
+				resolveClass(clazz);
+		}
 		return clazz;
-    }
+	}
+	protected void syso(String log)
+	{
+		System.out.println(log);
+	}
 	
 	@Override
 	protected Class<?> findClass(String className) throws ClassNotFoundException {
