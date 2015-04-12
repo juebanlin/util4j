@@ -1,25 +1,19 @@
-package net.jueb.util4j;
+package net.jueb.util4j.classLoader.loader;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.HashSet;
 
 /**
  * 自定义类加载器
  * @author Administrator
- *注意:
- *1.className和对应编译的.class文件的类名称必须一致，不然会出现：java.lang.NoClassDefFoundError: test/H1 (wrong name: test/H2)
- *只有被定义过的类才能被加载
+ *打破双亲委托加载顺序,让子类先加载,父类后加载
  */
-public class HotSwapClassLoder extends ClassLoader {
+public class MyClassLoder extends ClassLoader {
 	
-	private HashSet<String> loadedClass=new HashSet<String>(); // 需要由该类加载器直接加载的类名
-	
-    public HotSwapClassLoder(String basedir,String[] classNames) throws IOException {
+    public MyClassLoder() throws IOException {
 		super(null);
-		defineClassByDir(basedir,classNames);
 	}
 	
 	/**
@@ -69,9 +63,6 @@ public class HotSwapClassLoder extends ClassLoader {
         return defineClassByBytes(className, raw); 
     }
 	
-	
-	
-	
 	/**
 	 * 根据字节数组定义一个class对象,成功则记录
 	 * @param className
@@ -86,7 +77,6 @@ public class HotSwapClassLoder extends ClassLoader {
 		cls=defineClass(className,raw,0,raw.length);
 		if(cls!=null)
 		{
-			loadedClass.add(className);
 			System.out.println("Class:"+className+"被定义!");
 		}
 		return cls;
@@ -100,22 +90,78 @@ public class HotSwapClassLoder extends ClassLoader {
 	 */
 	@Override
 	protected Class<?> loadClass(String className, boolean resolve) throws ClassNotFoundException { 
-        Class<?> cls = null; 
-        cls = findLoadedClass(className);//如果是由本加载器defineClass过的class,则能找到
-        if(!this.loadedClass.contains(className) && cls == null) 
-        {//如果该类没有加载过，并且不属于必须由该类加载器加载之列都委托给系统加载器进行加载。
-        	cls = getSystemClassLoader().loadClass(className); 
-        	System.out.println("类:"+className+"委托给系统加载器进行加载!");
-        }
-        if (cls == null) 
-        {
-        	 throw new ClassNotFoundException(className); 
-        }
-        if (resolve) 
-        {
-        	 resolveClass(cls); 
-        }
-        return cls; 
-    } 
+		System.out.println("开始加载类:"+className);
+		Class<?> clazz=null;
+		if(className.startsWith("java.")||className.startsWith("javax."))
+		{//如果是系统类加载器
+			System.out.println("交给系统类加载器加载:"+className);
+//			clazz=super.loadClass(name);
+			clazz=findSystemClass(className);
+			if (clazz != null) 
+			{//解析类结构
+				if (resolve)
+					resolveClass(clazz);
+				return (clazz);
+			}
+			return clazz;
+		}
+		if(clazz==null)
+		{
+			System.out.println("交给当前类加载器加载:"+className);
+			clazz=findLoadedClass(className);
+			if (clazz != null) 
+			{//解析类结构
+				if (resolve) 
+				{
+					resolveClass(clazz);
+				}
+			}
+		}
+		if(clazz==null)
+		{
+			System.out.println("交给当前类加载器定义:"+className);
+			try {
+				clazz=findClass(className);
+			} catch (Exception e) {
+				//如果该类没有加载过，并且不属于必须由该类加载器加载之列都委托给系统加载器进行加载。
+				System.out.println("交给当前线程类加载器加载:"+className);
+				clazz=Thread.currentThread().getContextClassLoader().loadClass(className);
+			}
+		}
+		if(clazz==null)
+		{
+			System.out.println("交给当前系统类加载器加载:"+className);
+			clazz=findSystemClass(className);
+		}
+		System.out.println("类:"+clazz+"被"+clazz.getClassLoader()+"成功加载!");
+		return clazz;
+    }
+	
+	@Override
+	protected Class<?> findClass(String className) throws ClassNotFoundException {
+		System.out.println("当前类加载器classpath中查找并定义类:"+className);
+		Class<?> clazz=null;
+		byte[] bytes=findClassFileBytes(className);
+		if(bytes!=null)
+		{
+			clazz=defineClass(className,bytes, 0, bytes.length);
+		}
+		if(clazz==null)
+		{
+			throw new ClassNotFoundException();
+		}
+		return clazz;
+	}
+	
+	/**
+	 * 根据类名获取类文件字节
+	 * @param className
+	 * @return
+	 */
+	public byte[] findClassFileBytes(String className)
+	{
+		//TODO
+		return null;
+	}
 }
 
