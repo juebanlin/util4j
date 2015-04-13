@@ -88,7 +88,7 @@ public class MyUrlClassLoader extends URLClassLoader{
 		{
 			//查找系统类加载器
 			clazz=findSystemClass(className);
-			System.out.println("系统类加载器加载:"+className+"完成!");
+			syso("系统类加载器加载:"+className+"完成!");
 		}
 		if (clazz != null) 
 		{//解析类结构
