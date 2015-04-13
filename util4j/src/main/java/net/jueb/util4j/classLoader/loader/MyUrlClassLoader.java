@@ -11,6 +11,19 @@ import java.net.URLClassLoader;
  **/
 public class MyUrlClassLoader extends URLClassLoader{
 
+	private boolean useSystem=true;
+	
+	
+	public void useSystem(boolean use)
+	{
+		this.useSystem=use;
+	}
+	
+	public boolean useSystem()
+	{
+		return useSystem;
+	}
+	
 	public MyUrlClassLoader() {
 		super(new URL[]{},null);
 	}
@@ -75,20 +88,25 @@ public class MyUrlClassLoader extends URLClassLoader{
 					syso(getClass()+"加载:"+className+"完成!");
 				}
 			} catch (Exception e) {
-				//如果该类没有加载过，并且不属于必须由该类加载器加载之列都委托给系统加载器进行加载。
-				ClassLoader loader=Thread.currentThread().getContextClassLoader();
-				clazz=loader.loadClass(className);
-				if(clazz!=null)
+				if(useSystem)
 				{
-					syso(loader.getClass().getName()+"加载:"+className+"完成!");
+					//如果该类没有加载过，并且不属于必须由该类加载器加载之列都委托给系统加载器进行加载。
+					ClassLoader loader=Thread.currentThread().getContextClassLoader();
+					if(loader!=this)
+					{//如果当前线程上下文的加载器不是自己,用请求委托加载
+						clazz=loader.loadClass(className);
+					}
+					if(clazz!=null)
+					{
+						syso(loader.getClass().getName()+"加载:"+className+"完成!");
+					}else
+					{
+						//查找系统类加载器
+						clazz=findSystemClass(className);
+						syso("系统类加载器加载:"+className+"完成!");
+					}
 				}
 			}
-		}
-		if(clazz==null)
-		{
-			//查找系统类加载器
-			clazz=findSystemClass(className);
-			syso("系统类加载器加载:"+className+"完成!");
 		}
 		if (clazz != null) 
 		{//解析类结构

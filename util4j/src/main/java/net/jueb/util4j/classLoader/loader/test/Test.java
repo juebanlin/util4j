@@ -55,7 +55,7 @@ public class Test {
 				}
 			}
 		};
-		new Timer().schedule(task, 0,10);
+		new Timer().schedule(task, 0,1000);
 	}
 	public static void main(String[] args) throws Exception {
 		new Test().testGc();
