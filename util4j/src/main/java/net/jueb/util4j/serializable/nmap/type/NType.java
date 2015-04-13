@@ -4,6 +4,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import net.jueb.util4j.serializable.nmap.util.TypeBytes;
 import net.jueb.util4j.serializable.nmap.util.TypeBytesInputStream;
 import net.jueb.util4j.serializable.nmap.util.TypeBytesOutputStream;
@@ -13,14 +16,20 @@ import net.jueb.util4j.serializable.nmap.util.TypeBytesOutputStream;
  * @author Administrator
  */
 public abstract class NType<T> implements ValueConvert{
-
+	protected Logger log = LoggerFactory.getLogger(getClass());
 	public static boolean showLog=false;
 	
-	public static void log(String log)
+	public void log(String log)
 	{
 		if(showLog)
 		{
-			System.out.println(log);
+			if(this.log!=null)
+			{
+				this.log.debug(log);
+			}else
+			{
+				System.out.println(log);
+			}
 		}
 	}
 	

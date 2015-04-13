@@ -5,12 +5,17 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * 自定义类加载器
  * @author Administrator
  *打破双亲委托加载顺序,让子类先加载,父类后加载
  */
 public class MyClassLoder extends ClassLoader {
+	protected Logger log = LoggerFactory.getLogger(getClass());
+	
 	private boolean useSystem=true;
     
 	public MyClassLoder() throws IOException {
@@ -157,12 +162,18 @@ public class MyClassLoder extends ClassLoader {
 	}
 	protected void syso(String log)
 	{
-		System.out.println(log);
+		if(this.log!=null)
+		{
+			this.log.debug(log);
+		}else
+		{
+			System.out.println(log);
+		}
 	}
 	
 	@Override
 	protected Class<?> findClass(String className) throws ClassNotFoundException {
-		System.out.println("当前类加载器classpath中查找并定义类:"+className);
+		syso("当前类加载器classpath中查找并定义类:"+className);
 		Class<?> clazz=null;
 		byte[] bytes=findClassFileBytes(className);
 		if(bytes!=null)

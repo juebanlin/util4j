@@ -6,10 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DataToMap extends DataToMapBase{
-	private Logger log=Logger.getLogger(getClass());
+	protected Logger log = LoggerFactory.getLogger(getClass());
 	private Map<Object, Object> map=new TreeMap<Object, Object>();
 	private DataTools dt=new DataTools();
 	private byte[] data;

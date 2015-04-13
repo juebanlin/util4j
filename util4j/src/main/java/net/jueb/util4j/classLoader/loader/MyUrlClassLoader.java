@@ -3,6 +3,9 @@ package net.jueb.util4j.classLoader.loader;
 import java.net.URL;
 import java.net.URLClassLoader;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  *@author juebanlin
  *@email juebanlin@gmail.com
@@ -10,7 +13,7 @@ import java.net.URLClassLoader;
  *打破双亲委托加载顺序,让子类先加载,父类后加载
  **/
 public class MyUrlClassLoader extends URLClassLoader{
-
+	protected Logger log = LoggerFactory.getLogger(getClass());
 	private boolean useSystem=true;
 	
 	
@@ -115,9 +118,16 @@ public class MyUrlClassLoader extends URLClassLoader{
 		}
 		return clazz;
 	}
+	
 	protected void syso(String log)
 	{
-		System.out.println(log);
+		if(this.log!=null)
+		{
+			this.log.debug(log);
+		}else
+		{
+			System.out.println(log);
+		}
 	}
 	/**
 	 * 查找url路径列表中类文件并声明定义类
