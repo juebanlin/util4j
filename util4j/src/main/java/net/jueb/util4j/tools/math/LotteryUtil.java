@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 /**
  * 概率随机工具
@@ -43,7 +44,7 @@ public class LotteryUtil {
 	 */
 	public static <M> LotterItem<M> lotteryItem(List<LotterItem<M>> lotterItems)
 	{ 	if (lotterItems == null || lotterItems.isEmpty()) {
-			return null;
+			throw new UnsupportedOperationException("lotterItems is empty");
     	}
 		LotterItem<M> result=null;
     	// 计算总概率，这样可以保证不一定总概率是1
@@ -67,7 +68,9 @@ public class LotteryUtil {
     	}
     	if(result==null)
     	{
-    		System.out.println("found null");
+    		System.err.printf("LotterItem not found,use random");
+    		int index=new Random().nextInt(lotterItems.size());
+    		result=lotterItems.get(index);
     	}
     	return result;
 	}
