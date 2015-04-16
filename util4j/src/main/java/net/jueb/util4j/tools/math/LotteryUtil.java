@@ -13,7 +13,6 @@ import java.util.Random;
  * @author Administrator
  */
 public class LotteryUtil {
-	
 	public static class LotterItem<M>
 	{
 		private M item;//物品
@@ -75,6 +74,40 @@ public class LotteryUtil {
     	return result;
 	}
 	
+	public static <T> String test(List<LotterItem<T>> items,int testCount)
+	{
+		String result="";
+		int allCount=testCount;
+		Map<T,Integer> map=new HashMap<T, Integer>();
+		//统计元素出现次数
+		for(int i=0;i<allCount;i++)
+		{
+			T item=LotteryUtil.lotteryItem(items).getItem();
+			if(map.containsKey(item))
+			{
+				int tmp=map.get(item);
+				tmp++;
+				map.put(item, tmp);
+				
+			}else
+			{
+				map.put(item, 1);
+			}
+		}
+		//计算概率
+		for(T key:map.keySet())
+		{
+			int count=map.get(key);
+			DecimalFormat df = new DecimalFormat();  
+		    df.setMaximumFractionDigits(2);// 设置精确2位小数   
+		    df.setRoundingMode(RoundingMode.HALF_UP); //模式 例如四舍五入   
+		    double p = (double)count/(double)allCount*100;//以100为计算概率200为实际总概率,则计算的概率会减半 
+		    result="元素:"+key+"出现次数"+count+"/"+allCount+",出现概率:"+df.format(p)+"%";
+		    System.out.println("元素:"+key+"出现次数"+count+"/"+allCount+",出现概率:"+df.format(p)+"%");
+		}
+		return result;
+	}
+	
     public static void main(String[] args) {
 		ArrayList<LotterItem<String>> fruits=new ArrayList<LotteryUtil.LotterItem<String>>();
 		//以总概率为200为例子
@@ -89,32 +122,6 @@ public class LotteryUtil {
 		fruits.add(fruit4);
 		fruits.add(fruit5);
 		int allCount=10000000;
-		Map<String,Integer> map=new HashMap<String, Integer>();
-		//统计元素出现次数
-		for(int i=0;i<allCount;i++)
-		{
-			String item=LotteryUtil.lotteryItem(fruits).getItem();
-			if(map.containsKey(item))
-			{
-				int tmp=map.get(item);
-				tmp++;
-				map.put(item, tmp);
-				
-			}else
-			{
-				map.put(item, 1);
-			}
-		}
-		//计算概率
-		for(String key:map.keySet())
-		{
-			int count=map.get(key);
-			DecimalFormat df = new DecimalFormat();  
-		    df.setMaximumFractionDigits(2);// 设置精确2位小数   
-		    df.setRoundingMode(RoundingMode.HALF_UP); //模式 例如四舍五入   
-		    double p = (double)count/(double)allCount*100;//以100为计算概率200为实际总概率,则计算的概率会减半 
-			System.out.println("元素:"+key+"出现次数"+count+"/"+allCount+",出现概率:"+df.format(p)+"%");
-		}
-		
+		test(fruits, allCount);
 	}
 }
