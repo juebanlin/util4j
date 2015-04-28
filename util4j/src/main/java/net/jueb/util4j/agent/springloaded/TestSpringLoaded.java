@@ -1,37 +1,33 @@
 package net.jueb.util4j.agent.springloaded;
 
+import java.io.File;
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.util.Arrays;
+import java.net.URLClassLoader;
 
-import org.springsource.loaded.agent.SpringLoadedAgent;
-
-import net.jueb.util4j.agent.MyAgent;
+import net.jueb.util4j.classLoader.util.ClassUtil;
+import net.jueb.util4j.classLoader.util.UrlClassLoaderUtil;
 
 import com.sun.tools.attach.AgentInitializationException;
 import com.sun.tools.attach.AgentLoadException;
 import com.sun.tools.attach.AttachNotSupportedException;
-import com.sun.tools.attach.VirtualMachine;
 
+/**
+ * 可行方法1：-javaagent:"plugins/springloaded-1.2.1.RELEASE.jar" -noverify
+ * @author Administrator
+ */
 public class TestSpringLoaded {
 
-	public static void main(String[] args) throws AttachNotSupportedException, IOException, AgentLoadException, AgentInitializationException, InterruptedException {
-		//获取当前jvm的进程pid
-		String pid = ManagementFactory.getRuntimeMXBean().getName();  
-		int indexOf = pid.indexOf('@');  
-		if (indexOf > 0)  
-		  {  
-		       pid = pid.substring(0, indexOf);  
-		   }  
-		    //获取当前jvm
-		  VirtualMachine vm=VirtualMachine.attach(pid);
-		  String agentArg="spring agent";
-	      String javaAgent="C:/Users/Administrator/.m2/repository/org/springframework/springloaded/1.2.1.RELEASE/springloaded-1.2.1.RELEASE.jar";
-	      vm.loadAgent(javaAgent,agentArg);//加载agent的jar文件路径和agent方法参数
-	      Thread.sleep(1000);
-	      vm.detach();
-	        System.out.println("动态加载agent完成!");
-	        System.out.println(Arrays.toString(SpringLoadedAgent.getInstrumentation().getAllLoadedClasses()));
-	        System.in.read();
+	public static void main(String[] args) throws AttachNotSupportedException,
+			IOException, AgentLoadException, AgentInitializationException,
+			InterruptedException {
+		AgentAttacheClient.getCurrentVm().loadAgent("plugins/springloaded-1.2.1.RELEASE.jar");
+		TestSpringLoacedClass t1=new TestSpringLoacedClass();
+		for(int i=0;i<100;i++)
+		{
+			TestSpringLoacedClass t2=new TestSpringLoacedClass();
+			t1.say();
+			t2.say();
+			Thread.sleep(1000);
+		}
 	}
 }
