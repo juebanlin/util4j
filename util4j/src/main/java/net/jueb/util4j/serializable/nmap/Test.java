@@ -13,9 +13,9 @@ import net.jueb.util4j.serializable.nmap.type.NUTF8String;
 public class Test {
 
 	public static void main(String[] args) throws Exception {
-
+		build();
 		Test t = new Test();
-		File f = new File("d:/map.data");
+		File f = new File("d:/map2.data");
 		long i = System.currentTimeMillis();
 		NMap nmap = new NMap().load(f);
 		long x = System.currentTimeMillis() - i;
@@ -66,7 +66,7 @@ public class Test {
 		nmap3.put(isWorkKey, isWorkValue);
 		nmap.put(nmap2, nmap3);
 		try {
-			nmap2.saveTo(new File("d:/2.data"));
+			nmap2.saveTo(new File("d:/map2.data"));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -74,8 +74,9 @@ public class Test {
 	}
 
 	public static void showMap(NMap nmap) {
-		byte[] data = nmap.getBytes();
-		System.out.println(nmap.toString());
-		System.out.println(Arrays.toString(data));
+		build();
+//		byte[] data = nmap.getBytes();
+//		System.out.println(nmap.toString());
+//		System.out.println(Arrays.toString(data));
 	}
 }
