@@ -1,33 +1,13 @@
 package net.jueb.util4j.agent.springloaded;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-
 import com.sun.tools.attach.AgentInitializationException;
 import com.sun.tools.attach.AgentLoadException;
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
 
-public class AgentAttacheClient {
-
-	public static void attachAgent(String vmPid, File agent) {
-		VirtualMachine vm;
-		try {
-			vm = VirtualMachine.attach(vmPid);
-			vm.loadAgent(agent.getAbsolutePath());
-			vm.detach();
-			System.out.println("动态加载agent完成!");
-		} catch (AttachNotSupportedException e1) {
-			e1.printStackTrace();
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		} catch (AgentLoadException e) {
-			e.printStackTrace();
-		} catch (AgentInitializationException e) {
-			e.printStackTrace();
-		}
-	}
+public class AgentUtil {
 
 	public static VirtualMachine getCurrentVm() {
 		// 获取当前jvm的进程pid
@@ -47,8 +27,11 @@ public class AgentAttacheClient {
 		return null;
 	}
 
-	public static void main(String[] args) {
-		File agent = new File("plugins/springloaded-1.2.1.RELEASE.jar");
-		AgentAttacheClient.attachAgent("6340", agent);
+	public static void main(String[] args) throws AgentLoadException, AgentInitializationException, IOException, AttachNotSupportedException {
+		VirtualMachine vm=VirtualMachine.attach("7876");
+		vm.loadAgent("d:/springloaded-1.2.1.RELEASE.jar");
+//		vm.loadAgent("d:/myagent.jar","myagent");
+		System.out.println(vm.getAgentProperties().toString());
+		System.in.read();
 	}
 }

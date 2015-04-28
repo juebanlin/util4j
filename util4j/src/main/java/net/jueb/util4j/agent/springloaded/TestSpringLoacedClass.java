@@ -2,9 +2,9 @@ package net.jueb.util4j.agent.springloaded;
 
 public class TestSpringLoacedClass {
 
-	int version=12;
-	public void say()
+	int version=3;
+	public void say2()
 	{
-		System.out.println("version:"+version);
+		System.out.println("version2:"+version);
 	}
 }
