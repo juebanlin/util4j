@@ -46,7 +46,7 @@
 	</dependency>
 	<dependency>
 		<groupId>org.slf4j</groupId>
-		<artifactId>log4j-over-slf4j</artifactId>
+		<artifactId>slf4j-log4j12</artifactId>
 		<version>1.7.12</version>
 	</dependency>
   </dependencies>
@@ -68,10 +68,11 @@
         <includes>
           <include>**/*.properties</include>
         </includes>
-        <!-- 排除  -->
+        <!-- 排除 
         <excludes>
         	<exclude>log4j.properties</exclude>
         </excludes>
+         -->
       </resource>
       <resource>
         <directory>src/main/resources</directory>
