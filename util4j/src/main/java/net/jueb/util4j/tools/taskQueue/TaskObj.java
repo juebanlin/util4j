@@ -1,4 +1,4 @@
-package net.jueb.util4j.tools.jobQueue;
+package net.jueb.util4j.tools.taskQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,15 +12,15 @@ import org.slf4j.LoggerFactory;
 	private Logger log = LoggerFactory.getLogger(getClass());
 	private long startTime=System.currentTimeMillis();// 开始时间
 	private long endTime=0;// 结束时间
-	private Runnable task;
+	private Task task;
 
-	public TaskObj(Runnable task) {
+	public TaskObj(Task task) {
 		this.task = task;
 	}
 
 	public void start() {
 		try {
-			task.run();
+			task.action();
 		} catch (Exception e) {
 			log.debug("task error[" + task.getClass() + "]:" + e.getMessage());
 		}

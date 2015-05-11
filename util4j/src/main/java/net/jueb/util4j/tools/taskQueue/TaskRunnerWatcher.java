@@ -1,4 +1,4 @@
-package net.jueb.util4j.tools.jobQueue;
+package net.jueb.util4j.tools.taskQueue;
 
 import java.util.HashSet;
 import java.util.concurrent.CountDownLatch;
@@ -11,11 +11,15 @@ import org.slf4j.LoggerFactory;
  * @author Administrator
  */
 class TaskRunnerWatcher extends Thread {
-	public static long TaskRunTimeOutMillis = 10000;
+	private long TaskRunTimeOutMillis = 10000;
 	private Logger log = LoggerFactory.getLogger(getClass());
 	private HashSet<TaskRunner> runners = new HashSet<TaskRunner>();
 	private CountDownLatch latch;
 
+	public TaskRunnerWatcher(long TaskRunTimeOutMillis ) {
+		this.TaskRunTimeOutMillis=TaskRunTimeOutMillis;
+	}
+	
 	@Override
 	public void run() {
 		try {

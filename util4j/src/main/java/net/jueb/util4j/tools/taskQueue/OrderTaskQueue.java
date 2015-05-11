@@ -1,4 +1,4 @@
-package net.jueb.util4j.tools.jobQueue;
+package net.jueb.util4j.tools.taskQueue;
 
 /**
  * 顺序任务执行队列
@@ -11,7 +11,7 @@ public class OrderTaskQueue {
 	{
 		if(watcher==null)
 		{
-			watcher=new TaskRunnerWatcher();
+			watcher=new TaskRunnerWatcher(10000);
 			watcher.setName("OrderTaskQueueWatcher");
 			watcher.setDaemon(true);
 			watcher.start();
@@ -28,7 +28,7 @@ public class OrderTaskQueue {
 		return name;
 	}
 	
-	public void addTask(Runnable task)
+	public void addTask(Task task)
 	{
 		runner.addTask(task);
 	}
@@ -42,6 +42,15 @@ public class OrderTaskQueue {
 	{
 		runner.shutdown();
 	}
+	public int taskCount()
+	{
+		return runner.taskCount();
+	}
+	
+	public boolean removeTask(Task task)
+	{
+		return this.runner.removeTask(task);
+	}
 	
 	public static void main(String[] args) throws InterruptedException {
 		OrderTaskQueue jo=new OrderTaskQueue("TestJobQueue");
@@ -50,9 +59,9 @@ public class OrderTaskQueue {
 		{
 			final int x=i;
 			Thread.sleep(5000);
-			jo.addTask(new Runnable() {
+			jo.addTask(new Task(){
 				@Override
-				public void run() {
+				public void action() {
 					System.out.println("x="+x);
 					if(x==5)
 					{
@@ -70,4 +79,5 @@ public class OrderTaskQueue {
 			});
 		}
 	}
+	
 }

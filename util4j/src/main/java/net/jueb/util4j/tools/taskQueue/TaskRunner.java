@@ -1,7 +1,8 @@
-package net.jueb.util4j.tools.jobQueue;
+package net.jueb.util4j.tools.taskQueue;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,7 +15,7 @@ import org.slf4j.LoggerFactory;
  class TaskRunner {
 	private Logger log = LoggerFactory.getLogger(getClass());
 	private TaskRunnerWatcher watcher;
-	private ConcurrentLinkedQueue<Runnable> tasks = new ConcurrentLinkedQueue<Runnable>();
+	private ConcurrentLinkedQueue<Task> tasks = new ConcurrentLinkedQueue<Task>();
 	private TaskObj currentTask;// 当前任务对象
 	private final String name;
 	private RunnnerCore runnnerCore;//运行核心线程
@@ -130,9 +131,19 @@ import org.slf4j.LoggerFactory;
 		}
 	}
 	
-	public void addTask(Runnable task)
+	public void addTask(Task task)
 	{
 		this.tasks.add(task);
 		runnnerCore.wakeUpIfSleep();
+	}
+	
+	public int taskCount()
+	{
+		return this.tasks.size();
+	}
+	
+	public boolean removeTask(Task task)
+	{
+		return this.tasks.remove(task);
 	}
 }
