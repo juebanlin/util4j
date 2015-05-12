@@ -98,7 +98,8 @@ public class SimpleOrderTaskQueue {
 				isActive=true;
 				try {
 					while (!shutdown) {
-						if (tasks.isEmpty()) {// 线程睡眠
+						Task task=tasks.poll();
+						if (task==null) {// 线程睡眠
 							long awaitStartTime = System.currentTimeMillis();
 							log.debug("tasks.isEmpty(),TaskRunner sleep……");
 							latch = new CountDownLatch(1);
@@ -109,11 +110,10 @@ public class SimpleOrderTaskQueue {
 							log.debug("TaskRunner WakeUp,sleepTime="
 									+ awaitTime + " Millis");
 						} else {// 线程被外部条件唤醒
-							currentTask = new TaskObj(tasks.poll());
+							currentTask = new TaskObj(task);
 							currentTask.start();
 							currentTask = null;
 						}
-
 					}
 				} catch (Exception e) {
 					e.printStackTrace();
