@@ -1,4 +1,4 @@
-package net.jueb.util4j.tools.taskQueue.old;
+package net.jueb.util4j.tools.taskQueue.lite;
 
 public interface Task {
 
