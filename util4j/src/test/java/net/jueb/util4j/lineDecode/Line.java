@@ -147,6 +147,17 @@ public class Line {
 				has=true;
 			}
 		}
+		if(has)
+		{
+			for(LineResult result:useFullResults)
+			{
+				if(result.getMaxCount()>typeCount)
+				{
+					typeCount=result.getMaxCount();
+					type=result.getType();
+				}
+			}
+		}
 		return has;
 	}
 	
