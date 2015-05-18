@@ -12,7 +12,7 @@ public class Line {
 	public static final BonusType king=BonusType.s;
 	public static final int[] counts=new int[]{3,4,5};//连续满足次数
 	private BonusType type;
-	private LineType linType;
+	private LineType lineType;
 	private int typeCount;
 	private ArrayList<LineResult> allResults=new ArrayList<Line.LineResult>();//所有结果
 	private ArrayList<LineResult> useFullResults=new ArrayList<Line.LineResult>();//满足条件的结果
@@ -28,7 +28,7 @@ public class Line {
 	
 	public  final LineType getLineType()
 	{
-		return linType;
+		return lineType;
 	}
 	
 	/**
@@ -153,8 +153,9 @@ public class Line {
 			{
 				if(result.getMaxCount()>typeCount)
 				{
-					typeCount=result.getMaxCount();
+					lineType=result.getLine();
 					type=result.getType();
+					typeCount=result.getMaxCount();
 				}
 			}
 		}
@@ -257,10 +258,10 @@ public class Line {
 	}
 	
 	public LineType getLinType() {
-		return linType;
+		return lineType;
 	}
 	public void setLinType(LineType linType) {
-		this.linType = linType;
+		this.lineType = linType;
 	}
 	public ArrayList<LineResult> getAllResults() {
 		return allResults;
@@ -393,7 +394,7 @@ public class Line {
 		if(line.hasLine(testTypes))
 		{
 			System.out.println(line.getUseFullResults().toString());
+			System.out.println("type:"+line.getType()+",count:"+line.getTypeCount());
 		}
-//		System.out.println(Arrays.toString(line.typesNoKing(new BonusType[]{BonusType.valueOf(4),BonusType.valueOf(9),BonusType.valueOf(4),BonusType.valueOf(4),BonusType.valueOf(9)})));
 	}
 }
