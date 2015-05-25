@@ -111,8 +111,8 @@ public class LotteryUtil {
     public static void main(String[] args) {
 		ArrayList<LotterItem<String>> fruits=new ArrayList<LotteryUtil.LotterItem<String>>();
 		//以总概率为200为例子
-		LotterItem<String> fruit1=new LotterItem<String>("a", 20);
-		LotterItem<String> fruit2=new LotterItem<String>("b", 30);
+		LotterItem<String> fruit1=new LotterItem<String>("a", 0);
+		LotterItem<String> fruit2=new LotterItem<String>("b", 50);
 		LotterItem<String> fruit3=new LotterItem<String>("c", 40);
 		LotterItem<String> fruit4=new LotterItem<String>("d", 50);
 		LotterItem<String> fruit5=new LotterItem<String>("e",60);
@@ -121,7 +121,7 @@ public class LotteryUtil {
 		fruits.add(fruit3);
 		fruits.add(fruit4);
 		fruits.add(fruit5);
-		int allCount=10000000;
+		int allCount=1000;
 		test(fruits, allCount);
 	}
 }
