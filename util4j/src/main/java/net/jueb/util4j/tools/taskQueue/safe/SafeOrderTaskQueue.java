@@ -1,5 +1,6 @@
 package net.jueb.util4j.tools.taskQueue.safe;
 
+import java.util.HashSet;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import org.slf4j.Logger;
@@ -7,19 +8,28 @@ import org.slf4j.LoggerFactory;
 
 /**
  * 顺序任务执行队列
- * 
+ * 具备任务超时处理
  * @author Administrator
  */
-public class SimpleOrderTaskQueue {
+public class SafeOrderTaskQueue {
 	private Logger log = LoggerFactory.getLogger(getClass());
-	/**
-	 * 任务执行时间最多不能超过5秒
-	 */
 	protected final ConcurrentLinkedQueue<Task> tasks = new ConcurrentLinkedQueue<Task>();
+	protected static TaskRunnerWatcher watcher;// 公共运行者监视器
 	protected final TaskRunner runner;// 运行者
+	
+	{
+		synchronized (this) {
+			if (watcher == null) {
+				watcher = new TaskRunnerWatcher();
+				watcher.setName("OrderTaskQueueWatcher");
+				watcher.setDaemon(true);
+				watcher.start();
+			}
+		}
+	}
 
-	public SimpleOrderTaskQueue(String name) {
-		runner = new TaskRunner(name);
+	public SafeOrderTaskQueue(String name, long TaskRunTimeOutMillis) {
+		runner = new TaskRunner(name, TaskRunTimeOutMillis, watcher);
 	}
 
 	public static interface Task {
@@ -67,13 +77,18 @@ public class SimpleOrderTaskQueue {
 	 *
 	 */
 	class TaskRunner {
+		private long TaskRunTimeOutMillis;// 脚本超时毫秒
+		private TaskRunnerWatcher watcher;
 		private TaskObj currentTask;// 当前任务对象
 		private final String name;
 		private RunnnerCore runnnerCore;// 运行核心线程
 		private boolean isActive;
 
-		public TaskRunner(String name) {
+		public TaskRunner(String name, long TaskRunTimeOutMillis,
+				TaskRunnerWatcher watcher) {
 			this.name = name;
+			this.watcher = watcher;
+			this.TaskRunTimeOutMillis = TaskRunTimeOutMillis;
 		}
 
 		public void start() {
@@ -96,10 +111,11 @@ public class SimpleOrderTaskQueue {
 			@Override
 			public void run() {
 				isActive=true;
+				watcher.regist(TaskRunner.this);// 当线程启动后注册到监视器
 				try {
 					while (!shutdown) {
-						Task task=tasks.poll();
-						if (task==null) {// 线程睡眠
+						watcher.wakeUpIfSleep();// 唤醒监视器
+						if (tasks.isEmpty()) {// 线程睡眠
 							long awaitStartTime = System.currentTimeMillis();
 							log.debug("tasks.isEmpty(),TaskRunner sleep……");
 							latch = new CountDownLatch(1);
@@ -110,10 +126,11 @@ public class SimpleOrderTaskQueue {
 							log.debug("TaskRunner WakeUp,sleepTime="
 									+ awaitTime + " Millis");
 						} else {// 线程被外部条件唤醒
-							currentTask = new TaskObj(task);
+							currentTask = new TaskObj(tasks.poll());
 							currentTask.start();
 							currentTask = null;
 						}
+
 					}
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -162,13 +179,103 @@ public class SimpleOrderTaskQueue {
 		 * 如果是睡眠,则唤醒
 		 */
 		public void wakeUpIfSleep() {
-			if (!tasks.isEmpty() && runnnerCore!=null) {
+			if (!tasks.isEmpty()) {
 				runnnerCore.wakeUpIfSleep();
 			}
 		}
 
+		public long getTaskRunTimeOutMillis() {
+			return TaskRunTimeOutMillis;
+		}
+
 		public TaskObj getCurrentTask() {
 			return currentTask;
+		}
+	}
+
+	/**
+	 * 监护线程 用于唤醒和处理超时任务
+	 * 
+	 * @author Administrator
+	 */
+	class TaskRunnerWatcher extends Thread {
+		private HashSet<TaskRunner> runners = new HashSet<TaskRunner>();
+		private CountDownLatch latch;
+
+		public TaskRunnerWatcher() {
+		}
+
+		@Override
+		public void run() {
+			try {
+				while (true) {
+					Thread.sleep(100);
+					boolean allStop = true;
+					for (TaskRunner runner : runners) {// 遍历任务执行者
+						if (runner.isActive()) {
+							allStop = false;
+							runner.wakeUpIfSleep();
+							long TaskRunTimeOutMillis = runner
+									.getTaskRunTimeOutMillis();
+							if (TaskRunTimeOutMillis > 0) {
+								TaskObj task = runner.getCurrentTask();
+								if (task != null) {// 判断任务是否超时
+									long startTime = task.getStartTime();
+									long endTime = task.getEndTime();
+									long costTime = 0;
+									if (endTime <= 0) {
+										endTime = System.currentTimeMillis();
+									}
+									costTime = endTime - startTime;
+									if (costTime > TaskRunTimeOutMillis) {// 执行超时
+										runner.skipCurrentTask(task);
+									}
+								}
+							}
+						}
+						if (allStop) {// 如果所有线程都死亡了,则监视者睡眠
+							log.debug("Not Found Alive TaskRunner,Watcher sleep……");
+							long awaitStartTime = System.currentTimeMillis();
+							latch = new CountDownLatch(1);
+							latch.await();
+							latch = null;
+							long awaitTime = System.currentTimeMillis()
+									- awaitStartTime;
+							log.debug("Some TaskRunner isAlive,Watcher WakeUp,sleepTime="
+									+ awaitTime + " Millis");
+						}
+					}
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+
+		/**
+		 * 注册
+		 * 
+		 * @param runner
+		 */
+		public void regist(TaskRunner runner) {
+			this.runners.add(runner);
+		}
+
+		/**
+		 * 取消监视注册
+		 * 
+		 * @param runner
+		 */
+		public void unRegist(TaskRunner runner) {
+			this.runners.remove(runner);
+		}
+
+		/**
+		 * 唤醒监视器
+		 */
+		public void wakeUpIfSleep() {
+			if (latch != null) {
+				latch.countDown();
+			}
 		}
 	}
 
@@ -200,7 +307,7 @@ public class SimpleOrderTaskQueue {
 	}
 
 	public static void main(String[] args) throws InterruptedException {
-		SimpleOrderTaskQueue jo = new SimpleOrderTaskQueue("TestJobQueue");
+		SafeOrderTaskQueue jo = new SafeOrderTaskQueue("TestJobQueue", 10000);
 		jo.start();
 		for (int i = 0; i < 1000; i++) {
 			final int x = i;
