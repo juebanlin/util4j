@@ -228,7 +228,7 @@ public class OrderTaskQueue {
 		private boolean enable=true;
 		private final HashMap<String, MonitorEntry> entrys=new HashMap<String,MonitorEntry>();
 		private final HashMap<String, MonitorEntry> interval=new HashMap<String,MonitorEntry>();//区间监测
-		private long lastCheckTime=System.currentTimeMillis();//上一次检查时间
+		private long lastCheckTime;//上一次检查时间
 		private long checkInterval=CountMonitorInterval;//监测时间间隔
 		private SimpleDateFormat sdf=new SimpleDateFormat("HH:mm:ss sss");
 		public boolean isEnable() {
@@ -244,6 +244,10 @@ public class OrderTaskQueue {
 			if(!enable)
 			{
 				return;
+			}
+			if(lastCheckTime==0)
+			{
+				lastCheckTime=System.currentTimeMillis();
 			}
 			long currentTime=System.currentTimeMillis();
 			if(currentTime-lastCheckTime>checkInterval)
