@@ -22,7 +22,7 @@ import java.security.spec.X509EncodedKeySpec;
 
 import javax.crypto.Cipher;
 
-import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
+import org.apache.commons.codec.binary.Base64;
 
 /**
  * 非对称加密算法工具类
@@ -350,7 +350,7 @@ public class RsaUtil {
     	{
     		return null;
     	}
-    	return Base64.encode(publicKey.getEncoded());
+    	return Base64.encodeBase64String(publicKey.getEncoded());
     }
     
     /**
@@ -364,7 +364,7 @@ public class RsaUtil {
     	{
     		return null;
     	}
-    	return Base64.encode(privateKey.getEncoded());
+    	return Base64.encodeBase64String(privateKey.getEncoded());
     }
     
     /**
@@ -374,7 +374,7 @@ public class RsaUtil {
      */
     public PublicKey getPublicKey(String publicKey){  
        try {
-    	   byte[] keyBytes = Base64.decode(publicKey);  
+    	   byte[] keyBytes = Base64.decodeBase64(publicKey);  
            X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);  
            KeyFactory keyFactory = KeyFactory.getInstance(algorithm);  
            return keyFactory.generatePublic(spec);  
@@ -389,7 +389,7 @@ public class RsaUtil {
      */
     public PrivateKey getPrivateKey(String privateKey){  
         try {
-        	byte[] keyBytes = Base64.decode(privateKey);  
+        	byte[] keyBytes = Base64.decodeBase64(privateKey);  
             PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);  
             KeyFactory keyFactory = KeyFactory.getInstance(algorithm);  
             return keyFactory.generatePrivate(spec); 
