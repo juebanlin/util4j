@@ -17,13 +17,13 @@ public class Test
 	public void testEnDe(String str)
 	{
     	byte[] data=str.getBytes();
-    	System.out.println("测试数据:"+str);
+    	System.out.println(System.currentTimeMillis()+":测试数据:"+str);
     	byte[] enData=rsa.encryptData(puk,data);//加密数据
     	String enStr=new String(enData);
-    	System.out.println("公钥加密后数据字符串："+enStr);
+    	System.out.println(System.currentTimeMillis()+":公钥加密后数据字符串："+enStr);
     	byte[] deData=rsa.decryptData(prk, enData);//解密数据
     	String deStr=new String(deData);
-    	System.out.println("私钥解密后数据字符串："+deStr);
+    	System.out.println(System.currentTimeMillis()+":私钥解密后数据字符串："+deStr);
 	}
 	/**
 	 * key字符串转换测试
