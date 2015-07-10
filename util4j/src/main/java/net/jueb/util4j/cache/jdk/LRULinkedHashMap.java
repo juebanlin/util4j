@@ -18,20 +18,25 @@ public class LRULinkedHashMap<K, V> extends LinkedHashMap<K, V> {
 	 */
 	private static final long serialVersionUID = -764563178543166915L;
 
-	private final int maxCapacity;  
+	static final int DEFAULT_INITIAL_CAPACITY = 1 << 4; // aka 16
+	private final int initialCapacity;  
   
     private static final float DEFAULT_LOAD_FACTOR = 0.75f;  
   
     private final Lock lock = new ReentrantLock();  
   
-    public LRULinkedHashMap(int maxCapacity) {  
-        super(maxCapacity, DEFAULT_LOAD_FACTOR, true);  
-        this.maxCapacity = maxCapacity;  
+    public LRULinkedHashMap() {
+    	this(DEFAULT_INITIAL_CAPACITY);
+	}
+    
+    public LRULinkedHashMap(int initialCapacity) {  
+        super(initialCapacity, DEFAULT_LOAD_FACTOR, true);  
+        this.initialCapacity = initialCapacity;  
     }  
   
     @Override  
     protected boolean removeEldestEntry(java.util.Map.Entry<K, V> eldest) {  
-        return size() > maxCapacity;  
+        return size() > initialCapacity;  
     }  
     @Override  
     public boolean containsKey(Object key) {  
