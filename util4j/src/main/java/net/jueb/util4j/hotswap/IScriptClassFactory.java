@@ -1,6 +1,3 @@
-/**
- * 
- */
 package net.jueb.util4j.hotswap;
 
 import java.io.File;
@@ -18,7 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @author wangyd 动态加载类 T不能做为父类加载
+ *动态加载类 T不能做为父类加载
  */
 
 public abstract class IScriptClassFactory<T extends IScript> {
