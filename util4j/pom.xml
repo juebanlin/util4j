@@ -11,12 +11,12 @@
   <url>http://jueb.net</url>
   <distributionManagement>
   	<repository>
-  		<id>jueb-nexus</id>
+  		<id>nexus-jueb</id>
   		<name>jueb nexus repository</name>
   		<url>http://nexus.jueb.net:8081/nexus/content/repositories/releases/</url>
   	</repository>
   	<snapshotRepository>
-  		<id>jueb-nexus</id>
+  		<id>nexus-jueb</id>
   		<name>jueb nexus snapshotRepository</name>
   		<url>http://nexus.jueb.net:8081/nexus/content/repositories/snapshots/</url>
   	</snapshotRepository>
