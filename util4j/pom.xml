@@ -86,6 +86,7 @@
 			<groupId>org.apache.activemq</groupId>
 			<artifactId>activemq-all</artifactId>
 			<version>5.11.1</version>
+			<optional>true</optional>
 		</dependency>
 	</dependencies>
 	<build>
@@ -93,23 +94,79 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.2</version>
 				<configuration>
 					<source>1.7</source>
 					<target>1.7</target>
+					<!-- 编译插件jdk版本 -->
+					<compilerVersion>1.7</compilerVersion>
 					<encoding>${project.build.sourceEncoding}</encoding>
 				</configuration>
 			</plugin>
+			<!-- 源代码打包 -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>2.1</version>
+				<configuration>
+					<attach>true</attach>
+					<encoding>${project.build.sourceEncoding}</encoding>
+				</configuration>
+				<executions>
+					<execution>
+						<phase>compile</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- 项目文档打包 -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.9.1</version>
+				<configuration>
+					<aggregate>true</aggregate>
+				</configuration>
+			</plugin>
+			<!-- 字节码打jar包时把不需要的资源文件给排除在外 -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>2.6</version>
+				<configuration>
+					<!-- jar资源过滤 -->
+					<excludes>
+						<exclude>**/conf/*</exclude>
+						<exclude>**/shell/*</exclude>
+						<exclude>**/.svn/*</exclude>
+						<exclude>**/*.java</exclude>
+						<exclude>log4j2.xml</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
 		</plugins>
+		<!-- classes 目录资源过滤 -->
 		<resources>
 			<resource>
 				<directory>src/main/java</directory>
 				<includes>
 					<include>**/*.properties</include>
 				</includes>
-				<!-- 排除 <excludes> <exclude>log4j.properties</exclude> </excludes> -->
+				<!-- 排除 
+				<excludes>
+					<exclude>log4j2.xml</exclude>
+				</excludes>
+				-->
 			</resource>
 			<resource>
 				<directory>src/main/resources</directory>
+				<!-- 排除
+				<excludes>
+					<exclude>log4j2.xml</exclude>
+				</excludes>
+				 -->
 			</resource>
 		</resources>
 	</build>
