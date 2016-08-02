@@ -9,18 +9,6 @@
 
 	<name>util4j</name>
 	<url>http://jueb.net</url>
-	<distributionManagement>
-		<repository>
-			<id>nexus-jueb</id>
-			<name>jueb nexus repository</name>
-			<url>http://nexus.jueb.net:8081/nexus/content/repositories/releases/</url>
-		</repository>
-		<snapshotRepository>
-			<id>nexus-jueb</id>
-			<name>jueb nexus snapshotRepository</name>
-			<url>http://nexus.jueb.net:8081/nexus/content/repositories/snapshots/</url>
-		</snapshotRepository>
-	</distributionManagement>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
