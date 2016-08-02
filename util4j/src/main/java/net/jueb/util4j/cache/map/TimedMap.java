@@ -6,7 +6,7 @@ import java.util.Map;
  * 键值对具有生命周期的map
  * @author Administrator
  */
-public interface CacheMap<K,V> extends Map<K,V>{
+public interface TimedMap<K,V> extends Map<K,V>{
 
 	/**
 	 * 存放一个键值对,该键值超时访问自动删除

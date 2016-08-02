@@ -6,12 +6,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,21 +28,22 @@ import net.jueb.util4j.thread.NamedThreadFactory;
  * @param <K> 
  * @param <V>
  */
-public class CacheMapSimpleImpl<K,V> implements CacheMap<K, V>{
+public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 	protected Logger log=LoggerFactory.getLogger(getClass());
-	public static final ScheduledThreadPoolExecutor scheduExec = new ScheduledThreadPoolExecutor(1,new NamedThreadFactory("CacheMapTimer", true));
+	public final ScheduledThreadPoolExecutor scheduExec;
 	private final ExecutorService lisenterExecutor=Executors.newCachedThreadPool(new NamedThreadFactory("CacheMapLisenterExecutor", true));
 
-	private final ReentrantLock lock=new ReentrantLock();
+	private final ReentrantReadWriteLock rwLock=new ReentrantReadWriteLock();
 	private final Map<K,EntryAdapter<K,V>> entryMap;
 		
-	public CacheMapSimpleImpl(Map<K,EntryAdapter<K,V>> mapMode){
+	public TimedMapImpl(Map<K,EntryAdapter<K,V>> mapMode,ScheduledThreadPoolExecutor scheduExec){
 		entryMap=mapMode;
-		scheduExec.scheduleWithFixedDelay(getCleanTask(), 1,10, TimeUnit.SECONDS);
+		this.scheduExec=scheduExec;
+		this.scheduExec.scheduleWithFixedDelay(getCleanTask(), 1,20, TimeUnit.SECONDS);
 	}
 	
-	public CacheMapSimpleImpl(){
-		this(new HashMap<K,EntryAdapter<K,V>>());
+	public TimedMapImpl(){
+		this(new HashMap<K,EntryAdapter<K,V>>(),new ScheduledThreadPoolExecutor(1,new NamedThreadFactory("CacheMapTimer", true)));
 	}
 	
 	@SuppressWarnings("hiding")
@@ -251,7 +253,7 @@ public class CacheMapSimpleImpl<K,V> implements CacheMap<K, V>{
 	 */
 	protected int cleanTimeOut()
 	{
-		lock.lock();
+		rwLock.readLock().lock();
 		Set<K> removeKeys=new HashSet<K>();
 		try {
 			for(K key:entryMap.keySet())
@@ -262,27 +264,82 @@ public class CacheMapSimpleImpl<K,V> implements CacheMap<K, V>{
 					removeKeys.add(key);
 				}
 			}
-			for(K key:removeKeys)
-			{
-				removeAndListener(key);
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error(e.getMessage(),e);
+		}finally {
+			rwLock.readLock().unlock();
+		}
+		if(!removeKeys.isEmpty())
+		{
+			rwLock.writeLock().lock();
+			try {
+				for(Object key:removeKeys)
+				{
+					removeAndListener(key);
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+				log.error(e.getMessage(),e);
+			}finally {
+				rwLock.writeLock().unlock();
+			}
+		}
+		return removeKeys.size();
+	}
+
+	/**
+	 * 移除缓存对象并通知事件
+	 * @param key
+	 * @return
+	 */
+	protected EntryAdapter<K, V> removeAndListener(Object key)
+	{
+		final EntryAdapter<K, V> entry=entryMap.remove(key);
+		try {
+			if(entry!=null)
+			{//通知被移除
+				lisenterExecutor.execute(new Runnable() {
+					@Override
+					public void run() {
+						for(EventListener<K, V> l:entry.getListeners())
+						{
+							try {
+								l.removed(entry.getKey(),entry.getValue());
+							} catch (Throwable e) {
+								e.printStackTrace();
+								log.error(e.getMessage(),e);
+							}
+						}
+						entry.getListeners().clear();
+					}
+				});
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			log.error(e.getMessage(),e);
-		}finally{
-			lock.unlock();
 		}
-		return removeKeys.size();
+		return entry;
 	}
-	
+
 	@Override
 	public int size() {
-		return entryMap.size();
+		rwLock.readLock().lock();
+		try {
+			return entryMap.size();
+		} finally {
+			rwLock.readLock().unlock();
+		}
 	}
 
 	@Override
 	public boolean isEmpty() {
-		return entryMap.isEmpty();
+		rwLock.readLock().lock();
+		try {
+			return entryMap.isEmpty();
+		} finally {
+			rwLock.readLock().unlock();
+		}
 	}
 
 	@Override
@@ -292,9 +349,8 @@ public class CacheMapSimpleImpl<K,V> implements CacheMap<K, V>{
 
 	@Override
 	public boolean containsValue(Object value) {
-		lock.lock();
 		try {
-			Iterator<Entry<K,V>> i = entrySet().iterator();
+			Iterator<Entry<K,V>> i = entrySet().iterator();//有锁
 	        if (value==null) {
 	            while (i.hasNext()) {
 	                Entry<K,V> e = i.next();
@@ -311,8 +367,6 @@ public class CacheMapSimpleImpl<K,V> implements CacheMap<K, V>{
 		} catch (Exception e) {
 			e.printStackTrace();
 			log.error(e.getMessage(),e);
-		}finally{
-			lock.unlock();
 		}
         return false;
 	}
@@ -325,45 +379,23 @@ public class CacheMapSimpleImpl<K,V> implements CacheMap<K, V>{
 	@Override
 	public V put(K key, V value, long ttl) {
 		if (key == null || value == null) throw new NullPointerException();
-		lock.lock();
+		rwLock.writeLock().lock();
 		try {
 			entryMap.put(key, new EntryAdapter<K,V>(key, value,ttl));
 		} catch (Exception e) {
 			e.printStackTrace();
 			log.error(e.getMessage(),e);
 		}finally{
-			lock.unlock();
+			rwLock.writeLock().unlock();
 		}
         return value;
 	}
 
-	protected EntryAdapter<K, V> removeAndListener(Object key)
-	{
-		final EntryAdapter<K, V> e=entryMap.remove(key);
-		if(e!=null)
-		{//通知被移除
-			lisenterExecutor.execute(new Runnable() {
-				@Override
-				public void run() {
-					for(EventListener<K, V> l:e.getListeners())
-					{
-						try {
-							l.removed(e.getKey(),e.getValue());
-						} catch (Throwable e) {
-							e.printStackTrace();
-							log.error(e.getMessage(),e);
-						}
-					}
-					e.getListeners().clear();
-				}
-			});
-		}
-		return e;
-	}
-	
 	@Override
 	public V get(Object key) {
-		lock.lock();
+		rwLock.readLock().lock();
+		V result=null;
+		boolean remove=false;
 		try {
 			EntryAdapter<K, V> e=entryMap.get(key);
 			if(e!=null)
@@ -371,86 +403,56 @@ public class CacheMapSimpleImpl<K,V> implements CacheMap<K, V>{
 				e.setLastActiveTime(System.currentTimeMillis());
 				if(e.isTimeOut())
 				{
-					removeAndListener(key);
+					remove=true;
 				}else
 				{
-					return e.getValue();
+					result=e.getValue();
 				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			log.error(e.getMessage(),e);
-		}finally{
-			lock.unlock();
+		}finally {
+			rwLock.readLock().unlock();
 		}
-		return null;
+		if(remove)
+		{
+			rwLock.writeLock().lock();
+			try {
+				removeAndListener(key);
+			} catch (Exception e2) {
+				rwLock.writeLock().unlock();
+			}
+		}
+		return result;
 	}
 
 	@Override
 	public V getBy(K key) {
-		lock.lock();
-		try {
-			EntryAdapter<K, V> e=entryMap.get(key);
-			if(e!=null)
-			{
-				e.setLastActiveTime(System.currentTimeMillis());
-				if(e.isTimeOut())
-				{
-					removeAndListener(key);
-				}else
-				{
-					return e.getValue();
-				}
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			log.error(e.getMessage(),e);
-		}finally{
-			lock.unlock();
-		}
-		return null;
+		return get(key);
 	}
 
 	@Override
 	public V remove(Object key) {
-		lock.lock();
+		rwLock.writeLock().lock();
+		EntryAdapter<K,V> value=null;
 		try {
-			EntryAdapter<K,V> value=removeAndListener(key);
-			if(value!=null)
-			{
-				return value.getValue();
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			log.error(e.getMessage(),e);
-		}finally{
-			lock.unlock();
+			value=removeAndListener(key);
+		} catch (Exception e2) {
+			rwLock.writeLock().unlock();
 		}
-        return null;
+		return value==null?null:value.getValue();
 	}
 
 	@Override
 	public V removeBy(K key) {
-		lock.lock();
-		try {
-			Entry<K, V> e=removeAndListener(key);
-			if(e!=null)
-			{
-				return e.getValue();
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			log.error(e.getMessage(),e);
-		}finally{
-			lock.unlock();
-		}
-		return null;
+		return remove(key);
 	}
 
 	@Override
 	public void putAll(Map<? extends K, ? extends V> m) {
 		if (m == null) throw new NullPointerException();
-		lock.lock();
+		rwLock.writeLock().lock();
 		try {
 			for(java.util.Map.Entry<? extends K, ? extends V> e:m.entrySet())
 			{
@@ -460,68 +462,71 @@ public class CacheMapSimpleImpl<K,V> implements CacheMap<K, V>{
 			e.printStackTrace();
 			log.error(e.getMessage(),e);
 		}finally{
-			lock.unlock();
+			rwLock.writeLock().unlock();
 		}
 	}
 
 	@Override
 	public void clear() {
-		lock.lock();
+		rwLock.writeLock().lock();
 		try {
 			entryMap.clear();
 		} catch (Exception e) {
 			e.printStackTrace();
 			log.error(e.getMessage(),e);
 		}finally{
-			lock.unlock();
+			rwLock.writeLock().unlock();
 		}
 	}
 
 	@Override
 	public Set<K> keySet() {
-		lock.lock();
+		rwLock.readLock().lock();
 		try {
 			return entryMap.keySet();
 		} catch (Exception e) {
 			e.printStackTrace();
 			log.error(e.getMessage(),e);
 		}finally{
-			lock.unlock();
+			rwLock.readLock().unlock();
 		}
 		return null;
 	}
 
 	@Override
 	public Collection<V> values() {
-		lock.lock();
+		rwLock.readLock().lock();
 		try {
 			return new CollectionAdapter(new IteratorAdapter(entryMap.values().iterator()));
 		} catch (Exception e) {
 			e.printStackTrace();
 			log.error(e.getMessage(),e);
 		}finally{
-			lock.unlock();
+			rwLock.readLock().unlock();
 		}
 		return null;
 	}
 
 	@Override
 	public Set<java.util.Map.Entry<K, V>> entrySet() {
-		lock.lock();
+		rwLock.readLock().lock();
+		Set<java.util.Map.Entry<K, V>> set=new HashSet<java.util.Map.Entry<K, V>>();
 		try {
-			return new HashSet<java.util.Map.Entry<K, V>>(entryMap.values());
+			set.addAll(entryMap.values());
 		} catch (Exception e) {
 			e.printStackTrace();
 			log.error(e.getMessage(),e);
 		}finally{
-			lock.unlock();
+			rwLock.readLock().unlock();
 		}
-		return new HashSet<java.util.Map.Entry<K, V>>();
+		return set;
 	}
 
 	@Override
 	public V updateTTL(K key, long ttl) {
-		lock.lock();
+		rwLock.readLock().lock();
+		V result=null;
+		boolean remove=false;
 		try {
 			EntryAdapter<K, V> e=entryMap.get(key);
 			if(e!=null)
@@ -529,26 +534,40 @@ public class CacheMapSimpleImpl<K,V> implements CacheMap<K, V>{
 				e.setLastActiveTime(System.currentTimeMillis());
 				if(e.isTimeOut())
 				{//已过期
-					removeAndListener(key);
+					remove=true;
 				}else
 				{
 					e.setLastActiveTime(System.currentTimeMillis());
 					e.setTtl(ttl);
-					return e.getValue();
+					result=e.getValue();
 				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			log.error(e.getMessage(),e);
 		}finally{
-			lock.unlock();
+			rwLock.readLock().unlock();
 		}
-		return null;
+		if(remove)
+		{
+			rwLock.writeLock().lock();
+			try {
+				removeAndListener(key);
+			} finally {
+				rwLock.writeLock().unlock();
+			}
+		}
+		return result;
 	}
 
+	/**
+	 * 获取过期时间,此访问不会更新活动时间
+	 */
 	@Override
 	public long getExpireTime(K key) {
-		lock.lock();
+		rwLock.readLock().lock();
+		boolean remove=false;
+		long result=-1;//过期移除
 		try {
 			EntryAdapter<K, V> e=entryMap.get(key);
 			if(e!=null)
@@ -557,27 +576,38 @@ public class CacheMapSimpleImpl<K,V> implements CacheMap<K, V>{
 				{//有过期时间
 					if(e.isTimeOut())
 					{//过期移除
-						removeAndListener(key);
-						return -1;
+						remove=true;
 					}
-					return e.getLastActiveTime()+e.getTtl()-System.currentTimeMillis();
+					result= e.getLastActiveTime()+e.getTtl()-System.currentTimeMillis();
 				}else
 				{//永不过期
-					return 0;
+					result= 0;
 				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			log.error(e.getMessage(),e);
-		}finally{
-			lock.unlock();
+		}finally {
+			rwLock.readLock().unlock();
 		}
-		return -1;//过期移除
+		if(remove)
+		{
+			rwLock.writeLock().lock();
+			try {
+				removeAndListener(key);
+				result= -1;
+			} finally {
+				rwLock.writeLock().unlock();
+			}
+		}
+		return result;
 	}
 	
 	@Override
 	public V addEventListener(K key,EventListener<K, V> lisnener) {
-		lock.lock();
+		rwLock.readLock().lock();
+		V result=null;
+		boolean remove=false;
 		try {
 			EntryAdapter<K, V> e=entryMap.get(key);
 			if(e!=null)
@@ -585,28 +615,39 @@ public class CacheMapSimpleImpl<K,V> implements CacheMap<K, V>{
 				e.setLastActiveTime(System.currentTimeMillis());
 				if(e.isTimeOut())
 				{
-					removeAndListener(key);
+					remove=true;
 				}else
 				{
 					if(lisnener!=null)
 					{
 						e.getListeners().add(lisnener);
 					}
-					return e.getValue();
+					result= e.getValue();
 				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			log.error(e.getMessage(),e);
-		}finally{
-			lock.unlock();
+		}finally {
+			rwLock.readLock().unlock();
 		}
-		return null;
+		if(remove)
+		{
+			rwLock.writeLock().lock();
+			try {
+				removeAndListener(key);
+			} finally {
+				rwLock.writeLock().unlock();
+			}
+		}
+		return result;
 	}
 
 	@Override
-	public V removeEventListener(K key,CacheMap.EventListener<K, V> lisnener) {
-		lock.lock();
+	public V removeEventListener(K key,TimedMap.EventListener<K, V> lisnener) {
+		rwLock.readLock().lock();
+		V result=null;
+		boolean remove=false;
 		try {
 			EntryAdapter<K, V> e=entryMap.get(key);
 			if(e!=null)
@@ -614,28 +655,39 @@ public class CacheMapSimpleImpl<K,V> implements CacheMap<K, V>{
 				e.setLastActiveTime(System.currentTimeMillis());
 				if(e.isTimeOut())
 				{
-					removeAndListener(key);
+					remove=true;
 				}else
 				{
 					if(lisnener!=null)
 					{
 						e.getListeners().remove(lisnener);
 					}
-					return e.getValue();
+					result= e.getValue();
 				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			log.error(e.getMessage(),e);
-		}finally{
-			lock.unlock();
+		}finally {
+			rwLock.readLock().unlock();
 		}
-		return null;
+		if(remove)
+		{
+			rwLock.writeLock().lock();
+			try {
+				removeAndListener(key);
+			} finally {
+				rwLock.writeLock().unlock();
+			}
+		}
+		return result;
 	}
 
 	@Override
 	public V removeAllEventListener(K key) {
-		lock.lock();
+		rwLock.readLock().lock();
+		V result=null;
+		boolean remove=false;
 		try {
 			EntryAdapter<K, V> e=entryMap.get(key);
 			if(e!=null)
@@ -643,45 +695,58 @@ public class CacheMapSimpleImpl<K,V> implements CacheMap<K, V>{
 				e.setLastActiveTime(System.currentTimeMillis());
 				if(e.isTimeOut())
 				{
-					removeAndListener(key);
+					remove=true;
 				}else
 				{
 					e.getListeners().clear();
-					return e.getValue();
+					result= e.getValue();
 				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			log.error(e.getMessage(),e);
-		}finally{
-			lock.unlock();
+		}finally {
+			rwLock.readLock().unlock();
 		}
-		return null;
+		if(remove)
+		{
+			rwLock.writeLock().lock();
+			try {
+				removeAndListener(key);
+			} finally {
+				rwLock.writeLock().unlock();
+			}
+		}
+		return result;
 	}
 
-	public static void main(String[] args) {
-			CacheMapSimpleImpl<String,String> map=new CacheMapSimpleImpl<String,String>();
-			for(int i=1;i<=10;i++)
-			{
-				map.put(""+i,i+"秒消失",TimeUnit.SECONDS.toMillis(i));
-				map.addEventListener(""+i, new EventListener<String, String>() {
 	
-					@Override
-					public void removed(String key, String value) {
-						System.err.println(key+":"+value+"超时移除");
-					}
-				});
-			}
-			for(int i=0;i<40;i++)
-			{
-				int sec=i+1;
-				try {
-					Thread.sleep(TimeUnit.SECONDS.toMillis(1));
-	//				map.getCleanTask().run();
-					System.out.println("sec:"+sec+","+map.size());
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
+	public static class Test implements EventListener<String,String>{
+		TimedMapImpl<String,String> map=new TimedMapImpl<String,String>();
+
+		/**
+		 * 当RoleAgent被移除后执行此方法
+		 */
+		@Override
+		public void removed(String key,String value) {
+			System.err.println("玩家断线未重连移除"+value.toString());
 		}
+		
+		public void test()
+		{
+			String key="TestKey";
+			String value="TestValue";
+			map.put(key,value);
+			map.addEventListener(key, this);
+			map.updateTTL(key,TimeUnit.SECONDS.toMillis(30));
+		}
+		
+	}
+	public static void main(String[] args) {
+		Test t=new Test();
+		t.test();
+		Scanner sc=new Scanner(System.in);
+		sc.nextLine();
+		sc.close();
+	}
 }
