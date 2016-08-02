@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>  
-<configuration status="DEBUG">
+<configuration status="DEBUG" xmlns="http://logging.apache.org/log4j/2.0/config">
 	<properties>
 		<!-- 日志输出目录 -->  
         <property name="LOG_HOME">logs</property>
@@ -37,7 +37,7 @@
     </appenders>  
     <loggers>
     	<!-- 同步日志
-    	 <logger name="com.mgame" level="trace" additivity="false">  
+    	 <logger name="net.jueb" level="trace" additivity="false">  
     		<appender-ref ref="Console" />
     		<appender-ref ref="LogFile" />
     		<appender-ref ref="ErrorLogFile" />
