@@ -1,5 +1,5 @@
 package net.jueb.util4j.bandConversion;
-import java.util.Vector;
+import java.util.List;
 
 /**
  * 符号转盘
@@ -11,7 +11,7 @@ public class Rotor{
 	/**
 	 * 符号集合
 	 */
-	private final Vector<Numeral> numerals;
+	private final List<Numeral> numerals;
 	
 	private final int radix;
 	
@@ -22,7 +22,7 @@ public class Rotor{
 	private volatile int maxIndex;
 	
 	
-	public Rotor(Vector<Numeral> numerals) {
+	public Rotor(List<Numeral> numerals) {
 		if(numerals.size()<=1)
 		{
 			throw new RuntimeException("基数转盘至少有2个符号");
@@ -48,50 +48,28 @@ public class Rotor{
 		this.currenIndex=index;
 	}
 	
-	
-	/**
-	 * ��ȡ��ǰָ��Ļ�����
-	 * @return
-	 */
 	public synchronized Numeral getCurrentNumeral()
 	{
 		return this.numerals.get(currenIndex);
 	}
 	
-	/**
-	 * ��ȡת�̵Ľ�����
-	 * @return
-	 */
 	public synchronized int getRadix() {
 		return this.radix;
 	}
 	
-	/**
-	 * ��ȡ�����Ʒ������
-	 * @return
-	 */
 	public synchronized int getMaxIndex() {
 		return this.maxIndex;
 	}
-	/**
-	 * ��ȡ��ǰָ��Ļ������ַ�
-	 * @return
-	 */
+
 	public synchronized String getCurrentViewStr()
 	{
 		return this.numerals.get(currenIndex).getViewStr();
 	}	
-	/**
-	 * ��ȡ��ż���
-	 * @return
-	 */
-	public synchronized Vector<Numeral> getNumerals() {
+
+	public synchronized List<Numeral> getNumerals() {
 		return numerals;
 	}
-	/**
-	 * ʹת������Ļ����һ
-	 * �����������ż�һ���򷵻�true,ͬʱ��ǰλ�ûص���С���
-	 */
+	
 	public synchronized boolean add()
 	{
 		if(this.currenIndex<maxIndex)
@@ -99,7 +77,7 @@ public class Rotor{
 			this.currenIndex++;
 			return false;
 		}else
-		{//�������֮ǰ�Ѿ��������ŵĻ����ţ������λ
+		{
 			this.currenIndex=0;
 			return true;
 		}

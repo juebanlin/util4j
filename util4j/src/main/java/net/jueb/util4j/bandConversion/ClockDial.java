@@ -1,23 +1,24 @@
 package net.jueb.util4j.bandConversion;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Vector;
 
 /**
  * 带有若干个符号转盘的表盘，用于表示数值
  * @author Administrator
- *
  */
 public class ClockDial {
 	
 	/**
 	 * 符号转盘
 	 */
-	private final Vector<Rotor> rotors;
+	private final List<Rotor> rotors;
+	
 	/**
 	 *所有转盘使用的相同的符号集合
 	 */
-	private final Vector<Numeral> numerals;
+	private final List<Numeral> numerals;
 	
 	/**
 	 * 表盘的进制数，即符合集合的大小
@@ -41,7 +42,7 @@ public class ClockDial {
 	 * @param numerals 符号集合
 	 * @param digit 表盘数值位数
 	 */
-	public ClockDial(Vector<Numeral> numerals,int digit) {
+	public ClockDial(List<Numeral> numerals,int digit) {
 		if(digit<=0)
 		{
 			throw new RuntimeException("至少有一位转盘");
@@ -100,12 +101,12 @@ public class ClockDial {
 		return this.setValue(result);
 	}
 	
-	public Vector<Rotor> getRotors() {
+	public List<Rotor> getRotors() {
 		return rotors;
 	}
 
 
-	public Vector<Numeral> getNumerals() {
+	public List<Numeral> getNumerals() {
 		return numerals;
 	}
 
