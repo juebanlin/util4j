@@ -1,9 +1,0 @@
-log4j.appender.label=org.apache.log4j.ConsoleAppender
-log4j.appender.label.layout=org.apache.log4j.PatternLayout
-log4j.appender.label.layout.ConversionPattern=%m%n
-
-log4j.appender.textArea=org.apache.log4j.ConsoleAppender
-log4j.appender.textArea.layout=org.apache.log4j.PatternLayout
-log4j.appender.textArea.layout.ConversionPattern=%-d{yyyy-MM-dd HH:mm:ss}  [ %p ]  %m%n
-
-log4j.rootLogger=INFO,label,textArea

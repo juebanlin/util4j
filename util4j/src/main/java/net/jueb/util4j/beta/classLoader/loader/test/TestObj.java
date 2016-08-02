@@ -1,6 +1,7 @@
 package net.jueb.util4j.beta.classLoader.loader.test;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *@author juebanlin
@@ -9,7 +10,7 @@ import org.apache.log4j.Logger;
  **/
 public class TestObj implements Runnable{
 
-	Logger log=Logger.getLogger(getClass());
+	Logger log=LoggerFactory.getLogger(getClass());
 	private int version=1;
 	
 	@Override
