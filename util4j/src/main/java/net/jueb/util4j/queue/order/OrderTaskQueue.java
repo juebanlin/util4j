@@ -384,7 +384,6 @@ public class OrderTaskQueue {
 	public static void main(String[] args) {
 		final List<Task> ts=new ArrayList<Task>();
 		final Map<Integer,Long> map=new HashMap<Integer,Long>();
-		final Logger log = LoggerFactory.getLogger("taskLog");
 		final int start=1;
 		final int end=1000000;
 		for(int i=start;i<=end;i++)

@@ -1,4 +1,4 @@
-package net.jueb.util4j.queue.order;
+package net.jueb.util4j.beta.queue;
 
 import java.sql.Date;
 import java.text.SimpleDateFormat;
