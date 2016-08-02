@@ -6,7 +6,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class AbstractGameService implements GameService{
+public abstract class AbstractService implements IService{
 	protected final Logger log = LoggerFactory.getLogger(getClass());
 	private  class ThreadHolder implements Runnable 
 	{

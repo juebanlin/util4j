@@ -4,7 +4,7 @@ package net.jueb.util4j.common.game;
  * 游戏服务
  * @author Administrator
  */
-public interface GameService {
+public interface IService {
 
 	public static enum ServiceState{
 		

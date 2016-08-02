@@ -1,4 +1,4 @@
-package net.jueb.util4j.beta.cache.jdk;
+package net.jueb.util4j.cache.map;
 
 import java.io.Serializable;  
 import java.util.ArrayList;  

@@ -430,6 +430,8 @@ public class OrderTaskQueue {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		new Scanner(System.in).nextLine();
+		Scanner sc=new Scanner(System.in);
+		sc.nextLine();
+		sc.close();
 	}
 }

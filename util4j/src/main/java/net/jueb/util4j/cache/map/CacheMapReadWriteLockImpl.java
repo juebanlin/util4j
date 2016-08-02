@@ -745,6 +745,8 @@ public class CacheMapReadWriteLockImpl<K,V> implements CacheMap<K, V>{
 	public static void main(String[] args) {
 		Test t=new Test();
 		t.test();
-		new Scanner(System.in).nextLine();
+		Scanner sc=new Scanner(System.in);
+		sc.nextLine();
+		sc.close();
 	}
 }
