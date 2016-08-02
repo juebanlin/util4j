@@ -4,7 +4,7 @@
 
 	<groupId>net.jueb</groupId>
 	<artifactId>util4j</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>2.0</version>
 	<packaging>jar</packaging>
 
 	<name>util4j</name>
@@ -12,7 +12,6 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
-
 	<dependencies>
 		<dependency>
 			<groupId>junit</groupId>
@@ -20,27 +19,13 @@
 			<version>4.11</version>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-lang3</artifactId>
-			<version>3.4</version>
-		</dependency>
-		<!-- 配置JDK 1.7的tools.jar依赖 -->
-		<dependency>
-			<groupId>com.sun</groupId>
-			<artifactId>tools</artifactId>
-			<version>1.7</version>
-			<scope>system</scope>
-			<systemPath>${JAVA_HOME}/lib/tools.jar</systemPath>
-			<optional>true</optional>
-		</dependency>
 		<!-- 日志配置 -->
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
 			<version>1.7.12</version>
 		</dependency>
-		<!-- 日志log4j实现配置 <optional>true</optional>只适合当前项目测试使用,不传递个依赖此项目的其它项目 -->
+		<!-- 日志log4j实现配置 <optional>true</optional>只适合当前项目测试使用,不传递个依赖此项目的其它项目-->
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-slf4j-impl</artifactId>
@@ -66,9 +51,37 @@
 			<optional>true</optional>
 		</dependency>
 		<dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>netty-all</artifactId>
+			<version>4.1.1.Final</version>
+		</dependency>
+		<dependency>
 			<groupId>commons-codec</groupId>
 			<artifactId>commons-codec</artifactId>
 			<version>1.10</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.4</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.google.protobuf</groupId>
+			<artifactId>protobuf-java</artifactId>
+			<version>2.6.1</version>
+			<optional>true</optional>
+		</dependency>
+		
+		
+		<!-- 配置JDK 1.7的tools.jar依赖 -->
+		<dependency>
+			<groupId>com.sun</groupId>
+			<artifactId>tools</artifactId>
+			<version>1.7</version>
+			<scope>system</scope>
+			<systemPath>${JAVA_HOME}/lib/tools.jar</systemPath>
+			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.activemq</groupId>
