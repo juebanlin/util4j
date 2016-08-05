@@ -10,6 +10,7 @@ import net.jueb.util4j.net.JConnection;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 实现的连接
@@ -123,5 +124,10 @@ public class NettyConnection implements JConnection{
 	@Override
 	public String toString() {
 		return channel!=null?channel.toString()+",isActive:"+channel.isActive():super.toString();
+	}
+
+	@Override
+	public Set<String> getAttributeNames() {
+		return attributes.keySet();
 	}
 }

@@ -1,6 +1,7 @@
 package net.jueb.util4j.net;
 
 import java.net.InetSocketAddress;
+import java.util.Set;
 
 /**
  * 网络连接接口
@@ -30,6 +31,12 @@ public interface JConnection {
 	 * @param value
 	 */
 	public void setAttribute(String key,Object value);
+	
+	/**
+	 * 获取属性key集合
+	 * @return
+	 */
+	public Set<String> getAttributeNames();
 	/**
 	 * 获取属性
 	 * @param key
