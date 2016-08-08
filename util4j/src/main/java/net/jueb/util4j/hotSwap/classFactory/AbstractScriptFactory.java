@@ -22,7 +22,7 @@ import net.jueb.util4j.thread.NamedThreadFactory;
  * T不能做为父类加载
  * T尽量为接口类型,因为只有接口类型的类才没有逻辑,才可以不热加载,并且子类可选择实现
  */
-public abstract class IScriptClassFactory<T extends IScript> {
+public abstract class AbstractScriptFactory<T extends IScript> implements IScriptFactory<T>{
 	protected final Logger _log = LoggerFactory.getLogger(this.getClass());
 	/**
 	 * 是否自动重载变更代码
@@ -41,21 +41,24 @@ public abstract class IScriptClassFactory<T extends IScript> {
 
 	protected ScriptClassLoader classLoader;
 	protected final String classRootDir;
+	protected final ClassRegister reger;
 	
-	protected IScriptClassFactory(String classRootDir) {
+	protected AbstractScriptFactory(String classRootDir) {
 		this.classRootDir=classRootDir;
+		this.reger=new ClassRegister(this);
 		init();
 	}
-	protected IScriptClassFactory(String classRootDir,boolean reload) {
+	protected AbstractScriptFactory(String classRootDir,boolean reload) {
 		this.classRootDir=classRootDir;
 		this.reload=reload;
+		this.reger=new ClassRegister(this);
 		init();
 	}
 	
 	private void init()
 	{
 		try {
-			initRegist();
+			initRegist(reger);
 			schedule.scheduleWithFixedDelay(new ScriptMonitorTask(),0, intervalMillis, TimeUnit.MILLISECONDS);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -76,34 +79,6 @@ public abstract class IScriptClassFactory<T extends IScript> {
 		}
 		File file=new File(path);
 		return file.exists()&&file.isFile();
-	}
-	
-	/**
-	 * 根据类名注册类
-	 * @param script 脚本类
-	 * @param depends 依赖类
-	 */
-	protected final void registClass(String className,String ...depends) {
-		if(!validate(className, depends))
-		{
-			return ;
-		}
-		ClassFile cf = getClassFile(className);
-		scriptFilePaths.put(cf.getFilePath(), cf);
-		_log.info("registClass:"+cf.getFilePath());
-		ClassFile subClass=cf;//子类
-		for(int i=0;i<depends.length;i++)
-		{
-			String parentClassName=depends[i];
-			ClassFile parentCf=getClassFile(parentClassName);
-			subClass.setParent(parentCf);//设置子类
-			if(!scriptFilePaths.containsKey(parentCf.getFilePath()))
-			{
-				scriptFilePaths.put(parentCf.getFilePath(),parentCf);
-				_log.info("registDependClass:"+parentCf.getClassName());
-			}
-			subClass=parentCf;//更新子类为当前父类
-		}
 	}
 	
 	/**
@@ -134,6 +109,33 @@ public abstract class IScriptClassFactory<T extends IScript> {
 		return result;
 	}
 	
+	/**
+	 * 根据类名注册类
+	 * @param script 脚本类
+	 * @param depends 依赖类
+	 */
+	protected final void registClass(String className,String ...depends) {
+		if(!validate(className, depends))
+		{
+			return ;
+		}
+		ClassFile cf = getClassFile(className);
+		scriptFilePaths.put(cf.getFilePath(), cf);
+		_log.info("registClass:"+cf.getFilePath());
+		ClassFile subClass=cf;//子类
+		for(int i=0;i<depends.length;i++)
+		{
+			String parentClassName=depends[i];
+			ClassFile parentCf=getClassFile(parentClassName);
+			subClass.setParent(parentCf);//设置子类
+			if(!scriptFilePaths.containsKey(parentCf.getFilePath()))
+			{
+				scriptFilePaths.put(parentCf.getFilePath(),parentCf);
+				_log.info("registDependClass:"+parentCf.getClassName());
+			}
+			subClass=parentCf;//更新子类为当前父类
+		}
+	}
 	/**
 	 * 注册类
 	 * @param script 脚本类
@@ -258,6 +260,10 @@ public abstract class IScriptClassFactory<T extends IScript> {
 	// 加载所有的类
 	@SuppressWarnings("unchecked")
 	public final void loadAllClass(){
+		if(isLoading)
+		{
+			return;
+		}
 		isLoading=true;
 		classLoader = new ScriptClassLoader();
 		final ConcurrentHashMap<Integer, Class<? extends T>> codeMap=new ConcurrentHashMap<Integer, Class<? extends T>>();
@@ -338,7 +344,7 @@ public abstract class IScriptClassFactory<T extends IScript> {
 	/**
 	 * 初始化类注册
 	 */
-	protected abstract void initRegist();
+	protected abstract void initRegist(ClassRegister reger);
 	
 	// 从本地读取文件
 	@SuppressWarnings("resource")
@@ -469,11 +475,42 @@ public abstract class IScriptClassFactory<T extends IScript> {
 		}
 	}
 
+	protected class ClassRegister{
+		private final AbstractScriptFactory<T> factory;
+		
+		public ClassRegister(AbstractScriptFactory<T> factory) {
+			super();
+			this.factory = factory;
+		}
+		public final void registClass(Class<? extends T> scriptClass,Class<?> ...depends) {
+			factory.registClass(scriptClass, depends);
+		}
+		/**
+		 * 根据类名注册类
+		 * @param script 脚本类
+		 * @param depends 依赖类
+		 */
+		public final void registClass(String className,String ...depends) {
+			factory.registClass(className, depends);
+		}
+	}
+
+
 	public final boolean isReload() {
 		return reload;
 	}
 	
 	public final void setReload(boolean reload) {
 		this.reload = reload;
+	}
+	
+	@Override
+	public final T buildInstance(int code) {
+		return build(code);
+	}
+	
+	@Override
+	public final void reload() {
+		loadAllClass();
 	}
 }
