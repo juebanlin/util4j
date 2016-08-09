@@ -1,4 +1,4 @@
-package net.jueb.util4j.queue.taskQueue;
+package net.jueb.util4j.beta.queue.taskQueue;
 
 import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;

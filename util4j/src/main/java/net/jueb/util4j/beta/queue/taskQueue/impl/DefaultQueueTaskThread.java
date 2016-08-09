@@ -1,4 +1,4 @@
-package net.jueb.util4j.queue.taskQueue.impl;
+package net.jueb.util4j.beta.queue.taskQueue.impl;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.ReentrantLock;

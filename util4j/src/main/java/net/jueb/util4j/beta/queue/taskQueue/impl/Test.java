@@ -1,10 +1,10 @@
-package net.jueb.util4j.queue.taskQueue.impl;
+package net.jueb.util4j.beta.queue.taskQueue.impl;
 
 import java.util.Scanner;
 import java.util.Set;
 
-import net.jueb.util4j.queue.taskQueue.QueueTask;
-import net.jueb.util4j.queue.taskQueue.QueueTaskContext;
+import net.jueb.util4j.beta.queue.taskQueue.QueueTask;
+import net.jueb.util4j.beta.queue.taskQueue.QueueTaskContext;
 
 public class Test {
 

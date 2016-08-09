@@ -1,6 +1,6 @@
-package net.jueb.util4j.queue.taskQueue.impl;
+package net.jueb.util4j.beta.queue.taskQueue.impl;
 
-import net.jueb.util4j.queue.taskQueue.QueueTaskContext;
+import net.jueb.util4j.beta.queue.taskQueue.QueueTaskContext;
 
 class DefaultQueueTaskContext implements QueueTaskContext{
 

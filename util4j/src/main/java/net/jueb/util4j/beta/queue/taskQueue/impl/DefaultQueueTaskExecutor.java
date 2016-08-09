@@ -1,4 +1,4 @@
-package net.jueb.util4j.queue.taskQueue.impl;
+package net.jueb.util4j.beta.queue.taskQueue.impl;
 
 import java.util.Deque;
 import java.util.List;
@@ -8,9 +8,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
-import net.jueb.util4j.queue.taskQueue.AbstractQueueTaskExecutor;
-import net.jueb.util4j.queue.taskQueue.QueueTask;
-import net.jueb.util4j.queue.taskQueue.TaskTracer;
+import net.jueb.util4j.beta.queue.taskQueue.AbstractQueueTaskExecutor;
+import net.jueb.util4j.beta.queue.taskQueue.QueueTask;
+import net.jueb.util4j.beta.queue.taskQueue.TaskTracer;
 
 /**
  * 顺序任务执行队列

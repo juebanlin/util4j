@@ -1,7 +1,7 @@
-package net.jueb.util4j.queue.taskQueue.impl;
+package net.jueb.util4j.beta.queue.taskQueue.impl;
 
-import net.jueb.util4j.queue.taskQueue.AbstractTaskTracer;
-import net.jueb.util4j.queue.taskQueue.QueueTask;
+import net.jueb.util4j.beta.queue.taskQueue.AbstractTaskTracer;
+import net.jueb.util4j.beta.queue.taskQueue.QueueTask;
 
 class DefaultTaskTracer extends AbstractTaskTracer{
 
