@@ -2,6 +2,7 @@ package net.jueb.util4j.common.game;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,20 +11,22 @@ public abstract class AbstractService implements IService{
 	protected final Logger log = LoggerFactory.getLogger(getClass());
 	private  class ThreadHolder implements Runnable 
 	{
-		private boolean isRun;
-		public void setRun(boolean isRun) {
-			this.isRun = isRun;
-		}
+		private volatile CountDownLatch cd;
 		@Override
 		public void run() {
-			while(isRun)
+			cd=new CountDownLatch(1);
+			try {
+				cd.await();
+			} catch (InterruptedException e) {
+				log.error(e.getMessage(),e);
+			}
+		}
+		
+		public void exit()
+		{
+			if(cd!=null && cd.getCount()>0)
 			{
-				try {
-					Thread.sleep(500);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-					log.error(e.getMessage(),e);
-				}
+				cd.countDown();
 			}
 		}
 	}
@@ -64,16 +67,15 @@ public abstract class AbstractService implements IService{
 	
 	protected void daemonInit()
 	{
-		threadHolder.setRun(true);
 		Thread t=new Thread(threadHolder);
-		t.setDaemon(false);
+		t.setDaemon(daemon);
 		t.setName("GameService-ThreadHolder");
 		t.start();
 	}
 	
 	protected void daemonStop()
 	{
-		threadHolder.setRun(false);
+		threadHolder.exit();
 	}
 	
 	public void startService(){
@@ -82,8 +84,8 @@ public abstract class AbstractService implements IService{
 			setState(ServiceState.Starting);
 			try {
 				doStart();
-				setState(ServiceState.Active);
 				daemonInit();
+				setState(ServiceState.Active);
 			} catch (Throwable e) {
 				log.error(e.getMessage(),e);
 				e.printStackTrace();
@@ -110,8 +112,8 @@ public abstract class AbstractService implements IService{
 			setState(ServiceState.Stoping);
 			try {
 				doClose();
-				setState(ServiceState.Stoped);
 				daemonStop();
+				setState(ServiceState.Stoped);
 			} catch (Throwable e) {
 				log.error(e.getMessage(),e);
 				e.printStackTrace();
