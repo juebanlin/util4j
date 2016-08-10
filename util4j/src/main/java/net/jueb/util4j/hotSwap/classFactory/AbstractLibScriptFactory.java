@@ -314,16 +314,21 @@ public abstract class AbstractLibScriptFactory<T extends IScript> implements ISc
 					resolveClass(clazz);
 				}
 			}
-			log.debug("loadClass:" + className + ",resolve=" + resolve + ",Class=" + clazz + ",ClassLoader="
-					+ ClassLoader);
+			log.debug("loadClass:" + className + ",resolve=" + resolve + ",Clazz=" + clazz + ",ClassLoader="+ ClassLoader);
 			return clazz;
 		}
 
 		/**
-		 * 查找url路径列表中类文件并声明定义类
+		 * 查找类,这个方法一般多用于依赖类的查找,如果之前已经加载过,则重复加载会报错,所以需要添加findLoadedClass判断
 		 */
 		@Override
 		protected Class<?> findClass(final String name) throws ClassNotFoundException {
+			_log.debug("findClass:"+name);
+			Class<?> clazz=findLoadedClass(name);
+			if (clazz != null) 
+			{
+				return clazz;
+			}
 			return super.findClass(name);
 		}
 
@@ -384,8 +389,8 @@ public abstract class AbstractLibScriptFactory<T extends IScript> implements ISc
 
 		public void run() {
 			rwLock.readLock().lock();
-			boolean trigLoad = false;
 			try {
+				boolean trigLoad = false;
 				if (!autoReload) {
 					return;
 				}
@@ -425,16 +430,14 @@ public abstract class AbstractLibScriptFactory<T extends IScript> implements ISc
 						}
 					}
 				}
+				if (trigLoad) {
+					_log.debug("trigger reload scriptLibs……");
+					reload();
+				}
+			}catch (Exception e) {
+				_log.error(e.getMessage(),e);
 			} finally {
 				rwLock.readLock().unlock();
-			}
-			if (trigLoad) {
-				_log.debug("trigger reload scriptLibs……");
-				try {
-					loadAllClass();
-				} catch (Exception e) {
-					_log.error(e.getMessage(),e);
-				}
 			}
 		}
 	}
@@ -466,7 +469,6 @@ public abstract class AbstractLibScriptFactory<T extends IScript> implements ISc
 			try {
 				result = c.getConstructor(cs).newInstance(initargs);
 			} catch (Exception e) {
-				e.printStackTrace();
 				_log.error(e.getMessage(), e);
 			}
 		}
@@ -487,7 +489,6 @@ public abstract class AbstractLibScriptFactory<T extends IScript> implements ISc
 			try {
 				result = c.newInstance();
 			} catch (Exception e) {
-				e.printStackTrace();
 				_log.error(e.getMessage(), e);
 			}
 		}
@@ -505,8 +506,7 @@ public abstract class AbstractLibScriptFactory<T extends IScript> implements ISc
 	public final void reload() {
 		try {
 			loadAllClass();
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (Throwable e) {
 			_log.error(e.getMessage(), e);
 		}
 	}
