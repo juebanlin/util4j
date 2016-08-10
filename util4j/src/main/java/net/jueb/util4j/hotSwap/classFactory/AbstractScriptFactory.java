@@ -19,6 +19,7 @@ import net.jueb.util4j.thread.NamedThreadFactory;
 
 /**
  * 动态加载类 
+ * 注意:脚本类不能包含匿名类
  * T不能做为父类加载
  * T尽量为接口类型,因为只有接口类型的类才没有逻辑,才可以不热加载,并且子类可选择实现
  */
@@ -482,11 +483,18 @@ public abstract class AbstractScriptFactory<T extends IScript> implements IScrip
 			super();
 			this.factory = factory;
 		}
+		/**
+		 * 注册需要热更新的class
+		 * 注意:脚本类不能包含匿名类
+		 * @param scriptClass
+		 * @param depends
+		 */
 		public final void registClass(Class<? extends T> scriptClass,Class<?> ...depends) {
 			factory.registClass(scriptClass, depends);
 		}
 		/**
 		 * 根据类名注册类
+		 * 注意:脚本类不能包含匿名类
 		 * @param script 脚本类
 		 * @param depends 依赖类
 		 */
