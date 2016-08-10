@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -39,15 +40,16 @@ public abstract class AbstractLibScriptFactory<T extends IScript> implements ISc
 	/**
 	 * 是否自动重载变更代码
 	 */
-	protected volatile boolean reload;
+	protected volatile boolean autoReload;
 
 	/**
 	 * 记录加载的jar文件和时间
 	 */
-	protected final ConcurrentHashMap<String, RecordFile> loadedRecord = new ConcurrentHashMap<String, RecordFile>();
-	protected final ConcurrentHashMap<Integer, Class<? extends T>> codeMap = new ConcurrentHashMap<Integer, Class<? extends T>>();
-
-	enum State {
+	protected final Map<String, RecordFile> loadedRecord = new ConcurrentHashMap<String, RecordFile>();
+	protected final Map<Integer, Class<? extends T>> codeMap = new ConcurrentHashMap<Integer, Class<? extends T>>();
+	private final ReentrantReadWriteLock rwLock=new ReentrantReadWriteLock();
+	
+	public static enum State {
 		/**
 		 * 脚本未加载
 		 */
@@ -61,7 +63,7 @@ public abstract class AbstractLibScriptFactory<T extends IScript> implements ISc
 		 */
 		loaded,
 	}
-
+	
 	protected volatile State state = State.ready;
 
 	/**
@@ -75,9 +77,9 @@ public abstract class AbstractLibScriptFactory<T extends IScript> implements ISc
 		this(scriptLibDir, true);
 	}
 
-	protected AbstractLibScriptFactory(String scriptLibDir, boolean reload) {
+	protected AbstractLibScriptFactory(String scriptLibDir, boolean autoReload) {
 		this.scriptLibDir = scriptLibDir;
-		this.reload = reload;
+		this.autoReload = autoReload;
 		init();
 	}
 
@@ -148,7 +150,6 @@ public abstract class AbstractLibScriptFactory<T extends IScript> implements ISc
 
 	/**
 	 * 加载所有的类
-	 * 
 	 * @param jarFiles
 	 * @throws IOException
 	 * @throws ClassNotFoundException
@@ -161,8 +162,9 @@ public abstract class AbstractLibScriptFactory<T extends IScript> implements ISc
 		{
 			return;
 		}
-		state = State.loading;
+		rwLock.writeLock().lock();
 		try {
+			state = State.loading;
 			ScriptClassLoader newClassLoader = new ScriptClassLoader();
 			Map<String, RecordFile> newLoadedRecord = new HashMap<String, RecordFile>();
 			Set<Class<?>> allClass = new HashSet<Class<?>>();
@@ -183,6 +185,7 @@ public abstract class AbstractLibScriptFactory<T extends IScript> implements ISc
 			this.classLoader = newClassLoader;
 		} finally {
 			state = State.loaded;
+			rwLock.writeLock().unlock();
 		}
 	}
 
@@ -380,60 +383,83 @@ public abstract class AbstractLibScriptFactory<T extends IScript> implements ISc
 	class ScriptMonitorTask implements Runnable {
 
 		public void run() {
-			if (!reload) {
-				return;
-			}
+			rwLock.readLock().lock();
+			boolean trigLoad = false;
 			try {
-				if (state == State.loading) {
+				if (!autoReload) {
 					return;
 				}
-				boolean reload = false;
+				if (state == State.loading) 
+				{
+					return;
+				}
 				Map<String, File> files = new HashMap<String, File>();
-				for (File file : findJarFile(scriptLibDir)) {
+				for (File file : findJarFile(scriptLibDir)) 
+				{
 					files.put(file.getPath(), file);
 				}
-				for (File file : files.values()) {
+				for (File file : files.values()) 
+				{
 					RecordFile rf = loadedRecord.get(file.getPath());
-					if (rf == null) {// 新增jar
-						reload = true;
+					if (rf == null) 
+					{// 新增jar
+						trigLoad = true;
 						break;
-					} else {// 文件变动
-						if (file.lastModified() > rf.getLastModifyTime()) {
-							reload = true;
+					} else 
+					{// 文件变动
+						if (file.lastModified() > rf.getLastModifyTime()) 
+						{
+							trigLoad = true;
 							break;
 						}
 					}
 				}
-				if (!reload) {
-					for (String key : loadedRecord.keySet()) {
-						if (!files.containsKey(key)) {// 建少jar
-							reload = true;
+				if (!trigLoad) 
+				{//判断是否减少了jar
+					for (String key : loadedRecord.keySet()) 
+					{
+						if (!files.containsKey(key)) 
+						{//减少jar
+							trigLoad = true;
 							break;
 						}
 					}
 				}
-				if (reload) {
-					_log.debug("trigger reload scriptLibs……");
+			} finally {
+				rwLock.readLock().unlock();
+			}
+			if (trigLoad) {
+				_log.debug("trigger reload scriptLibs……");
+				try {
 					loadAllClass();
+				} catch (Exception e) {
+					_log.error(e.getMessage(),e);
 				}
-			} catch (Throwable e) {
-				e.printStackTrace();
-				_log.error(e.getMessage(), e);
 			}
 		}
 	}
 
-	public final boolean isReload() {
-		return reload;
+	public boolean isAutoReload() {
+		return autoReload;
 	}
 
-	public final void setReload(boolean reload) {
-		this.reload = reload;
+	public void setAutoReload(boolean autoReload) {
+		this.autoReload = autoReload;
 	}
 
+	protected final Class<? extends T> getScriptClass(int code)
+	{
+		rwLock.readLock().lock();
+		try {
+			return codeMap.get(code);
+		} finally {
+			rwLock.readLock().unlock();
+		}
+	}
+	
 	protected final T build(int code, Class<?>[] cs, Object[] initargs) {
 		T result = null;
-		Class<? extends T> c = codeMap.get(code);
+		Class<? extends T> c = getScriptClass(code);
 		if (c == null) {
 			_log.error("not found script,code=" + code + "(0x" + Integer.toHexString(code) + ")");
 		} else {
@@ -449,13 +475,12 @@ public abstract class AbstractLibScriptFactory<T extends IScript> implements ISc
 
 	/**
 	 * 根据小消息头构建
-	 * 
 	 * @param code
 	 * @return
 	 */
 	protected final T build(int code) {
 		T result = null;
-		Class<? extends T> c = codeMap.get(code);
+		Class<? extends T> c = getScriptClass(code);
 		if (c == null) {
 			_log.error("not found script,code=" + code + "(0x" + Integer.toHexString(code) + ")");
 		} else {
@@ -467,6 +492,10 @@ public abstract class AbstractLibScriptFactory<T extends IScript> implements ISc
 			}
 		}
 		return result;
+	}
+
+	public final State getState() {
+		return state;
 	}
 
 	public final T buildInstance(int code) {
