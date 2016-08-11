@@ -420,7 +420,10 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 			rwLock.writeLock().lock();
 			try {
 				removeAndListener(key);
-			} catch (Exception e2) {
+			} catch (Exception e) {
+				e.printStackTrace();
+				log.error(e.getMessage(),e);
+			}finally {
 				rwLock.writeLock().unlock();
 			}
 		}
@@ -439,6 +442,9 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		try {
 			value=removeAndListener(key);
 		} catch (Exception e2) {
+			e.printStackTrace();
+			log.error(e.getMessage(),e);
+		}finally {
 			rwLock.writeLock().unlock();
 		}
 		return value==null?null:value.getValue();
@@ -596,7 +602,10 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 			try {
 				removeAndListener(key);
 				result= -1;
-			} finally {
+			} catch (Exception e) {
+				e.printStackTrace();
+				log.error(e.getMessage(),e);
+			}finally {
 				rwLock.writeLock().unlock();
 			}
 		}
@@ -636,7 +645,10 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 			rwLock.writeLock().lock();
 			try {
 				removeAndListener(key);
-			} finally {
+			} catch (Exception e) {
+				e.printStackTrace();
+				log.error(e.getMessage(),e);
+			}finally {
 				rwLock.writeLock().unlock();
 			}
 		}
@@ -676,7 +688,10 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 			rwLock.writeLock().lock();
 			try {
 				removeAndListener(key);
-			} finally {
+			}catch (Exception e) {
+				e.printStackTrace();
+				log.error(e.getMessage(),e);
+			}finally {
 				rwLock.writeLock().unlock();
 			}
 		}
@@ -713,7 +728,10 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 			rwLock.writeLock().lock();
 			try {
 				removeAndListener(key);
-			} finally {
+			}catch (Exception e) {
+				e.printStackTrace();
+				log.error(e.getMessage(),e);
+			}finally {
 				rwLock.writeLock().unlock();
 			}
 		}
