@@ -43,7 +43,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 	}
 	
 	public TimedMapImpl(){
-		this(new HashMap<K,EntryAdapter<K,V>>(),new ScheduledThreadPoolExecutor(1,new NamedThreadFactory("CacheMapTimer", true)));
+		this(new HashMap<K,EntryAdapter<K,V>>(),new ScheduledThreadPoolExecutor(1,new NamedThreadFactory("TimedMapCleanThread", true)));
 	}
 	
 	@SuppressWarnings("hiding")
