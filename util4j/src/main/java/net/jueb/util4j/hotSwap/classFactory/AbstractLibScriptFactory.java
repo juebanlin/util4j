@@ -28,7 +28,7 @@ import net.jueb.util4j.thread.NamedThreadFactory;
 /**
  * 动态加载jar内的脚本,支持包含匿名内部类 T不能做为父类加载 T尽量为接口类型,因为只有接口类型的类才没有逻辑,才可以不热加载,并且子类可选择实现
  */
-public abstract class AbstractLibScriptFactory<T extends IScript> implements IScriptFactory<T> {
+public abstract class AbstractLibScriptFactory<T extends IScript> extends AbstractStaticScriptFactory<T> {
 	protected final Logger _log = LoggerFactory.getLogger(this.getClass());
 
 	/**
@@ -459,48 +459,42 @@ public abstract class AbstractLibScriptFactory<T extends IScript> implements ISc
 			rwLock.readLock().unlock();
 		}
 	}
-	
-	protected final T build(int code, Class<?>[] cs, Object[] initargs) {
-		T result = null;
-		Class<? extends T> c = getScriptClass(code);
-		if (c == null) {
-			_log.error("not found script,code=" + code + "(0x" + Integer.toHexString(code) + ")");
-		} else {
-			try {
-				result = c.getConstructor(cs).newInstance(initargs);
-			} catch (Exception e) {
-				_log.error(e.getMessage(), e);
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * 根据小消息头构建
-	 * @param code
-	 * @return
-	 */
-	protected final T build(int code) {
-		T result = null;
-		Class<? extends T> c = getScriptClass(code);
-		if (c == null) {
-			_log.error("not found script,code=" + code + "(0x" + Integer.toHexString(code) + ")");
-		} else {
-			try {
-				result = c.newInstance();
-			} catch (Exception e) {
-				_log.error(e.getMessage(), e);
-			}
-		}
-		return result;
-	}
 
 	public final State getState() {
 		return state;
 	}
 
 	public final T buildInstance(int code) {
-		return build(code);
+		T result = super.buildInstance(code);
+		if(result==null)
+		{
+			Class<? extends T> c = getScriptClass(code);
+			if (c == null) 
+			{
+				_log.error("not found script,code=" + code + "(0x" + Integer.toHexString(code) + ")");
+			} else 
+			{
+				result = newInstance(c);
+			}
+		}
+		return result;
+	}
+	
+	@Override
+	public T buildInstance(int code, Object... args) {
+		T result = super.buildInstance(code, args);
+		if(result==null)
+		{
+			Class<? extends T> c = getScriptClass(code);
+			if (c == null) 
+			{
+				_log.error("not found script,code=" + code + "(0x" + Integer.toHexString(code) + ")");
+			} else 
+			{
+				result = newInstance(c,args);
+			}
+		}
+		return result;
 	}
 
 	public final void reload() {

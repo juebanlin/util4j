@@ -23,7 +23,7 @@ import net.jueb.util4j.thread.NamedThreadFactory;
  * T不能做为父类加载
  * T尽量为接口类型,因为只有接口类型的类才没有逻辑,才可以不热加载,并且子类可选择实现
  */
-public abstract class AbstractScriptFactory<T extends IScript> implements IScriptFactory<T>{
+public abstract class AbstractScriptFactory<T extends IScript> extends AbstractStaticScriptFactory<T>{
 	protected final Logger _log = LoggerFactory.getLogger(this.getClass());
 	/**
 	 * 是否自动重载变更代码
@@ -216,46 +216,10 @@ public abstract class AbstractScriptFactory<T extends IScript> implements IScrip
 		}
 		return cf;
 	}
-
-	protected final T build(int code, Class<?>[] cs, Object[] initargs) {
-		T result=null;
-		Class<? extends T> c = codeMap.get(code);
-		if(c==null)
-		{
-			_log.error("not found script,code=" + code+"(0x"+Integer.toHexString(code)+")");
-		}else
-		{
-			try {
-				result= c.getConstructor(cs).newInstance(initargs);
-			} catch (Exception e) {
-				e.printStackTrace();
-				_log.error(e.getMessage(),e);
-			}
-		}
-		return result;
-	}
 	
-	/**
-	 * 根据小消息头构建
-	 * @param code
-	 * @return
-	 */
-	protected final T build(int code) {
-		T result=null;
-		Class<? extends T> c = codeMap.get(code);
-		if(c==null)
-		{
-			_log.error("not found script,code=" + code+"(0x"+Integer.toHexString(code)+")");
-		}else
-		{
-			try {
-				result= c.newInstance();
-			} catch (Exception e) {
-				e.printStackTrace();
-				_log.error(e.getMessage(),e);
-			}
-		}
-		return result;
+	protected final Class<? extends T> getScriptClass(int code)
+	{
+		return codeMap.get(code);
 	}
 	
 	// 加载所有的类
@@ -512,9 +476,37 @@ public abstract class AbstractScriptFactory<T extends IScript> implements IScrip
 		this.reload = reload;
 	}
 	
-	@Override
 	public final T buildInstance(int code) {
-		return build(code);
+		T result = super.buildInstance(code);
+		if(result==null)
+		{
+			Class<? extends T> c = getScriptClass(code);
+			if (c == null) 
+			{
+				_log.error("not found script,code=" + code + "(0x" + Integer.toHexString(code) + ")");
+			} else 
+			{
+				result = newInstance(c);
+			}
+		}
+		return result;
+	}
+	
+	@Override
+	public T buildInstance(int code, Object... args) {
+		T result = super.buildInstance(code, args);
+		if(result==null)
+		{
+			Class<? extends T> c = getScriptClass(code);
+			if (c == null) 
+			{
+				_log.error("not found script,code=" + code + "(0x" + Integer.toHexString(code) + ")");
+			} else 
+			{
+				result = newInstance(c,args);
+			}
+		}
+		return result;
 	}
 	
 	@Override

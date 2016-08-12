@@ -15,7 +15,15 @@ public interface IScriptFactory<T extends IScript> {
 	public T buildInstance(int code);
 	
 	/**
-	 * 重新加载所有脚本
+	 * 创建一个脚本实例 
+	 * @param code
+	 * @param args 脚本构造参数
+	 * @return
+	 */
+	public T buildInstance(int code,Object ...args);
+	
+	/**
+	 * 重新加载脚本
 	 */
 	public void reload();
 }

@@ -441,7 +441,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		EntryAdapter<K,V> value=null;
 		try {
 			value=removeAndListener(key);
-		} catch (Exception e2) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			log.error(e.getMessage(),e);
 		}finally {
