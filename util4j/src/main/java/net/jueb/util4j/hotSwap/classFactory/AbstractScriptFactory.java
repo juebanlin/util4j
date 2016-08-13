@@ -25,10 +25,11 @@ import net.jueb.util4j.thread.NamedThreadFactory;
  */
 public abstract class AbstractScriptFactory<T extends IScript> extends AbstractStaticScriptFactory<T>{
 	protected final Logger _log = LoggerFactory.getLogger(this.getClass());
+	
 	/**
 	 * 是否自动重载变更代码
 	 */
-	protected boolean reload;
+	protected boolean autoReload;
 	protected final ConcurrentHashMap<String,ClassFile> scriptFilePaths=new ConcurrentHashMap<String,ClassFile>();
 	protected final ConcurrentHashMap<Integer, Class<? extends T>> codeMap=new ConcurrentHashMap<Integer, Class<? extends T>>();
 	protected boolean isLoading;
@@ -49,9 +50,9 @@ public abstract class AbstractScriptFactory<T extends IScript> extends AbstractS
 		this.reger=new ClassRegister(this);
 		init();
 	}
-	protected AbstractScriptFactory(String classRootDir,boolean reload) {
+	protected AbstractScriptFactory(String classRootDir,boolean autoReload) {
 		this.classRootDir=classRootDir;
-		this.reload=reload;
+		this.autoReload=autoReload;
 		this.reger=new ClassRegister(this);
 		init();
 	}
@@ -411,7 +412,7 @@ public abstract class AbstractScriptFactory<T extends IScript> extends AbstractS
 		@Override
 		public void run() {
 			try {
-				if(!reload)
+				if(!autoReload)
 				{
 					return ;
 				}
@@ -466,14 +467,12 @@ public abstract class AbstractScriptFactory<T extends IScript> extends AbstractS
 			factory.registClass(className, depends);
 		}
 	}
-
-
-	public final boolean isReload() {
-		return reload;
-	}
 	
-	public final void setReload(boolean reload) {
-		this.reload = reload;
+	public boolean isAutoReload() {
+		return autoReload;
+	}
+	public void setAutoReload(boolean autoReload) {
+		this.autoReload = autoReload;
 	}
 	
 	public final T buildInstance(int code) {
