@@ -43,24 +43,22 @@ public abstract class AbstractScriptFactory<T extends IScript> extends AbstractS
 
 	protected ScriptClassLoader classLoader;
 	protected final String classRootDir;
-	protected final ClassRegister reger;
 	
 	protected AbstractScriptFactory(String classRootDir) {
 		this.classRootDir=classRootDir;
-		this.reger=new ClassRegister(this);
 		init();
 	}
+	
 	protected AbstractScriptFactory(String classRootDir,boolean autoReload) {
 		this.classRootDir=classRootDir;
 		this.autoReload=autoReload;
-		this.reger=new ClassRegister(this);
 		init();
 	}
 	
 	private void init()
 	{
 		try {
-			initRegist(reger);
+			initRegist(new ClassRegister(this));
 			schedule.scheduleWithFixedDelay(new ScriptMonitorTask(),0, intervalMillis, TimeUnit.MILLISECONDS);
 		} catch (Exception e) {
 			e.printStackTrace();
