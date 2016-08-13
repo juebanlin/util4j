@@ -76,11 +76,13 @@ public class TableLottery<M>{
 
 	/**
 	 * 随机物品
+	 * 会有概率为0的物品参加或者随机百分比为0的情况
 	 * @param lotterItems 随机集合
 	 * @param seed 种子
 	 * @return
 	 */
-	public static <M> LotteryObj<M> getRand(Collection<LotteryObj<M>> lotterItems,Random seed)
+	@Deprecated
+	public static <M> LotteryObj<M> getRand_Old(Collection<LotteryObj<M>> lotterItems,Random seed)
 	{ 	if (lotterItems == null || lotterItems.isEmpty()) {
 			throw new UnsupportedOperationException("lotterItems is empty");
     	}
@@ -97,7 +99,7 @@ public class TableLottery<M>{
     	double nextDouble =seed.nextDouble();//随机一个概率值[0,1)
     	nextDouble=nextDouble*sumProbability;//如果随机概率是20%,则换算成总概率的随机概率值:20%*N
     	// 计算每个物品在总概率的基础下的概率情况
-    	Double tempSumRate = 0d;
+    	double tempSumRate = 0d;
     	for (LotteryObj<M> item: list) 
     	{//叠加概率
     		tempSumRate += item.getProbability();//增加区块
@@ -107,11 +109,42 @@ public class TableLottery<M>{
     			break;
     		}
     	}
-    	if(result==null)
+    	return result;
+	}
+	
+	public static <M> LotteryObj<M> getRand(Collection<LotteryObj<M>> lotterItems,Random seed)
+	{ 	if (lotterItems == null || lotterItems.isEmpty()) {
+			throw new UnsupportedOperationException("lotterItems is empty");
+    	}
+		//占比值排序
+		List<LotteryObj<M>> list=new ArrayList<LotteryObj<M>>(lotterItems);
+		Collections.sort(list);
+		LotteryObj<M> result=null;
+    	// 计算总概率，这样可以保证不一定总概率是1
+    	long sumProbability = 0l;
+    	for (LotteryObj<M> item : list) 
     	{
-    		System.err.printf("LotterItem not found,use random");
-    		int index=new Random().nextInt(lotterItems.size());
-    		result=list.get(index);
+    		sumProbability += item.getProbability();
+    	}
+    	if(sumProbability==0)
+    	{
+    		return null;
+    	}
+    	double p=seed.nextDouble();//随机百分比,
+    	p=p*sumProbability;//因为sumProbability不一定是100,所以需要换算为具体比例值
+    	if(p==0)
+    	{//当P为0,则桌子随机指针为整数1,即总概率的最小值
+    		p=1;
+    	}
+    	double tempSumRate = 0l;
+    	for (LotteryObj<M> item: list) 
+    	{//叠加概率
+    		tempSumRate += item.getProbability();//增加区块
+    		if(tempSumRate>=p)
+    		{// 根据区块值来获取抽取到的物品索引
+    			result=item;
+    			break;
+    		}
     	}
     	return result;
 	}
@@ -154,11 +187,11 @@ public class TableLottery<M>{
     public static void main(String[] args) {
 		ArrayList<LotteryObj<String>> fruits=new ArrayList<LotteryObj<String>>();
 		//以总概率为200为例子
-		LotteryObj<String> fruit1=new DefaultLotteryObject<String>("a", 20);
-		LotteryObj<String> fruit2=new DefaultLotteryObject<String>("b", 30);
-		LotteryObj<String> fruit3=new DefaultLotteryObject<String>("c", 40);
-		LotteryObj<String> fruit4=new DefaultLotteryObject<String>("d", 50);
-		LotteryObj<String> fruit5=new DefaultLotteryObject<String>("e",60);
+		LotteryObj<String> fruit1=new DefaultLotteryObject<String>("a", 50);
+		LotteryObj<String> fruit2=new DefaultLotteryObject<String>("b", 150);
+		LotteryObj<String> fruit3=new DefaultLotteryObject<String>("c", 200);
+		LotteryObj<String> fruit4=new DefaultLotteryObject<String>("d", 250);
+		LotteryObj<String> fruit5=new DefaultLotteryObject<String>("e",350);
 		fruits.add(fruit1);
 		fruits.add(fruit2);
 		fruits.add(fruit3);
