@@ -1,5 +1,6 @@
 package net.jueb.util4j.hotSwap.classFactory;
 
+import java.lang.reflect.Modifier;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
@@ -51,6 +52,12 @@ public abstract class AbstractStaticScriptFactory<T extends IScript> implements 
 	protected final void registStaticScript(Class<? extends T> scriptClass)
 	{
 		try {
+			boolean isAbstractOrInterface = Modifier.isAbstract(scriptClass.getModifiers())
+					|| Modifier.isInterface(scriptClass.getModifiers());// 是否是抽象类
+			if(isAbstractOrInterface)
+			{
+				throw new UnsupportedOperationException(scriptClass+"can not newInstance");
+			}
 			T script = scriptClass.newInstance();
 			int code=script.getMessageCode();
 			Class<? extends T> old=staticCodeMap.get(code);
