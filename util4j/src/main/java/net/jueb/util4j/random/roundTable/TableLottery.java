@@ -3,6 +3,7 @@ package net.jueb.util4j.random.roundTable;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -90,16 +91,17 @@ public class TableLottery<M>{
 		return null;
 	}
 	
-	public static <T> T randomBlock(List<T> tableBlocks,Random seed,TableBlockator<T> tableBlockator) {
+	public static <T> T randomBlock(Collection<T> tableBlocks,Random seed,TableBlockator<T> tableBlockator) {
 	 	if (tableBlocks == null || tableBlocks.isEmpty()) {
 			throw new UnsupportedOperationException("tableBlocks is empty");
     	}
 		//占比值排序
-		Collections.sort(tableBlocks,tableBlockator);
+	 	List<T> list=new ArrayList<T>(tableBlocks);
+		Collections.sort(list,tableBlockator);
 		T result=null;
     	// 计算总概率，这样可以保证不一定总概率是1
     	long sumProbability = 0l;
-    	for (T tableBlock : tableBlocks) 
+    	for (T tableBlock : list) 
     	{
     		sumProbability += tableBlockator.getTableBlockSize(tableBlock);
     	}
@@ -114,7 +116,7 @@ public class TableLottery<M>{
     		p=1;
     	}
     	double tempSumRate = 0l;
-    	for (T tableBlock: tableBlocks) 
+    	for (T tableBlock: list) 
     	{//叠加概率
     		tempSumRate +=tableBlockator.getTableBlockSize(tableBlock);//增加区块
     		if(tempSumRate>=p)
@@ -126,16 +128,17 @@ public class TableLottery<M>{
     	return result;
 	}
 	
-	public static <T extends TableBlock> T randomBlock(List<T> tableBlocks,Random seed) {
+	public static <T extends TableBlock> T randomBlock(Collection<T> tableBlocks,Random seed) {
 	 	if (tableBlocks == null || tableBlocks.isEmpty()) {
 			throw new UnsupportedOperationException("tableBlocks is empty");
     	}
 		//占比值排序
-		Collections.sort(tableBlocks);
+	 	List<T> list=new ArrayList<T>(tableBlocks);
+		Collections.sort(list);
 		T result=null;
     	// 计算总概率，这样可以保证不一定总概率是1
     	long sumProbability = 0l;
-    	for (T tableBlock : tableBlocks) 
+    	for (T tableBlock : list) 
     	{
     		sumProbability += tableBlock.getTableBlockSize();
     	}
@@ -150,7 +153,7 @@ public class TableLottery<M>{
     		p=1;
     	}
     	double tempSumRate = 0l;
-    	for (T tableBlock: tableBlocks) 
+    	for (T tableBlock: list) 
     	{//叠加概率
     		tempSumRate += tableBlock.getTableBlockSize();//增加区块
     		if(tempSumRate>=p)
@@ -162,7 +165,7 @@ public class TableLottery<M>{
     	return result;
 	}
 	
-	public static <T extends TableBlock> String test(List<T> tableBlocks,int testCount)
+	public static <T extends TableBlock> String test(Collection<T> tableBlocks,int testCount)
 	{
 		Random seed=new Random();
 		String result="";
