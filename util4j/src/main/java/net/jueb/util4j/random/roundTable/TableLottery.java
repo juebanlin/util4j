@@ -3,8 +3,8 @@ package net.jueb.util4j.random.roundTable;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,46 +16,47 @@ import java.util.Random;
  */
 public class TableLottery<M>{
 	
-	private final Random random;
-	private final Collection<LotteryObj<M>> lotterItems;
-	
-	public TableLottery(Random random, Collection<LotteryObj<M>> lotterItems) {
-		super();
-		this.random = random;
-		this.lotterItems = lotterItems;
-	}
-	
-	public TableLottery(Collection<LotteryObj<M>> lotterItems) {
-		super();
-		this.random = new Random();
-		this.lotterItems = lotterItems;
+	/**
+	 *	圆桌概率计算的参与块
+	 * @author juebanlin
+	 *
+	 */
+	public static interface TableBlock extends Comparable<TableBlock>
+	{
+		/**
+		 * 块大小
+		 * @return
+		 */
+		public int getTableBlockSize();
 	}
 
-	public static interface LotteryObj<M> extends Comparable<LotteryObj<M>>{
-		public M getItem();
-		public int getProbability();
-	}
-	
-	/**
-	 * 随机对象
-	 * @author Administrator
-	 * @param <M>
-	 */
-	public static class DefaultLotteryObject<M> implements LotteryObj<M>
+	public static interface TableBlockator<T> extends Comparator<T>
 	{
-		private M item;//物品
+		/**
+		 * 块大小
+		 * @return
+		 */
+		public int getTableBlockSize(T obj);
+	}
+
+	public static class TableBlockAdapter<M> implements TableBlock
+	{
+		private M obj;//物品
 		private int probability;//概率
-		public DefaultLotteryObject(M item,int probability) {
+		public TableBlockAdapter(M obj,int probability) {
 			super();
-			this.item = item;
+			this.obj = obj;
 			this.probability = probability;
 		}
-		public M getItem() {
-			return item;
+		
+		public M getObj() {
+			return obj;
 		}
-		public void setItem(M item) {
-			this.item = item;
+
+		public void setObj(M obj) {
+			this.obj = obj;
 		}
+
 		public int getProbability() {
 			return probability;
 		}
@@ -64,71 +65,47 @@ public class TableLottery<M>{
 		}
 		
 		@Override
-		public int compareTo(LotteryObj<M> o) {
-			return this.getProbability()-o.getProbability();
+		public int compareTo(TableBlock o) {
+			return this.getTableBlockSize()-o.getTableBlockSize();
+		}
+		
+		@Override
+		public int getTableBlockSize() {
+			return probability;
+		}
+
+		@Override
+		public String toString() {
+			return obj.toString();
 		}
 	}
-	
-	public LotteryObj<M> getNetx()
-	{ 
-		return getRand(lotterItems, random);
-	}
 
-	/**
-	 * 随机物品
-	 * 会有概率为0的物品参加或者随机百分比为0的情况
-	 * @param lotterItems 随机集合
-	 * @param seed 种子
-	 * @return
-	 */
-	@Deprecated
-	public static <M> LotteryObj<M> getRand_Old(Collection<LotteryObj<M>> lotterItems,Random seed)
-	{ 	if (lotterItems == null || lotterItems.isEmpty()) {
-			throw new UnsupportedOperationException("lotterItems is empty");
-    	}
-		//占比值排序
-		List<LotteryObj<M>> list=new ArrayList<LotteryObj<M>>(lotterItems);
-		Collections.sort(list);
-		LotteryObj<M> result=null;
-    	// 计算总概率，这样可以保证不一定总概率是1
-    	double sumProbability = 0d;
-    	for (LotteryObj<M> item : list) 
-    	{
-    		sumProbability += item.getProbability();
-    	}
-    	double nextDouble =seed.nextDouble();//随机一个概率值[0,1)
-    	nextDouble=nextDouble*sumProbability;//如果随机概率是20%,则换算成总概率的随机概率值:20%*N
-    	// 计算每个物品在总概率的基础下的概率情况
-    	double tempSumRate = 0d;
-    	for (LotteryObj<M> item: list) 
-    	{//叠加概率
-    		tempSumRate += item.getProbability();//增加区块
-    		if(tempSumRate>=nextDouble)
-    		{// 根据区块值来获取抽取到的物品索引
-    			result=item;
-    			break;
-    		}
-    	}
-    	return result;
+	public static <M> M randomBlockAdapter(List<TableBlockAdapter<M>> tableBlocks,Random seed) 
+	{
+		TableBlockAdapter<M> m=randomBlock(tableBlocks, seed);
+		if(m!=null)
+		{
+			return m.getObj();
+		}
+		return null;
 	}
 	
-	public static <M> LotteryObj<M> getRand(Collection<LotteryObj<M>> lotterItems,Random seed)
-	{ 	if (lotterItems == null || lotterItems.isEmpty()) {
-			throw new UnsupportedOperationException("lotterItems is empty");
+	public static <T> T randomBlock(List<T> tableBlocks,Random seed,TableBlockator<T> tableBlockator) {
+	 	if (tableBlocks == null || tableBlocks.isEmpty()) {
+			throw new UnsupportedOperationException("tableBlocks is empty");
     	}
 		//占比值排序
-		List<LotteryObj<M>> list=new ArrayList<LotteryObj<M>>(lotterItems);
-		Collections.sort(list);
-		LotteryObj<M> result=null;
+		Collections.sort(tableBlocks,tableBlockator);
+		T result=null;
     	// 计算总概率，这样可以保证不一定总概率是1
     	long sumProbability = 0l;
-    	for (LotteryObj<M> item : list) 
+    	for (T tableBlock : tableBlocks) 
     	{
-    		sumProbability += item.getProbability();
+    		sumProbability += tableBlockator.getTableBlockSize(tableBlock);
     	}
     	if(sumProbability==0)
     	{
-    		return null;
+    		return result;
     	}
     	double p=seed.nextDouble();//随机百分比,
     	p=p*sumProbability;//因为sumProbability不一定是100,所以需要换算为具体比例值
@@ -137,28 +114,64 @@ public class TableLottery<M>{
     		p=1;
     	}
     	double tempSumRate = 0l;
-    	for (LotteryObj<M> item: list) 
+    	for (T tableBlock: tableBlocks) 
     	{//叠加概率
-    		tempSumRate += item.getProbability();//增加区块
+    		tempSumRate +=tableBlockator.getTableBlockSize(tableBlock);//增加区块
     		if(tempSumRate>=p)
     		{// 根据区块值来获取抽取到的物品索引
-    			result=item;
+    			result=tableBlock;
     			break;
     		}
     	}
     	return result;
 	}
 	
-	public static <T> String test(List<LotteryObj<T>> items,int testCount)
+	public static <T extends TableBlock> T randomBlock(List<T> tableBlocks,Random seed) {
+	 	if (tableBlocks == null || tableBlocks.isEmpty()) {
+			throw new UnsupportedOperationException("tableBlocks is empty");
+    	}
+		//占比值排序
+		Collections.sort(tableBlocks);
+		T result=null;
+    	// 计算总概率，这样可以保证不一定总概率是1
+    	long sumProbability = 0l;
+    	for (T tableBlock : tableBlocks) 
+    	{
+    		sumProbability += tableBlock.getTableBlockSize();
+    	}
+    	if(sumProbability==0)
+    	{
+    		return result;
+    	}
+    	double p=seed.nextDouble();//随机百分比,
+    	p=p*sumProbability;//因为sumProbability不一定是100,所以需要换算为具体比例值
+    	if(p==0)
+    	{//当P为0,则桌子随机指针为整数1,即总概率的最小值
+    		p=1;
+    	}
+    	double tempSumRate = 0l;
+    	for (T tableBlock: tableBlocks) 
+    	{//叠加概率
+    		tempSumRate += tableBlock.getTableBlockSize();//增加区块
+    		if(tempSumRate>=p)
+    		{// 根据区块值来获取抽取到的物品索引
+    			result=tableBlock;
+    			break;
+    		}
+    	}
+    	return result;
+	}
+	
+	public static <T extends TableBlock> String test(List<T> tableBlocks,int testCount)
 	{
-		TableLottery<T> l=new TableLottery<T>(items);
+		Random seed=new Random();
 		String result="";
 		int allCount=testCount;
 		Map<T,Integer> map=new HashMap<T, Integer>();
 		//统计元素出现次数
 		for(int i=0;i<allCount;i++)
 		{
-			T item=l.getNetx().getItem();
+			T item=randomBlock(tableBlocks, seed);
 			if(map.containsKey(item))
 			{
 				int tmp=map.get(item);
@@ -185,13 +198,13 @@ public class TableLottery<M>{
 	}
 	
     public static void main(String[] args) {
-		ArrayList<LotteryObj<String>> fruits=new ArrayList<LotteryObj<String>>();
+		List<TableBlockAdapter<String>> fruits=new ArrayList<TableBlockAdapter<String>>();
 		//以总概率为200为例子
-		LotteryObj<String> fruit1=new DefaultLotteryObject<String>("a", 50);
-		LotteryObj<String> fruit2=new DefaultLotteryObject<String>("b", 150);
-		LotteryObj<String> fruit3=new DefaultLotteryObject<String>("c", 200);
-		LotteryObj<String> fruit4=new DefaultLotteryObject<String>("d", 250);
-		LotteryObj<String> fruit5=new DefaultLotteryObject<String>("e",350);
+		TableBlockAdapter<String> fruit1=new TableBlockAdapter<String>("a", 50);
+		TableBlockAdapter<String> fruit2=new TableBlockAdapter<String>("b", 150);
+		TableBlockAdapter<String> fruit3=new TableBlockAdapter<String>("c", 200);
+		TableBlockAdapter<String> fruit4=new TableBlockAdapter<String>("d", 250);
+		TableBlockAdapter<String> fruit5=new TableBlockAdapter<String>("e",350);
 		fruits.add(fruit1);
 		fruits.add(fruit2);
 		fruits.add(fruit3);
