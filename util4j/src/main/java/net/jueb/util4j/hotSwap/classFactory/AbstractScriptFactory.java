@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,8 +31,8 @@ public abstract class AbstractScriptFactory<T extends IScript> extends AbstractS
 	 * 是否自动重载变更代码
 	 */
 	protected boolean autoReload;
-	protected final ConcurrentHashMap<String,ClassFile> scriptFilePaths=new ConcurrentHashMap<String,ClassFile>();
-	protected final ConcurrentHashMap<Integer, Class<? extends T>> codeMap=new ConcurrentHashMap<Integer, Class<? extends T>>();
+	protected final Map<String,ClassFile> scriptFilePaths=new ConcurrentHashMap<String,ClassFile>();
+	protected final Map<Integer, Class<? extends T>> codeMap=new ConcurrentHashMap<Integer, Class<? extends T>>();
 	protected boolean isLoading;
 	
 	/**
