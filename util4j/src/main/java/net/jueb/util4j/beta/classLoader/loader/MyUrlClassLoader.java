@@ -1,5 +1,6 @@
 package net.jueb.util4j.beta.classLoader.loader;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 
@@ -136,6 +137,4 @@ public class MyUrlClassLoader extends URLClassLoader{
 	protected Class<?> findClass(final String name) throws ClassNotFoundException {
 		return super.findClass(name);
 	}
-	
-	
 }

@@ -323,7 +323,7 @@ public abstract class AbstractLibScriptFactory<T extends IScript> extends Abstra
 		 */
 		@Override
 		protected Class<?> findClass(final String name) throws ClassNotFoundException {
-			_log.debug("findClass:"+name);
+			log.debug("findClass:"+name);
 			Class<?> clazz=findLoadedClass(name);
 			if (clazz != null) 
 			{
