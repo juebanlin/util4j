@@ -18,7 +18,8 @@ public abstract class AbstractStaticScriptFactory<T extends IScript> implements 
 	
 	protected class StaticScriptRegister{
 		
-		private final AbstractStaticScriptFactory<T> factory;
+		protected final AbstractStaticScriptFactory<T> factory;
+		
 		public StaticScriptRegister(AbstractStaticScriptFactory<T> factory) {
 			super();
 			this.factory = factory;
@@ -43,6 +44,10 @@ public abstract class AbstractStaticScriptFactory<T extends IScript> implements 
 		initStaticScriptRegist(new StaticScriptRegister(this));
 	}
 	
+	/**
+	 * 注册静态脚本,此脚本不可被动态脚本覆盖
+	 * @param reg
+	 */
 	protected abstract void initStaticScriptRegist(StaticScriptRegister reg);
 	
 	/**

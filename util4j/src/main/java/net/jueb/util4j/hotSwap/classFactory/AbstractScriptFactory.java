@@ -59,7 +59,7 @@ public abstract class AbstractScriptFactory<T extends IScript> extends AbstractS
 	private void init()
 	{
 		try {
-			initRegist(new ClassRegister(this));
+			initScriptRegist(new ScriptRegister(this));
 			schedule.scheduleWithFixedDelay(new ScriptMonitorTask(),0, intervalMillis, TimeUnit.MILLISECONDS);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -309,7 +309,7 @@ public abstract class AbstractScriptFactory<T extends IScript> extends AbstractS
 	/**
 	 * 初始化类注册
 	 */
-	protected abstract void initRegist(ClassRegister reger);
+	protected abstract void initScriptRegist(ScriptRegister reger);
 	
 	// 从本地读取文件
 	@SuppressWarnings("resource")
@@ -440,10 +440,10 @@ public abstract class AbstractScriptFactory<T extends IScript> extends AbstractS
 		}
 	}
 
-	protected class ClassRegister{
+	protected class ScriptRegister{
 		private final AbstractScriptFactory<T> factory;
 		
-		public ClassRegister(AbstractScriptFactory<T> factory) {
+		public ScriptRegister(AbstractScriptFactory<T> factory) {
 			super();
 			this.factory = factory;
 		}
