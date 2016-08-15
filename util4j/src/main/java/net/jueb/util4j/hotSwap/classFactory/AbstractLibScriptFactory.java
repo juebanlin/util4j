@@ -465,34 +465,36 @@ public abstract class AbstractLibScriptFactory<T extends IScript> extends Abstra
 	}
 
 	public final T buildInstance(int code) {
-		T result = super.buildInstance(code);
-		if(result==null)
+		T result=null;
+		Class<? extends T> c = getStaticScriptClass(code);
+		if(c==null)
 		{
-			Class<? extends T> c = getScriptClass(code);
-			if (c == null) 
-			{
-				_log.error("not found script,code=" + code + "(0x" + Integer.toHexString(code) + ")");
-			} else 
-			{
-				result = newInstance(c);
-			}
+			c = getScriptClass(code);
+		}
+		if (c == null) 
+		{
+			_log.error("not found script,code=" + code + "(0x" + Integer.toHexString(code) + ")");
+		} else 
+		{
+			result = newInstance(c);
 		}
 		return result;
 	}
 	
 	@Override
 	public T buildInstance(int code, Object... args) {
-		T result = super.buildInstance(code, args);
-		if(result==null)
+		T result=null;
+		Class<? extends T> c = getStaticScriptClass(code);
+		if(c==null)
 		{
-			Class<? extends T> c = getScriptClass(code);
-			if (c == null) 
-			{
-				_log.error("not found script,code=" + code + "(0x" + Integer.toHexString(code) + ")");
-			} else 
-			{
-				result = newInstance(c,args);
-			}
+			c = getScriptClass(code);
+		}
+		if (c == null) 
+		{
+			_log.error("not found script,code=" + code + "(0x" + Integer.toHexString(code) + ")");
+		} else 
+		{
+			result = newInstance(c,args);
 		}
 		return result;
 	}
