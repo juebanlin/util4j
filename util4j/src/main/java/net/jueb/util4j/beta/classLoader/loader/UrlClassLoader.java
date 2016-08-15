@@ -1,5 +1,7 @@
 package net.jueb.util4j.beta.classLoader.loader;
 
+import java.io.File;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import org.slf4j.Logger;
@@ -78,5 +80,10 @@ public class UrlClassLoader extends URLClassLoader{
 	@Override
 	protected void addURL(URL url) {
 		super.addURL(url);
+	}
+	
+	public static void main(String[] args) throws MalformedURLException {
+		URL url=new File("abs/").toURI().toURL();
+		System.out.println(url);
 	}
 }
