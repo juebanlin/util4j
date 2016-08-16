@@ -12,6 +12,16 @@ import net.jueb.util4j.bytesStream.InputStreamUtils;
 
 public class HttpUtil {
 
+	public static byte[] httpGet(String url) throws Exception
+	{
+		HttpURLConnection conn=(HttpURLConnection) new URL(url).openConnection();
+		try {
+			return InputStreamUtils.getBytes(conn.getInputStream());
+		} finally {
+			conn.getInputStream().close();
+		}
+	}
+	
 	public static byte[] httpPost(String url,Map<String,String> args) throws Exception
 	{
 		List<String> list=new ArrayList<String>();
@@ -39,7 +49,7 @@ public class HttpUtil {
 		}
 	}
 	
-	public static void postJson(String urlPath,String json) throws Exception
+	public static void httpPostJson(String urlPath,String json) throws Exception
 	{
 		HttpURLConnection url=(HttpURLConnection)new URL(urlPath).openConnection();
 		url.setRequestMethod("POST");
