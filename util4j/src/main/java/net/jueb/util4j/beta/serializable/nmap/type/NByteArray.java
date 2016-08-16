@@ -1,9 +1,8 @@
 package net.jueb.util4j.beta.serializable.nmap.type;
 
 import java.util.Arrays;
-
 import net.jueb.util4j.beta.serializable.nmap.falg.Flag;
-import net.jueb.util4j.beta.serializable.nmap.util.TypeBytesInputStream;
+import net.jueb.util4j.beta.tools.convert.typebytes.TypeBytesInputStream;
 
 /**
  * 字节数组以头+长度+数据+尾巴

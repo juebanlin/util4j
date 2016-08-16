@@ -6,10 +6,9 @@ import java.util.Arrays;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import net.jueb.util4j.beta.serializable.nmap.util.TypeBytes;
-import net.jueb.util4j.beta.serializable.nmap.util.TypeBytesInputStream;
-import net.jueb.util4j.beta.serializable.nmap.util.TypeBytesOutputStream;
+import net.jueb.util4j.beta.tools.convert.typebytes.TypeBytes;
+import net.jueb.util4j.beta.tools.convert.typebytes.TypeBytesInputStream;
+import net.jueb.util4j.beta.tools.convert.typebytes.TypeBytesOutputStream;
 
 /**
  * 一个任意类型

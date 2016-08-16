@@ -16,7 +16,7 @@ import java.util.TreeMap;
 
 import net.jueb.util4j.beta.serializable.nmap.falg.Flag;
 import net.jueb.util4j.beta.serializable.nmap.util.NMapConvert;
-import net.jueb.util4j.beta.serializable.nmap.util.TypeBytesInputStream;
+import net.jueb.util4j.beta.tools.convert.typebytes.TypeBytesInputStream;
 
 /**
  * 内部封装一个hashmap

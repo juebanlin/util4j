@@ -2,7 +2,7 @@ package net.jueb.util4j.beta.serializable.bytesMap;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang.StringUtils;
 
 
 /**
@@ -94,7 +94,6 @@ public class DataTools {
 		String[] startHex=byteArrayToHexArray(startArray);//转换为hex字符数组
 		String startHexStr=Arrays.toString(startHex);//转换为hex字符串
 		startHexStr=StringUtils.substringBetween(startHexStr, "[", "]").replaceAll("\\s", "");//去括号空格
-		
 		String resultHex=StringUtils.substringAfter(dataHexStr, startHexStr);//截取并转换为hex字符串
 		if(resultHex==null)
 		{

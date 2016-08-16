@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang.StringUtils;
 import io.netty.util.CharsetUtil;
 import net.jueb.util4j.bytesStream.InputStreamUtils;
 
@@ -29,7 +29,7 @@ public class HttpUtil {
 		{
 			list.add(entry.getKey()+"="+entry.getValue());
 		}
-		String content=StringUtils.join(list,"&");
+		String content=StringUtils.join(list, "&");
 		return httpPost(url,content.getBytes("utf-8"));
 	}
 	

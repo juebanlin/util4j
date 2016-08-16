@@ -1,9 +1,8 @@
 package net.jueb.util4j.beta.tools.convert;
 
-
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * 字节数组,16进制字符串数组文本之间的转换

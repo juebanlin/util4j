@@ -4,7 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.LinkedList;
 
 import net.jueb.util4j.beta.serializable.nmap.falg.Flag;
-import net.jueb.util4j.beta.serializable.nmap.util.TypeBytesInputStream;
+import net.jueb.util4j.beta.tools.convert.typebytes.TypeBytesInputStream;
 
 public class NString extends NType<String>{
 

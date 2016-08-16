@@ -3,8 +3,6 @@ package net.jueb.util4j.beta.tools.convert.typebytes;
 import java.io.EOFException;
 import java.util.Arrays;
 
-import org.apache.commons.lang3.StringUtils;
-
 import net.jueb.util4j.beta.tools.convert.HexStrBytes;
 
 
@@ -59,20 +57,7 @@ public final class TypeBytes {
 		}
  		return hex;
 	}
-	/**
-	 * 将一个装有16进制的string数组变成一个16进制字符串
-	 * "[01, 16, 1F, 0E]" ==> 01161F0E
-	 * @param str
-	 * @return
-	 */
-	public String hexStringArrayToHexStr2(String[] str)
-	{
-		String hexStr=Arrays.toString(str);
-		hexStr=StringUtils.substringBetween(hexStr, "[", "]");
-		hexStr=hexStr.replaceAll("\\s", "");//去空格
-		hexStr=hexStr.replaceAll(",", "");
-		return hexStr;
-	}
+	
 	public byte[] getBytes(byte i)
 	{
 		return new byte[]{i};
