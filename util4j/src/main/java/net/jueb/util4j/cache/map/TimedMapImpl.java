@@ -233,7 +233,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		public void run() {
 			try {
 				long time=System.currentTimeMillis();
-				String info="cleanBefore:"+size()+",cleanTimeOutCount:"+cleanTimeOut()+",cleanAfter:"+size();
+				String info="cleanBefore:"+size()+",cleanTimeOutCount:"+cleanExpire()+",cleanAfter:"+size();
 				time=System.currentTimeMillis()-time;
 				log.info(info+",useTimeMillis:"+time);
 			} catch (Throwable e) {
@@ -242,13 +242,10 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		}
 	}
 	
-	/**
-	 * 返回清理的键值对数量
-	 * @return
-	 */
-	protected int cleanTimeOut()
-	{
+	@Override
+	public Map<K, V> cleanExpire() {
 		rwLock.readLock().lock();
+		Map<K,V> map=new HashMap<>();
 		Set<K> removeKeys=new HashSet<K>();
 		try {
 			for(K key:entryMap.keySet())
@@ -271,7 +268,11 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 			try {
 				for(Object key:removeKeys)
 				{
-					removeAndListener(key);
+					EntryAdapter<K, V> entry=removeAndListener(key);
+					if(entry!=null)
+					{
+						map.put(entry.key, entry.value);
+					}
 				}
 			} catch (Exception e) {
 				log.error(e.getMessage(),e);
@@ -279,7 +280,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 				rwLock.writeLock().unlock();
 			}
 		}
-		return removeKeys.size();
+		return map;
 	}
 
 	/**
@@ -513,9 +514,8 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 
 	@Override
 	public V updateTTL(K key, long ttl) {
-		rwLock.readLock().lock();
+		rwLock.writeLock().lock();
 		V result=null;
-		boolean remove=false;
 		try {
 			EntryAdapter<K, V> e=entryMap.get(key);
 			if(e!=null)
@@ -523,7 +523,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 				e.setLastActiveTime(System.currentTimeMillis());
 				if(e.isTimeOut())
 				{//已过期
-					remove=true;
+					removeAndListener(key);
 				}else
 				{
 					e.setLastActiveTime(System.currentTimeMillis());
@@ -534,16 +534,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		} catch (Exception e) {
 			log.error(e.getMessage(),e);
 		}finally{
-			rwLock.readLock().unlock();
-		}
-		if(remove)
-		{
-			rwLock.writeLock().lock();
-			try {
-				removeAndListener(key);
-			} finally {
-				rwLock.writeLock().unlock();
-			}
+			rwLock.writeLock().unlock();
 		}
 		return result;
 	}

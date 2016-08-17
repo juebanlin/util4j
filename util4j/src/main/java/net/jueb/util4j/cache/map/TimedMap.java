@@ -38,6 +38,18 @@ public interface TimedMap<K,V> extends Map<K,V>{
 	public long getExpireTime(K key);
 	
 	/**
+	 * 清理过期
+	 * @return
+	 */
+	public Map<K,V> cleanExpire();
+	
+	/**
+	 * 获取清理任务
+	 * @return
+	 */
+	public Runnable getCleanTask();
+	
+	/**
 	 * 给键值对加事件监听器
 	 * @param key
 	 * @param lisnener

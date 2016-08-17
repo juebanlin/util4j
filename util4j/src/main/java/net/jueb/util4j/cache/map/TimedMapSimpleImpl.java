@@ -233,7 +233,7 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 		public void run() {
 			try {
 				long time=System.currentTimeMillis();
-				String info="cleanBefore:"+size()+",cleanTimeOutCount:"+cleanTimeOut()+",cleanAfter:"+size();
+				String info="cleanBefore:"+size()+",cleanTimeOutCount:"+cleanExpire()+",cleanAfter:"+size();
 				time=System.currentTimeMillis()-time;
 				log.info(info+",useTimeMillis:"+time);
 			} catch (Throwable e) {
@@ -242,13 +242,10 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 		}
 	}
 	
-	/**
-	 * 返回清理的键值对数量
-	 * @return
-	 */
-	protected int cleanTimeOut()
-	{
+	@Override
+	public Map<K, V> cleanExpire() {
 		lock.lock();
+		Map<K,V> map=new HashMap<>();
 		Set<K> removeKeys=new HashSet<K>();
 		try {
 			for(K key:entryMap.keySet())
@@ -261,14 +258,18 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 			}
 			for(K key:removeKeys)
 			{
-				removeAndListener(key);
+				EntryAdapter<K, V> e=removeAndListener(key);
+				if(e!=null)
+				{
+					map.put(e.getKey(),e.getValue());
+				}
 			}
 		} catch (Exception e) {
 			log.error(e.getMessage(),e);
 		}finally{
 			lock.unlock();
 		}
-		return removeKeys.size();
+		return map;
 	}
 	
 	@Override
