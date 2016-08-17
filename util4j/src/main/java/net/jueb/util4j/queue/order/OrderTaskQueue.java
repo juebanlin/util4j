@@ -103,7 +103,6 @@ public class OrderTaskQueue {
 				task.action();
 			} catch (Throwable e) {
 				log.error("task error[" + task.getClass() + "]:"+ e.getMessage(),e);
-				e.printStackTrace();
 			}
 			endNanoTime = System.nanoTime();
 		}
@@ -182,7 +181,6 @@ public class OrderTaskQueue {
 					}
 				} catch (Throwable e) {
 					log.error(e.getMessage(),e);
-					e.printStackTrace();
 				}
 				isActive = false;
 			}

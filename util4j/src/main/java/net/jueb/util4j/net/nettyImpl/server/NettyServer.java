@@ -127,7 +127,6 @@ public class NettyServer extends AbstractNettyServer{
 			try {
 				latch.await(3,TimeUnit.SECONDS);
 			} catch (Exception e) {
-				e.printStackTrace();
 				log.error(e.getMessage(),e);
 			}
 		}

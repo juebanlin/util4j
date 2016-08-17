@@ -62,7 +62,6 @@ public abstract class AbstractScriptFactory<T extends IScript> extends AbstractS
 			initScriptRegist(new ScriptRegister(this));
 			schedule.scheduleWithFixedDelay(new ScriptMonitorTask(),0, intervalMillis, TimeUnit.MILLISECONDS);
 		} catch (Exception e) {
-			e.printStackTrace();
 			_log.error(e.getMessage(),e);
 		}
 	}
@@ -164,7 +163,6 @@ public abstract class AbstractScriptFactory<T extends IScript> extends AbstractS
 						_log.info("loaded codeScript,code="+code+"(0x"+Integer.toHexString(code)+"),class="+scriptClass);
 					}
 				} catch (Exception e) {
-					e.printStackTrace();
 					_log.error("scriptClass error:"+scriptClass,e);
 				}
 			}
@@ -266,7 +264,6 @@ public abstract class AbstractScriptFactory<T extends IScript> extends AbstractS
 					classFile.setLastModifyTime(new File(classFile.getFilePath()).lastModified());//更新时间
 				}
 			} catch (Exception e) {
-				e.printStackTrace();
 				_log.error(e.getMessage(),e);
 			}
 		}
@@ -434,7 +431,6 @@ public abstract class AbstractScriptFactory<T extends IScript> extends AbstractS
 					loadAllClass();
 				}
 			} catch (Throwable e) {
-				e.printStackTrace();
 				_log.error(e.getMessage(),e);
 			}
 		}

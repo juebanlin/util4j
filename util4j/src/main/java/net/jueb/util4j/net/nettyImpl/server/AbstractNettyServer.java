@@ -63,7 +63,6 @@ public abstract class AbstractNettyServer implements JNetServer{
 				log.debug(getName()+"端口绑定失败!"+cf.channel());
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.error(e.getMessage(),e);
 			throw e;
 		}

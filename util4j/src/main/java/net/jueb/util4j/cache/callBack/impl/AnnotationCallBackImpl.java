@@ -118,7 +118,6 @@ public class AnnotationCallBackImpl<T> implements AnnotationCallBack<T>{
 				method.setAccessible(true);
 				method.invoke(callTarget,result);
 			} catch (Exception e) {
-				e.printStackTrace();
 				_log.error("实例方法调用异常:"+result,e);
 			}
 		}
@@ -140,7 +139,6 @@ public class AnnotationCallBackImpl<T> implements AnnotationCallBack<T>{
 				method.setAccessible(true);
 				method.invoke(callTarget);
 			} catch (Exception e) {
-				e.printStackTrace();
 				_log.error(e.getMessage(),e);
 			}
 		}

@@ -12,10 +12,14 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  *敏感词库,将敏感词加入到HashMap中，构建DFA算法模型
  */
 public class SensitiveDictionary {
+	protected Logger log=LoggerFactory.getLogger(getClass());
 	public String ENCODING = "GBK";    //字符编码
 	@SuppressWarnings("rawtypes")
 	public Map sensitiveWordMap;
@@ -40,7 +44,7 @@ public class SensitiveDictionary {
 			sensitiveWordMap=sensitiveWordToHashMap(keyWordSet);
 			//spring获取application，然后application.setAttribute("sensitiveWordMap",sensitiveWordMap);
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error(e.getMessage(),e);
 		}
 	}
 	
@@ -52,7 +56,7 @@ public class SensitiveDictionary {
 			sensitiveWordMap=sensitiveWordToHashMap(keyWordSet);
 			//spring获取application，然后application.setAttribute("sensitiveWordMap",sensitiveWordMap);
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error(e.getMessage(),e);
 		}
 	}
 

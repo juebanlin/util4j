@@ -111,7 +111,6 @@ public abstract class AbstractLibScriptFactory<T extends IScript> extends Abstra
 			loadAllClass();
 			schedule.scheduleWithFixedDelay(new ScriptMonitorTask(), 0, intervalMillis, TimeUnit.MILLISECONDS);
 		} catch (Exception e) {
-			e.printStackTrace();
 			_log.error(e.getMessage(), e);
 		}
 	}

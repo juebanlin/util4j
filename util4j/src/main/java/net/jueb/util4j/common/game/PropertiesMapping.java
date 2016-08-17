@@ -26,7 +26,6 @@ public abstract class PropertiesMapping {
 				setFiled(f,ps.getProperty(f.getName()));
 			} catch (Exception e) {
 				log.error(e.getMessage(),e);
-				e.printStackTrace();
 			}
 		}
 	}

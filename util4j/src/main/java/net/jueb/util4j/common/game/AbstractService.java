@@ -17,7 +17,7 @@ public abstract class AbstractService implements IService{
 			cd=new CountDownLatch(1);
 			try {
 				cd.await();
-			} catch (InterruptedException e) {
+			} catch (Throwable e) {
 				log.error(e.getMessage(),e);
 			}
 		}
@@ -87,9 +87,8 @@ public abstract class AbstractService implements IService{
 				daemonInit();
 				setState(ServiceState.Active);
 			} catch (Throwable e) {
-				log.error(e.getMessage(),e);
-				e.printStackTrace();
 				setState(ServiceState.Stoped);
+				log.error(e.getMessage(),e);
 			}
 			break;
 		case Starting:
@@ -115,9 +114,8 @@ public abstract class AbstractService implements IService{
 				daemonStop();
 				setState(ServiceState.Stoped);
 			} catch (Throwable e) {
-				log.error(e.getMessage(),e);
-				e.printStackTrace();
 				setState(ServiceState.Active);
+				log.error(e.getMessage(),e);
 			}
 			break;
 		case Stoping:

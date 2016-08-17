@@ -45,7 +45,6 @@ public class RsaUtil extends SecurityUtil{
 	        pairgen.initialize(keySize, random);  
 	        return pairgen.generateKeyPair();
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.debug(e.getMessage(),e);
 		}  
         return null;  
@@ -62,7 +61,6 @@ public class RsaUtil extends SecurityUtil{
 			keyPairGenerator = KeyPairGenerator.getInstance(algorithm);
 			return keyPairGenerator.generateKeyPair(); 
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.debug(e.getMessage(),e);
 		}  
         return null; 
@@ -79,7 +77,6 @@ public class RsaUtil extends SecurityUtil{
 			keyPairGenerator.initialize(keysize);
 			return keyPairGenerator.generateKeyPair(); 
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.debug(e.getMessage(),e);
 		}  
         return null; 
@@ -102,7 +99,6 @@ public class RsaUtil extends SecurityUtil{
 			cipher.init(Cipher.ENCRYPT_MODE, key);
 			return cipher.doFinal(data);
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.debug(e.getMessage(),e);
 		}
     	return null;
@@ -125,7 +121,6 @@ public class RsaUtil extends SecurityUtil{
 			cipher.init(Cipher.ENCRYPT_MODE, key);
 			return cipher.doFinal(data);
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.debug(e.getMessage(),e);
 		}
     	return null;
@@ -148,7 +143,6 @@ public class RsaUtil extends SecurityUtil{
 			cipher.init(Cipher.DECRYPT_MODE, key);
 			return cipher.doFinal(data);
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.debug(e.getMessage(),e);
 		}
     	return null;
@@ -171,7 +165,6 @@ public class RsaUtil extends SecurityUtil{
 			cipher.init(Cipher.DECRYPT_MODE, key);
 			return cipher.doFinal(data);
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.debug(e.getMessage(),e);
 		}
     	return null;
@@ -195,7 +188,6 @@ public class RsaUtil extends SecurityUtil{
 			cipher.init(Cipher.WRAP_MODE,wrapKey);
 			return cipher.wrap(key);
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.debug(e.getMessage(),e);
 		}
     	return null;
@@ -219,7 +211,6 @@ public class RsaUtil extends SecurityUtil{
 			cipher.init(Cipher.UNWRAP_MODE,unwrapKey);
 			return (PrivateKey) cipher.unwrap(key, algorithm,Cipher.PRIVATE_KEY);
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.debug(e.getMessage(),e);
 		}
     	return null;
@@ -243,7 +234,6 @@ public class RsaUtil extends SecurityUtil{
 			cipher.init(Cipher.UNWRAP_MODE,unwrapKey);
 			return (PublicKey) cipher.unwrap(key, algorithm,Cipher.PUBLIC_KEY);
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.debug(e.getMessage(),e);
 		}
     	return null;
@@ -262,7 +252,6 @@ public class RsaUtil extends SecurityUtil{
            KeyFactory keyFactory = KeyFactory.getInstance(algorithm);  
            return keyFactory.generatePublic(spec);  
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.debug(e.getMessage(),e);
 		}
        return null;
@@ -280,7 +269,6 @@ public class RsaUtil extends SecurityUtil{
             KeyFactory keyFactory = KeyFactory.getInstance(algorithm);  
             return keyFactory.generatePrivate(spec); 
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.debug(e.getMessage(),e);
 		} 
     	return null;
@@ -300,10 +288,8 @@ public class RsaUtil extends SecurityUtil{
             signature.initSign(privateKey);  
             signature.update(content);  
             return signature.sign();  
-        }  
-        catch (Exception e)   
+        }catch (Exception e)   
         {  
-            e.printStackTrace();
             log.error(e.getMessage(),e);
         }  
         return null;  
@@ -324,10 +310,8 @@ public class RsaUtil extends SecurityUtil{
             signature.initVerify(pubKey);  
             signature.update(content);  
             return signature.verify(sign);  
-        }   
-        catch (Exception e)   
+        }catch (Exception e)   
         {  
-            e.printStackTrace(); 
             log.error(e.getMessage(),e);
         }  
         return false;  

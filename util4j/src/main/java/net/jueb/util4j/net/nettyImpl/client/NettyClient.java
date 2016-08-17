@@ -154,7 +154,6 @@ public class NettyClient extends AbstractNettyClient{
 			try {
 				latch.await(3, TimeUnit.SECONDS);//线程阻塞(count>0 && time<MILLISECONDS)
 			} catch (InterruptedException e) {
-				e.printStackTrace();
 				log.error(e.getMessage(),e);
 			}
 		}

@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
  */
 public class SensitiveFilter
 {
-	Logger log=LoggerFactory.getLogger(getClass());
+	protected Logger log=LoggerFactory.getLogger(getClass());
 	@SuppressWarnings("rawtypes")
 	private Map pool = new HashMap<>();
 	
@@ -32,7 +32,6 @@ public class SensitiveFilter
 			Path path = Paths.get(SensitiveFilter.class.getClassLoader().getResource(filePath).toURI());
 			words.addAll(Files.readAllLines(path));
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.error(e.getMessage(),e);
 		}
 		createTree(words);

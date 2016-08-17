@@ -1,4 +1,4 @@
-package net.jueb.test;
+package net.jueb.util4j.test;
 
 public class H1 extends HotSwap{
 	

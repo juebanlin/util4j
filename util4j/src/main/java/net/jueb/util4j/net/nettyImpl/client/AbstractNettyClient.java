@@ -102,7 +102,6 @@ public abstract class AbstractNettyClient implements JNetClient{
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.error(e.getMessage(),e);
 		}
 		return isConnect;

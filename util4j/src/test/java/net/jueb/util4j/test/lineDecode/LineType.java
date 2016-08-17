@@ -1,4 +1,4 @@
-package net.jueb.test.lineDecode;
+package net.jueb.util4j.test.lineDecode;
 
 import java.util.ArrayList;
 import java.util.Collections;

@@ -7,9 +7,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -29,19 +28,17 @@ import net.jueb.util4j.thread.NamedThreadFactory;
  */
 public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 	protected Logger log=LoggerFactory.getLogger(getClass());
-	public static final ScheduledThreadPoolExecutor scheduExec = new ScheduledThreadPoolExecutor(1,new NamedThreadFactory("CacheMapTimer", true));
-	private final ExecutorService lisenterExecutor=Executors.newCachedThreadPool(new NamedThreadFactory("CacheMapLisenterExecutor", true));
+	private final Executor lisenterExecutor;
 
 	private final ReentrantLock lock=new ReentrantLock();
-	private final Map<K,EntryAdapter<K,V>> entryMap;
+	private final Map<K,EntryAdapter<K,V>> entryMap=new HashMap<>();
 		
-	public TimedMapSimpleImpl(Map<K,EntryAdapter<K,V>> mapMode){
-		entryMap=mapMode;
-		scheduExec.scheduleWithFixedDelay(getCleanTask(), 1,10, TimeUnit.SECONDS);
+	public TimedMapSimpleImpl(Executor lisenterExecutor){
+		this.lisenterExecutor=lisenterExecutor;
 	}
 	
 	public TimedMapSimpleImpl(){
-		this(new HashMap<K,EntryAdapter<K,V>>());
+		this(Executors.newCachedThreadPool(new NamedThreadFactory("CacheMapLisenterExecutor", true)));
 	}
 	
 	@SuppressWarnings("hiding")
@@ -267,7 +264,6 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 				removeAndListener(key);
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.error(e.getMessage(),e);
 		}finally{
 			lock.unlock();
@@ -309,7 +305,6 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 	            }
 	        }
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.error(e.getMessage(),e);
 		}finally{
 			lock.unlock();
@@ -329,7 +324,6 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 		try {
 			entryMap.put(key, new EntryAdapter<K,V>(key, value,ttl));
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.error(e.getMessage(),e);
 		}finally{
 			lock.unlock();
@@ -350,7 +344,6 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 						try {
 							l.removed(e.getKey(),e.getValue());
 						} catch (Throwable e) {
-							e.printStackTrace();
 							log.error(e.getMessage(),e);
 						}
 					}
@@ -378,7 +371,6 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.error(e.getMessage(),e);
 		}finally{
 			lock.unlock();
@@ -403,7 +395,6 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.error(e.getMessage(),e);
 		}finally{
 			lock.unlock();
@@ -421,7 +412,6 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 				return value.getValue();
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.error(e.getMessage(),e);
 		}finally{
 			lock.unlock();
@@ -439,7 +429,6 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 				return e.getValue();
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.error(e.getMessage(),e);
 		}finally{
 			lock.unlock();
@@ -457,7 +446,6 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 				entryMap.put(e.getKey(), new EntryAdapter<K,V>(e.getKey(), e.getValue()));
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.error(e.getMessage(),e);
 		}finally{
 			lock.unlock();
@@ -470,7 +458,6 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 		try {
 			entryMap.clear();
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.error(e.getMessage(),e);
 		}finally{
 			lock.unlock();
@@ -483,7 +470,6 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 		try {
 			return entryMap.keySet();
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.error(e.getMessage(),e);
 		}finally{
 			lock.unlock();
@@ -497,7 +483,6 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 		try {
 			return new CollectionAdapter(new IteratorAdapter(entryMap.values().iterator()));
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.error(e.getMessage(),e);
 		}finally{
 			lock.unlock();
@@ -511,7 +496,6 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 		try {
 			return new HashSet<java.util.Map.Entry<K, V>>(entryMap.values());
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.error(e.getMessage(),e);
 		}finally{
 			lock.unlock();
@@ -538,7 +522,6 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.error(e.getMessage(),e);
 		}finally{
 			lock.unlock();
@@ -567,7 +550,6 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.error(e.getMessage(),e);
 		}finally{
 			lock.unlock();
@@ -596,7 +578,6 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.error(e.getMessage(),e);
 		}finally{
 			lock.unlock();
@@ -625,7 +606,6 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.error(e.getMessage(),e);
 		}finally{
 			lock.unlock();
@@ -651,7 +631,6 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.error(e.getMessage(),e);
 		}finally{
 			lock.unlock();
