@@ -245,7 +245,7 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 				long time=System.currentTimeMillis();
 				String info="cleanBefore:"+size()+",cleanTimeOutCount:"+cleanExpire()+",cleanAfter:"+size();
 				time=System.currentTimeMillis()-time;
-				log.info(info+",useTimeMillis:"+time);
+				log.debug(info+",useTimeMillis:"+time);
 			} catch (Throwable e) {
 				log.error(e.getMessage(),e);
 			}
