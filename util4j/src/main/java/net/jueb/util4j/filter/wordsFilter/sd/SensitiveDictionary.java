@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -20,30 +21,29 @@ import org.slf4j.LoggerFactory;
  */
 public class SensitiveDictionary {
 	protected Logger log=LoggerFactory.getLogger(getClass());
-	public String ENCODING = "GBK";    //字符编码
 	@SuppressWarnings("rawtypes")
 	public Map sensitiveWordMap;
 	
-	public SensitiveDictionary(InputStream in){
-		initKeyWord(in);
+	public SensitiveDictionary(InputStream in,Charset charset){
+		initKeyWord(in,charset);
 	}
 	
-	public SensitiveDictionary(File file){
-		initKeyWord(file);
+	public SensitiveDictionary(File file,Charset charset){
+		initKeyWord(file,charset);
 	}
 	
-	public SensitiveDictionary(byte[] data){
-		initKeyWord(new ByteArrayInputStream(data));
+	public SensitiveDictionary(byte[] data,Charset charset){
+		initKeyWord(new ByteArrayInputStream(data),charset);
 	}
 	
 	public SensitiveDictionary(Set<String> keyWordSet){
 		initKeyWord(keyWordSet);
 	}
 	
-	private void initKeyWord(InputStream in){
+	private void initKeyWord(InputStream in,Charset charset){
 		try {
 			//读取敏感词库
-			Set<String> keyWordSet = readSensitiveWord(in);
+			Set<String> keyWordSet = readSensitiveWord(in,charset);
 			//将敏感词库加入到HashMap中
 			sensitiveWordMap=sensitiveWordToHashMap(keyWordSet);
 			//spring获取application，然后application.setAttribute("sensitiveWordMap",sensitiveWordMap);
@@ -52,20 +52,20 @@ public class SensitiveDictionary {
 		}
 	}
 	
+	private void initKeyWord(File file,Charset charset){
+		try {
+			//读取敏感词库
+			Set<String> keyWordSet = readSensitiveWord(new FileInputStream(file),charset);
+			//将敏感词库加入到HashMap中
+			sensitiveWordMap=sensitiveWordToHashMap(keyWordSet);
+			//spring获取application，然后application.setAttribute("sensitiveWordMap",sensitiveWordMap);
+		} catch (Exception e) {
+			log.error(e.getMessage(),e);
+		}
+	}
+
 	private void initKeyWord(Set<String> keyWordSet){
 		try {
-			//将敏感词库加入到HashMap中
-			sensitiveWordMap=sensitiveWordToHashMap(keyWordSet);
-			//spring获取application，然后application.setAttribute("sensitiveWordMap",sensitiveWordMap);
-		} catch (Exception e) {
-			log.error(e.getMessage(),e);
-		}
-	}
-	
-	private void initKeyWord(File file){
-		try {
-			//读取敏感词库
-			Set<String> keyWordSet = readSensitiveWord(new FileInputStream(file));
 			//将敏感词库加入到HashMap中
 			sensitiveWordMap=sensitiveWordToHashMap(keyWordSet);
 			//spring获取application，然后application.setAttribute("sensitiveWordMap",sensitiveWordMap);
@@ -142,9 +142,9 @@ public class SensitiveDictionary {
 		return sensitiveWordMap;
 	}
 
-	private Set<String> readSensitiveWord(InputStream in) throws Exception{
+	private Set<String> readSensitiveWord(InputStream in,Charset charset) throws Exception{
 		Set<String> set = null;
-		InputStreamReader read = new InputStreamReader(in,ENCODING);
+		InputStreamReader read = new InputStreamReader(in,charset);
 		try {
 			set = new HashSet<String>();
 			BufferedReader bufferedReader = new BufferedReader(read);
