@@ -133,6 +133,9 @@
 				<version>2.9.1</version>
 				<configuration>
 					<aggregate>true</aggregate>
+                    <charset>${project.build.sourceEncoding}</charset>  
+                    <encoding>${project.build.sourceEncoding}</encoding>  
+                    <docencoding>${project.build.sourceEncoding}</docencoding>  
 				</configuration>
 			</plugin>
 			<!-- 字节码打jar包时把不需要的资源文件给排除在外 -->
