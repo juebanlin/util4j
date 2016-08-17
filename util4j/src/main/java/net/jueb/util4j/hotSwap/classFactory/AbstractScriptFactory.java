@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import net.jueb.util4j.bytesStream.InputStreamUtils;
 import net.jueb.util4j.thread.NamedThreadFactory;
 
 /**
@@ -309,16 +310,10 @@ public abstract class AbstractScriptFactory<T extends IScript> extends AbstractS
 	protected abstract void initScriptRegist(ScriptRegister reger);
 	
 	// 从本地读取文件
-	@SuppressWarnings("resource")
 	protected byte[] getFileBytes(ClassFile classFile) throws IOException {
 		File file = new File(classFile.getFilePath());
-		long len = file.length();
-		byte raw[] = new byte[(int) len];
 		FileInputStream fin = new FileInputStream(file);
-		int r = fin.read(raw);
-		if (r != len) {
-			throw new IOException("Can't read file " + classFile.getFilePath() + " all, " + r + " != " + len);
-		}
+		byte[] raw=InputStreamUtils.getBytes(fin);
 		fin.close();
 		return raw;
 	}

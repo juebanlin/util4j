@@ -196,7 +196,6 @@ public class OrderTaskQueue {
 					}
 				} catch (Exception e) {
 					log.error(e.getMessage(),e);
-					e.printStackTrace();
 				}finally{
 					lock.unlock();
 				}
@@ -426,7 +425,6 @@ public class OrderTaskQueue {
 			long time=map.get(2)-map.get(1);
 			System.out.println(time);
 		} catch (InterruptedException e) {
-			e.printStackTrace();
 		}
 		Scanner sc=new Scanner(System.in);
 		sc.nextLine();
