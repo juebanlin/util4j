@@ -10,9 +10,11 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import org.apache.commons.lang.math.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,13 +34,20 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 	private final Executor lisenterExecutor;
 	private final ReentrantReadWriteLock rwLock=new ReentrantReadWriteLock();
 	private final Map<K,EntryAdapter<K,V>> entryMap=new HashMap<>();
-		
+	
+	/**
+	 * 建议线程池固定大小,否则移除事件过多会消耗很多线程资源
+	 * @param lisenterExecutor
+	 */
 	public TimedMapImpl(Executor lisenterExecutor){
 		this.lisenterExecutor=lisenterExecutor;
 	}
 	
+	/**
+	 * 默认最大2个线程处理监听器
+	 */
 	public TimedMapImpl(){
-		this(Executors.newCachedThreadPool(new NamedThreadFactory("CacheMapLisenterExecutor", true)));
+		this(Executors.newFixedThreadPool(2,new NamedThreadFactory("CacheMapLisenterExecutor", true)));
 	}
 	
 	@SuppressWarnings("hiding")
@@ -233,7 +242,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		public void run() {
 			try {
 				long time=System.currentTimeMillis();
-				String info="cleanBefore:"+size()+",cleanTimeOutCount:"+cleanExpire()+",cleanAfter:"+size();
+				String info="cleanBefore:"+size()+",cleanTimeOutCount:"+cleanExpire().size()+",cleanAfter:"+size();
 				time=System.currentTimeMillis()-time;
 				log.info(info+",useTimeMillis:"+time);
 			} catch (Throwable e) {
@@ -277,6 +286,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 			} catch (Exception e) {
 				log.error(e.getMessage(),e);
 			}finally {
+				removeKeys.clear();
 				rwLock.writeLock().unlock();
 			}
 		}
@@ -717,11 +727,79 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		
 		public void test()
 		{
-			String key="TestKey";
-			String value="TestValue";
-			map.put(key,value);
-			map.addEventListener(key, this);
-			map.updateTTL(key,TimeUnit.SECONDS.toMillis(30));
+			ScheduledExecutorService s=Executors.newScheduledThreadPool(2);
+			s.scheduleAtFixedRate(map.getCleanTask(),1, 1, TimeUnit.SECONDS);
+			final Logger log=LoggerFactory.getLogger(getClass());
+			int num=1000000;
+			//固化数据
+			for(int i=0;i<num;i++)
+			{
+				String key="StaticKey"+i;
+				String value="StaticValue"+i;
+				map.put(key,value,0);
+			}
+			final int count=5000000;//测试次数
+			//写入线程
+			Thread putThread=new Thread(){
+				public void run() {
+					long times=0;
+					for(int i=0;i<count;i++)
+					{
+						long t=System.currentTimeMillis();
+						String key="TestKey"+i;
+						String value="TestValue"+i;
+						long ttl=TimeUnit.SECONDS.toMillis(RandomUtils.nextInt(300))+1;
+						map.put(key,value,ttl);
+						map.addEventListener(key, new EventListener<String,String>() {
+							@Override
+							public void removed(String key, String value) {
+							}
+						});
+						t=System.currentTimeMillis()-t;
+						log.debug("putTime="+t);
+						times+=t;
+						try {
+							Thread.sleep(100);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					}
+					System.err.println("putTimes="+times);//putTimes=2914
+				};
+			};
+			putThread.setName("putThread");
+			putThread.start();
+			try {
+				Thread.sleep(2000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			//读取线程
+			Thread getThread=new Thread(){
+				public void run() {
+					long times=0;
+					for(int i=0;i<count;i++)
+					{
+						long t=System.currentTimeMillis();
+						String key="TestKey"+i;
+						String v=map.get(key);
+						t=System.currentTimeMillis()-t;
+						times+=t;
+						if(v!=null)
+						{
+							log.debug("getTime="+t);
+						}
+						try {
+							Thread.sleep(150);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					}
+					System.err.println("getTimes="+times);//getTimes=1054
+				};
+			};
+			getThread.setName("getThread");
+			getThread.start();
 		}
 		
 	}

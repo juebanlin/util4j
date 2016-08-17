@@ -6,12 +6,15 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.apache.commons.lang.math.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,12 +36,19 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 	private final ReentrantLock lock=new ReentrantLock();
 	private final Map<K,EntryAdapter<K,V>> entryMap=new HashMap<>();
 		
+	/**
+	 * 建议线程池固定大小,否则移除事件过多会消耗很多线程资源
+	 * @param lisenterExecutor
+	 */
 	public TimedMapSimpleImpl(Executor lisenterExecutor){
 		this.lisenterExecutor=lisenterExecutor;
 	}
 	
+	/**
+	 * 默认最大2个线程处理监听器
+	 */
 	public TimedMapSimpleImpl(){
-		this(Executors.newCachedThreadPool(new NamedThreadFactory("CacheMapLisenterExecutor", true)));
+		this(Executors.newFixedThreadPool(2,new NamedThreadFactory("CacheMapLisenterExecutor", true)));
 	}
 	
 	@SuppressWarnings("hiding")
@@ -638,30 +648,100 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 		}
 		return null;
 	}
+	public static class Test implements EventListener<String,String>{
+		TimedMapSimpleImpl<String,String> map=new TimedMapSimpleImpl<String,String>();
 
-	public static void main(String[] args) {
-			TimedMapSimpleImpl<String,String> map=new TimedMapSimpleImpl<String,String>();
-			for(int i=1;i<=10;i++)
-			{
-				map.put(""+i,i+"秒消失",TimeUnit.SECONDS.toMillis(i));
-				map.addEventListener(""+i, new EventListener<String, String>() {
-	
-					@Override
-					public void removed(String key, String value) {
-						System.err.println(key+":"+value+"超时移除");
-					}
-				});
-			}
-			for(int i=0;i<40;i++)
-			{
-				int sec=i+1;
-				try {
-					Thread.sleep(TimeUnit.SECONDS.toMillis(1));
-	//				map.getCleanTask().run();
-					System.out.println("sec:"+sec+","+map.size());
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
+		/**
+		 * 当RoleAgent被移除后执行此方法
+		 */
+		@Override
+		public void removed(String key,String value) {
+			System.err.println("玩家断线未重连移除"+value.toString());
 		}
+		
+		public void test()
+		{
+			ScheduledExecutorService s=Executors.newScheduledThreadPool(2);
+			s.scheduleAtFixedRate(map.getCleanTask(),1, 1, TimeUnit.SECONDS);
+			final Logger log=LoggerFactory.getLogger(getClass());
+			int num=1000000;
+			//固化数据
+			for(int i=0;i<num;i++)
+			{
+				String key="StaticKey"+i;
+				String value="StaticValue"+i;
+				map.put(key,value,0);
+			}
+			final int count=5000000;//测试次数
+			//写入线程
+			Thread putThread=new Thread(){
+				public void run() {
+					long times=0;
+					for(int i=0;i<count;i++)
+					{
+						long t=System.currentTimeMillis();
+						String key="TestKey"+i;
+						String value="TestValue"+i;
+						long ttl=TimeUnit.SECONDS.toMillis(RandomUtils.nextInt(300))+1;
+						map.put(key,value,ttl);
+						map.addEventListener(key, new EventListener<String,String>() {
+							@Override
+							public void removed(String key, String value) {
+							}
+						});
+						t=System.currentTimeMillis()-t;
+						log.debug("putTime="+t);
+						times+=t;
+						try {
+							Thread.sleep(100);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					}
+					System.err.println("putTimes="+times);//putTimes=2914
+				};
+			};
+			putThread.setName("putThread");
+			putThread.start();
+			try {
+				Thread.sleep(2000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			//读取线程
+			Thread getThread=new Thread(){
+				public void run() {
+					long times=0;
+					for(int i=0;i<count;i++)
+					{
+						long t=System.currentTimeMillis();
+						String key="TestKey"+i;
+						String v=map.get(key);
+						t=System.currentTimeMillis()-t;
+						times+=t;
+						if(v!=null)
+						{
+							log.debug("getTime="+t);
+						}
+						try {
+							Thread.sleep(150);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					}
+					System.err.println("getTimes="+times);//getTimes=1054
+				};
+			};
+			getThread.setName("getThread");
+			getThread.start();
+		}
+		
+	}
+	public static void main(String[] args) {
+		Test t=new Test();
+		t.test();
+		Scanner sc=new Scanner(System.in);
+		sc.nextLine();
+		sc.close();
+	}
 }
