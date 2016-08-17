@@ -36,10 +36,24 @@ public class SensitiveDictionary {
 		initKeyWord(new ByteArrayInputStream(data));
 	}
 	
+	public SensitiveDictionary(Set<String> keyWordSet){
+		initKeyWord(keyWordSet);
+	}
+	
 	private void initKeyWord(InputStream in){
 		try {
 			//读取敏感词库
 			Set<String> keyWordSet = readSensitiveWord(in);
+			//将敏感词库加入到HashMap中
+			sensitiveWordMap=sensitiveWordToHashMap(keyWordSet);
+			//spring获取application，然后application.setAttribute("sensitiveWordMap",sensitiveWordMap);
+		} catch (Exception e) {
+			log.error(e.getMessage(),e);
+		}
+	}
+	
+	private void initKeyWord(Set<String> keyWordSet){
+		try {
 			//将敏感词库加入到HashMap中
 			sensitiveWordMap=sensitiveWordToHashMap(keyWordSet);
 			//spring获取application，然后application.setAttribute("sensitiveWordMap",sensitiveWordMap);
@@ -94,11 +108,6 @@ public class SensitiveDictionary {
 	 *              }
 	 *      	}
 	 *      }
-	 * @author chenming 
-	 * @date 2014年4月20日 下午3:04:20
-	 * @param keyWordSet  敏感词库
-	 * @version 1.0
-	 * @return 
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private Map sensitiveWordToHashMap(Set<String> keyWordSet) {
@@ -133,14 +142,6 @@ public class SensitiveDictionary {
 		return sensitiveWordMap;
 	}
 
-	/**
-	 * 读取敏感词库中的内容，将内容添加到set集合中
-	 * @author chenming 
-	 * @date 2014年4月20日 下午2:31:18
-	 * @return
-	 * @version 1.0
-	 * @throws Exception 
-	 */
 	private Set<String> readSensitiveWord(InputStream in) throws Exception{
 		Set<String> set = null;
 		InputStreamReader read = new InputStreamReader(in,ENCODING);

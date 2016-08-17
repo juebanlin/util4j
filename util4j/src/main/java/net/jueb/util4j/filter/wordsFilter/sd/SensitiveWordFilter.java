@@ -1,7 +1,5 @@
 package net.jueb.util4j.filter.wordsFilter.sd;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -147,12 +145,17 @@ public class SensitiveWordFilter {
 	}
 	
 	public static void main(String[] args) {
-		SensitiveWordFilter filter=null;
+		SensitiveDictionary d=null;
 		try {
-			filter = new SensitiveWordFilter(new SensitiveDictionary(new FileInputStream("d:\\01.txt")));
-		} catch (FileNotFoundException e) {
+//			d=new SensitiveDictionary(new FileInputStream("d:\\01.txt"));
+			Set<String> set=new HashSet<String>();
+			set.add("法轮功");
+			set.add("杀人");
+			d=new SensitiveDictionary(set);
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		SensitiveWordFilter filter = new SensitiveWordFilter(d);
 		System.out.println("敏感词的数量：" + filter.sensitiveWordMap.size());
 		String string = "太多的伤感情怀也许只局限于饲养基地 荧幕中的情节，主人公尝试着去用某种方式渐渐的很潇洒地释自杀指南怀那些自己经历的伤感。"
 						+ "然后法轮功 我们的扮演的角色就是跟随着主人公的喜红客联盟 怒哀乐而过于牵强的把自己的情感也附加于银幕情节中，然后感动就流泪，"
@@ -164,6 +167,6 @@ public class SensitiveWordFilter {
 		System.out.println("语句中包含敏感词的个数为：" + set.size() + "。包含：" + set);
 		System.out.println("总共消耗时间为：" + (endTime - beginTime));
 		String result=filter.replaceSensitiveWord(string, MatchType.minMatch, "*");
-		System.out.println(result);
+		System.out.println("替换后:"+result);
 	}
 }
