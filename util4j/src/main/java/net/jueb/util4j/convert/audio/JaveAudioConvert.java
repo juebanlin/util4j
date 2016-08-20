@@ -2,8 +2,6 @@ package net.jueb.util4j.convert.audio;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.UUID;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -18,10 +16,11 @@ import net.jueb.util4j.file.FileUtil;
 
 public class JaveAudioConvert {
 
-	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss SSS");
 	private Logger log = LoggerFactory.getLogger(getClass());
 	private final String tempDir;// 临时目录
-
+	public static final String tmpPrefix=".tmp";
+	public static final String prefix=".ok";
+	
 	public JaveAudioConvert() {
 		this(FileUtil.createTmpDir("JaveAudioConvert").getPath());
 	}
@@ -51,14 +50,21 @@ public class JaveAudioConvert {
 		return audioConvert(audioData, format, audioAttrs);
 	}
 
+	/**
+	 * 
+	 * @param audioData
+	 * @param format
+	 * @param audioAttrs
+	 * @return
+	 */
 	public final byte[] audioConvert(byte[] audioData, String format, AudioAttributes audioAttrs) {
 		String name = UUID.randomUUID().toString();
-		File file = new File(tempDir, name + ".tmp");
-		File destFile = new File(tempDir, name + ".result");
+		File file = new File(tempDir, name + tmpPrefix);
+		File destFile = new File(tempDir, name + prefix);
 		try {
 			FileUtils.writeByteArrayToFile(file, audioData);
 			audioConvert(file, destFile, format, audioAttrs);
-			if (destFile.exists()) {
+			if (destFile.exists() && destFile.isFile()) {
 				return FileUtils.readFileToByteArray(destFile);
 			}
 		} catch (IOException e) {
@@ -85,56 +91,54 @@ public class JaveAudioConvert {
 	 *            默认mp3
 	 * @return
 	 */
-	public final String audioConvert(File sourceFile, File target, String codec, String format) {
+	public final void audioConvert(File sourceFile, File target, String codec, String format) {
 		AudioAttributes audioAttrs = new AudioAttributes();
 		audioAttrs.setCodec(codec);// 设置编码器:libmp3lame
 		audioAttrs.setBitRate(new Integer(128000)); // 设置比特率
 		audioAttrs.setChannels(new Integer(2)); // 设置声音频道
 		audioAttrs.setSamplingRate(new Integer(44100));// 设置节录率
 		audioAttrs.setVolume(100);// 设置音量
-		return audioConvert(sourceFile, target, format, audioAttrs);
+		audioConvert(sourceFile, target, format, audioAttrs);
 	}
 
-	public final String audioConvert(File sourceFile, File target, String format, AudioAttributes audioAttrs) {
-		long time = System.currentTimeMillis();
-		final StringBuffer sb = new StringBuffer("\n");
+	public final void audioConvert(File sourceFile, File target, String format, AudioAttributes audioAttrs) {
+		long times = System.currentTimeMillis();
 		EncodingAttributes attrs = new EncodingAttributes();
 		attrs.setFormat(format);// 设置输出格式
 		attrs.setAudioAttributes(audioAttrs);
 		Encoder encoder = new Encoder();
-		sb.append("[" + sdf.format(new Date()) + "]" + "sourceFilePath=" + sourceFile.getPath() + "\n");
-		sb.append("[" + sdf.format(new Date()) + "]" + "sourceFileLength=" + sourceFile.length() + "\n");
-		sb.append("[" + sdf.format(new Date()) + "]" + "targetFilePath=" + target.getPath() + "\n");
+		log.debug("sourceFile(len:"+sourceFile.length()+"):"+sourceFile.getPath());
+		log.debug("targetFile:"+target.getPath());
 		EncoderProgressListener epl = new EncoderProgressListener() {
 			@Override
 			public void sourceInfo(MultimediaInfo arg0) {
-				sb.append("[" + sdf.format(new Date()) + "]" + "MultimediaInfo:" + arg0 + "\n");
+				log.debug("MultimediaInfo："+arg0);
 			}
 
 			@Override
 			public void progress(int arg0) {
-				sb.append("[" + sdf.format(new Date()) + "]" + "progress:" + arg0 + "\n");
+				log.debug("progress："+arg0);
 			}
 
 			@Override
 			public void message(String arg0) {
-				sb.append("[" + sdf.format(new Date()) + "]" + "message:" + arg0 + "\n");
+				log.debug("message："+arg0);
 			}
 		};
 		try {
-			sb.append("[" + sdf.format(new Date()) + "]" + "startEncode" + "\n");
+			log.debug("startEncode……");
 			encoder.encode(new MultimediaObject(sourceFile), target, attrs, epl);
-			sb.append("[" + sdf.format(new Date()) + "]" + "endEncode" + "\n");
-			if (target.exists()) {// 转码成功
-				sb.append("[" + sdf.format(new Date()) + "]" + "encode succees" + "\n");
-			}
+			log.debug("endEncode,targetFile(len:"+target.length()+"):"+target.getPath());
 		} catch (Exception e) {
 			target.delete();
-			sb.append("[" + sdf.format(new Date()) + "]" + "encodeError:" + e.getMessage() + "\n");
 			log.error(e.getMessage(), e);
 		}
-		time = System.currentTimeMillis() - time;
-		sb.append("[" + sdf.format(new Date()) + "]" + "times:" + time + "\n");
-		return sb.toString();
+		times = System.currentTimeMillis() - times;
+		log.debug("use times:"+times);
+	}
+	
+	public static void main(String[] args) {
+		JaveAudioConvert jc=new JaveAudioConvert();
+		jc.audioConvert(new File("d:/123.amr"), new File("d:/test/456.mp3"), "libmp3lame", "mp3");
 	}
 }
