@@ -96,31 +96,31 @@
 		<dependency>
 			<groupId>net.jueb.jave3</groupId>
 			<artifactId>jave3-core</artifactId>
-			<version>3.0</version>
+			<version>3.1</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>net.jueb.jave3</groupId>
 			<artifactId>jave3-linux32</artifactId>
-			<version>3.0</version>
+			<version>3.1</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>net.jueb.jave3</groupId>
 			<artifactId>jave3-linux64</artifactId>
-			<version>3.0</version>
+			<version>3.1</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>net.jueb.jave3</groupId>
 			<artifactId>jave3-win32</artifactId>
-			<version>3.0</version>
+			<version>3.1</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>net.jueb.jave3</groupId>
 			<artifactId>jave3-win64</artifactId>
-			<version>3.0</version>
+			<version>3.1</version>
 			<optional>true</optional>
 		</dependency>
 	</dependencies>

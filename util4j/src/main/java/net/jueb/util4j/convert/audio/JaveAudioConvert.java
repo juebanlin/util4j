@@ -31,30 +31,25 @@ public class JaveAudioConvert {
 
 	/**
 	 * 音频转码
-	 * 
-	 * @param audioData
-	 *            音频数据
-	 * @param codec
-	 *            编码
-	 * @param format
-	 *            转换格式
+	 * @param audioData 音频数据
+	 * @param codec 编码器,例如：libmp3lame
+	 * @param format 输出格式例如：mp3
 	 * @return
 	 */
 	public final byte[] audioConvert(byte[] audioData, String codec, String format) {
 		AudioAttributes audioAttrs = new AudioAttributes();
 		audioAttrs.setCodec(codec);// 设置编码器:libmp3lame
-		audioAttrs.setBitRate(new Integer(128000)); // 设置比特率
-		audioAttrs.setChannels(new Integer(2)); // 设置声音频道
-		audioAttrs.setSamplingRate(new Integer(44100));// 设置节录率
-		audioAttrs.setVolume(100);// 设置音量
 		return audioConvert(audioData, format, audioAttrs);
 	}
 
 	/**
-	 * 
-	 * @param audioData
-	 * @param format
+	 * @param audioData 音频数据
+	 * @param format 输出格式
 	 * @param audioAttrs
+	 * 	<p>audioAttrs.setBitRate(new Integer(128000)); // 设置比特率
+	 *	<p>audioAttrs.setChannels(new Integer(2)); // 设置声音频道
+	 *	<p>audioAttrs.setSamplingRate(new Integer(44100));// 设置节录率
+	 *	<p>audioAttrs.setVolume(100);// 设置音量
 	 * @return
 	 */
 	public final byte[] audioConvert(byte[] audioData, String format, AudioAttributes audioAttrs) {
@@ -81,26 +76,29 @@ public class JaveAudioConvert {
 	}
 
 	/**
-	 * 音频转换器
-	 * 
+	 * 音频转换
 	 * @param sourceFile
 	 * @param target
-	 * @param codec
-	 *            默认libmp3lame
-	 * @param format
-	 *            默认mp3
+	 * @param codec  编码器,例如libmp3lame
+	 * @param format 输出格式,例如:mp3
 	 * @return
 	 */
 	public final void audioConvert(File sourceFile, File target, String codec, String format) {
 		AudioAttributes audioAttrs = new AudioAttributes();
 		audioAttrs.setCodec(codec);// 设置编码器:libmp3lame
-		audioAttrs.setBitRate(new Integer(128000)); // 设置比特率
-		audioAttrs.setChannels(new Integer(2)); // 设置声音频道
-		audioAttrs.setSamplingRate(new Integer(44100));// 设置节录率
-		audioAttrs.setVolume(100);// 设置音量
 		audioConvert(sourceFile, target, format, audioAttrs);
 	}
 
+	/**
+	 * @param sourceFile
+	 * @param target
+	 * @param format 输出格式,例如:mp3
+	 * @param audioAttrs
+	 * 	<p>audioAttrs.setBitRate(new Integer(128000)); // 设置比特率
+	 *	<p>audioAttrs.setChannels(new Integer(2)); // 设置声音频道
+	 *	<p>audioAttrs.setSamplingRate(new Integer(44100));// 设置节录率
+	 *	<p>audioAttrs.setVolume(100);// 设置音量
+	 */
 	public final void audioConvert(File sourceFile, File target, String format, AudioAttributes audioAttrs) {
 		long times = System.currentTimeMillis();
 		EncodingAttributes attrs = new EncodingAttributes();
@@ -138,7 +136,17 @@ public class JaveAudioConvert {
 	}
 	
 	public static void main(String[] args) {
-		JaveAudioConvert jc=new JaveAudioConvert();
-		jc.audioConvert(new File("d:/123.amr"), new File("d:/test/456.mp3"), "libmp3lame", "mp3");
+		JaveAudioConvert jac=new JaveAudioConvert();
+		File sourceFile=new File("d:/1122.amr");
+		File target=new File("d:/test/11223344.mp3");
+//		jac.audioConvert(new File("d:/1122.amr"), new File("d:/test/1122.mp3"), "libmp3lame", "mp3");
+		//
+		AudioAttributes audioAttrs=new AudioAttributes();
+//		audioAttrs.setBitRate(new Integer(128000)); // 设置比特率 
+//		audioAttrs.setChannels(new Integer(2)); // 设置声音频道 
+//		audioAttrs.setSamplingRate(new Integer(44100));// 设置节录率 
+//		audioAttrs.setVolume(200);// 设置音量
+		audioAttrs.setCodec("libmp3lame");
+		jac.audioConvert(sourceFile, target,"mp3",audioAttrs);
 	}
 }
