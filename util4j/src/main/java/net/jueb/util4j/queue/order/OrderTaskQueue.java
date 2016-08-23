@@ -11,6 +11,7 @@ import java.util.Queue;
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -22,7 +23,7 @@ import org.slf4j.LoggerFactory;
  * 
  * @author Administrator
  */
-public class OrderTaskQueue {
+public class OrderTaskQueue implements Executor{
 	public final Logger log = LoggerFactory.getLogger(getClass());
 	protected final Queue<Task> tasks = new ConcurrentLinkedQueue<Task>();
 	protected final TaskRunner runner;// 运行者
@@ -46,6 +47,20 @@ public class OrderTaskQueue {
 			tasks.add(task);
 			runner.wakeUpIfSleep();
 		}
+	}
+	
+	@Override
+	public void execute(final Runnable command) {
+		addTask(new Task(){
+			@Override
+			public void action() throws Throwable {
+				command.run();
+			}
+			@Override
+			public String name() {
+				return command.toString();
+			}
+		});
 	}
 
 	public Queue<Task> getTasks() {
