@@ -18,8 +18,8 @@ public class JaveAudioConvert {
 
 	private Logger log = LoggerFactory.getLogger(getClass());
 	private final String tempDir;// 临时目录
-	public static final String tmpPrefix=".tmp";
-	public static final String prefix=".ok";
+	public static final String tmpSuffix=".tmp";
+	public static final String suffix=".ok";
 	
 	public JaveAudioConvert() {
 		this(FileUtil.createTmpDir("JaveAudioConvert").getPath());
@@ -54,8 +54,8 @@ public class JaveAudioConvert {
 	 */
 	public final byte[] audioConvert(byte[] audioData, String format, AudioAttributes audioAttrs) {
 		String name = UUID.randomUUID().toString();
-		File file = new File(tempDir, name + tmpPrefix);
-		File destFile = new File(tempDir, name + prefix);
+		File file = new File(tempDir, name + tmpSuffix);
+		File destFile = new File(tempDir, name + suffix);
 		try {
 			FileUtils.writeByteArrayToFile(file, audioData);
 			audioConvert(file, destFile, format, audioAttrs);
@@ -138,14 +138,14 @@ public class JaveAudioConvert {
 	public static void main(String[] args) {
 		JaveAudioConvert jac=new JaveAudioConvert();
 		File sourceFile=new File("d:/1122.amr");
-		File target=new File("d:/test/11223344.mp3");
+		File target=new File("d:/test/1122334455.mp3");
 //		jac.audioConvert(new File("d:/1122.amr"), new File("d:/test/1122.mp3"), "libmp3lame", "mp3");
 		//
 		AudioAttributes audioAttrs=new AudioAttributes();
-//		audioAttrs.setBitRate(new Integer(128000)); // 设置比特率 
-//		audioAttrs.setChannels(new Integer(2)); // 设置声音频道 
-//		audioAttrs.setSamplingRate(new Integer(44100));// 设置节录率 
-//		audioAttrs.setVolume(200);// 设置音量
+		audioAttrs.setBitRate(new Integer(64000)); // 设置比特率 
+		audioAttrs.setChannels(new Integer(2)); // 设置声音频道 
+		audioAttrs.setSamplingRate(new Integer(44100));// 设置节录率 
+		audioAttrs.setVolume(100);// 设置音量
 		audioAttrs.setCodec("libmp3lame");
 		jac.audioConvert(sourceFile, target,"mp3",audioAttrs);
 	}
