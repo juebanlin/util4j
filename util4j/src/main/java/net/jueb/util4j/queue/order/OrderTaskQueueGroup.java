@@ -14,6 +14,11 @@ public class OrderTaskQueueGroup {
 	private final ReentrantLock lock=new ReentrantLock();
 	protected final Map<String,OrderTaskQueue> queueMap = new ConcurrentHashMap<String,OrderTaskQueue>();
 
+	public OrderTaskQueue get(String key)
+	{
+		return queueMap.get(key);
+	}
+	
 	public OrderTaskQueue put(String key,Task task)
 	{
 		OrderTaskQueue queue=queueMap.get(key);
