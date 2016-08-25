@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -35,7 +36,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-
+import org.apache.commons.lang.math.RandomUtils;
 import org.apache.mina.filter.executor.UnorderedThreadPoolExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,9 +67,11 @@ public class OrderedThreadPoolQueueExecutor extends ThreadPoolExecutor implement
     /** A default value for the KeepAlive delay */
     private static final int DEFAULT_KEEP_ALIVE = 30;
 
-    private static final String EXIT_SIGNAL = "EXIT_SIGNAL";
+    private static final String QUEUE_NAME_EXIT_SIGNAL = "EXIT_SIGNAL";
 
-    /**
+    public static final String QUEUE_NAME_DEFAULT_QUEUE="DEFAULT_QUEUE";
+
+	/**
      *等待处理的队列
      */
     private final BlockingQueue<String> waitingQueues = new LinkedBlockingQueue<String>();
@@ -184,13 +187,15 @@ public class OrderedThreadPoolQueueExecutor extends ThreadPoolExecutor implement
     }
     
     private TaskQueueImpl getTaskQueueOrCreate(String queueName) {
-        TaskQueueImpl queue = queues.get(queueName);
-        if (queue == null) 
-        {
-            queue = new TaskQueueImpl(queueName);
-            queues.put(queueName, queue);
-        }
-        return queue;
+    	synchronized (queues) {
+    		TaskQueueImpl queue = queues.get(queueName);
+            if (queue == null) 
+            {
+                queue = new TaskQueueImpl(queueName);
+                queues.put(queueName, queue);
+            }
+            return queue;
+		}
     }
 
     /**
@@ -246,7 +251,7 @@ public class OrderedThreadPoolQueueExecutor extends ThreadPoolExecutor implement
             if (workers.size() <= super.getCorePoolSize()) {
                 return;
             }
-            waitingQueues.offer(EXIT_SIGNAL);
+            waitingQueues.offer(QUEUE_NAME_EXIT_SIGNAL);
         }
     }
 
@@ -334,7 +339,7 @@ public class OrderedThreadPoolQueueExecutor extends ThreadPoolExecutor implement
         {
             for (int i = workers.size(); i > 0; i--) 
             {
-                waitingQueues.offer(EXIT_SIGNAL);
+                waitingQueues.offer(QUEUE_NAME_EXIT_SIGNAL);
             }
         }
     }
@@ -349,8 +354,8 @@ public class OrderedThreadPoolQueueExecutor extends ThreadPoolExecutor implement
         String queueName;
         while ((queueName = waitingQueues.poll()) != null) 
         {
-            if (queueName == EXIT_SIGNAL) {
-                waitingQueues.offer(EXIT_SIGNAL);
+            if (queueName == QUEUE_NAME_EXIT_SIGNAL) {
+                waitingQueues.offer(QUEUE_NAME_EXIT_SIGNAL);
                 Thread.yield(); // Let others take the signal.
                 continue;
             }
@@ -366,41 +371,45 @@ public class OrderedThreadPoolQueueExecutor extends ThreadPoolExecutor implement
         return answer;
     }
 
-    public static final String DEFAULT_QUEUE="DEFAULT_QUEUE";
-    
-    public void execute(String queueName,Runnable task) {
-    	 if (shutdown) {
-             rejectTask(task);
-         }
-         TaskQueueImpl tasksQueue = getTaskQueueOrCreate(queueName);
-         // propose the new event to the event queue handler. If we
-         // use a throttle queue handler, the message may be rejected
-         // if the maximum size has been reached.
-      // Ok, the message has been accepted
-         synchronized (tasksQueue) 
-         {
-             //加入任务队列
-        	 tasksQueue.offer(new RunnableTaskAdapter(task));
-             if (tasksQueue.processingCompleted) 
-             {//如果该队列没有线程占用
-            	 tasksQueue.processingCompleted = false;
-                 waitingQueues.offer(queueName);
-             }
-         }
-         addWorkerIfNecessary();
-    }
-    
     /**
      * {@inheritDoc}
      */
     @Override
-    public void execute(final Runnable task) {
-        execute(DEFAULT_QUEUE,task);
+    public final void execute(Runnable task) {
+    	execute(QUEUE_NAME_DEFAULT_QUEUE,task);
+    }
+    
+    public final void execute(String queueName,Runnable task) {
+    	execute(queueName,new RunnableTaskAdapter(task));
     }
 
     @Override
-	public TaskQueueExecutor execute(String queue, Task task) {
-		return execute(queue, task);
+	public TaskQueueExecutor execute(String queueName, Task task) {
+    	if(shutdown)
+    	{
+    		rejectTask(task);
+    	}
+    	if(queueName==null || queueName.isEmpty())
+    	{
+    		throw new RuntimeException("queueName isEmpty");
+    	}
+    	TaskQueueImpl tasksQueue = getTaskQueueOrCreate(queueName);
+        // propose the new event to the event queue handler. If we
+        // use a throttle queue handler, the message may be rejected
+        // if the maximum size has been reached.
+    	// Ok, the message has been accepted
+        synchronized (tasksQueue) 
+        {
+            //加入任务队列
+       	 	tasksQueue.offer(task);
+            if (tasksQueue.processingCompleted) 
+            {//如果该队列没有线程占用
+           	 	tasksQueue.processingCompleted = false;
+                waitingQueues.offer(queueName);
+            }
+        }
+        addWorkerIfNecessary();
+		return tasksQueue;
 	}
 
 	@Override
@@ -529,7 +538,7 @@ public class OrderedThreadPoolQueueExecutor extends ThreadPoolExecutor implement
      */
     @Override
     public boolean remove(Runnable task) {
-        String queueName=DEFAULT_QUEUE;
+        String queueName=QUEUE_NAME_DEFAULT_QUEUE;
         TaskQueueImpl taskQueue = getTaskQueue(queueName);
         if (taskQueue == null) {
             return false;
@@ -586,7 +595,7 @@ public class OrderedThreadPoolQueueExecutor extends ThreadPoolExecutor implement
                 for (;;) 
                 {
                 	//获取一个队列
-                    String queueName = fetchSession();
+                    String queueName = fetchQueueName();
                     idleWorkers.decrementAndGet();
                     if (queueName == null) 
                     {
@@ -600,7 +609,7 @@ public class OrderedThreadPoolQueueExecutor extends ThreadPoolExecutor implement
                             }
                         }
                     }
-                    if (queueName == EXIT_SIGNAL) {
+                    if (queueName == QUEUE_NAME_EXIT_SIGNAL) {
                         break;
                     }
                     try {
@@ -626,8 +635,8 @@ public class OrderedThreadPoolQueueExecutor extends ThreadPoolExecutor implement
          * 当某个队列有任务添加时,此队列会被加入线程处理队列
          * @return
          */
-        private String fetchSession() {
-        	String session = null;
+        private String fetchQueueName() {
+        	String queueName = null;
             long currentTime = System.currentTimeMillis();
             long deadline = currentTime + getKeepAliveTime(TimeUnit.MILLISECONDS);
             for (;;) {
@@ -638,10 +647,10 @@ public class OrderedThreadPoolQueueExecutor extends ThreadPoolExecutor implement
                         break;
                     }
                     try {
-                        session = waitingQueues.poll(waitTime, TimeUnit.MILLISECONDS);
+                        queueName = waitingQueues.poll(waitTime, TimeUnit.MILLISECONDS);
                         break;
                     } finally {
-                        if (session == null) {
+                        if (queueName == null) {
                             currentTime = System.currentTimeMillis();
                         }
                     }
@@ -650,7 +659,7 @@ public class OrderedThreadPoolQueueExecutor extends ThreadPoolExecutor implement
                     continue;
                 }
             }
-            return session;
+            return queueName;
         }
 
         private void runTasks(TaskQueueImpl taskQueue) {
@@ -710,59 +719,155 @@ public class OrderedThreadPoolQueueExecutor extends ThreadPoolExecutor implement
 		}
     }
     
-    public static volatile int a;
-    public static volatile int b;
+    private static class Test{
+    	 public static volatile int a;
+    	 public static volatile int b;
+    	 final OrderedThreadPoolQueueExecutor o=new OrderedThreadPoolQueueExecutor(4,4);
+    	 /**
+    	  * 测试有序和队列任务互不影响
+    	  */
+    	 public void test1()
+    	 {
+    			new Thread(new Runnable() {
+    				@Override
+    				public void run() {
+    					for(int i=0;i<1000000;i++)
+    					{
+    						final int x=i;
+    						o.execute("a",new Runnable() {
+    							@Override
+    							public void run() {
+    								try {
+    									Thread.sleep(1000);
+    								} catch (InterruptedException e) {
+    									e.printStackTrace();
+    								}
+    								if(x==0)
+    								{
+    									System.err.println("x:"+x);
+    								}
+    								if(x%2==0)
+    								{
+    									Test.a++;
+    								}else
+    								{
+    									Test.a--;
+    								}
+    								if(x==1000000)
+    								{
+    									System.err.println(Test.a);
+    								}
+    								System.out.println("x:"+x+",a:"+a);
+    							}
+    						});
+    					}
+    				}
+    			}).start();
+    			new Thread(new Runnable() {
+    				@Override
+    				public void run() {
+    					for(int i=0;i<1000000;i++)
+    					{
+    						final int y=i;
+    						o.execute("b",new Runnable() {
+    							@Override
+    							public void run() {
+    								if(y==0)
+    								{
+    									System.err.println("y:"+y);
+    								}
+    								if(y%2==0)
+    								{
+    									Test.b++;
+    								}else
+    								{
+    									Test.b--;
+    								}
+    								if(y==1000000)
+    								{
+    									System.err.println(Test.b);
+    								}
+    								System.out.println("y:"+y+",b:"+b);
+    							}
+    						});
+    					}
+    				}
+    			}).start();
+    	 }
+    	 
+    	 public Task buildTask()
+    	 {
+    		 return new Task() {
+				@Override
+				public void run() {
+					
+				}
+				
+				@Override
+				public String name() {
+					return UUID.randomUUID().toString();
+				}
+			};
+    	 }
+    	 
+    	 
+    	 Map<Integer,Long> startTime=new HashMap<>();
+    	 /**
+    	  * 测试速度
+    	  */
+    	 public void test2()
+    	 {
+    		 new Thread(new Runnable() {
+ 				@Override
+ 				public void run() {
+ 					int taskCount=10000000;
+ 					int index=4;
+ 					//开始时间标记任务
+ 					for(int i=1;i<=index;i++)
+ 					{
+ 						Task t=buildTask();
+ 						final int queueName=i;
+ 						o.execute(queueName+"", new Task() {
+							@Override
+							public void run() {
+								startTime.put(queueName, System.currentTimeMillis());
+							}
+							@Override
+							public String name() {
+								return "";
+							}
+						});
+ 					}
+ 					//各个队列随机插入影响任务
+ 					for(int i=1;i<=taskCount;i++)
+ 					{
+ 						Task t=buildTask();
+ 						int queue=RandomUtils.nextInt(index)+1;
+ 						o.execute(queue+"",t);
+ 					}
+ 					//结束时间标记任务
+ 					for(int i=1;i<=index;i++)
+ 					{
+ 						Task t=buildTask();
+ 						final int queueName=i;
+ 						o.execute(queueName+"", new Task() {
+							@Override
+							public void run() {
+								long time= System.currentTimeMillis()-startTime.get(queueName);
+								System.err.println("队列："+queueName+",最后一个任务完成,队列耗时:"+time);
+							}
+							@Override
+							public String name() {
+								return "";
+							}
+						});
+ 					}
+ 				}
+ 			}).start();
+    	 }
+    }
+   
     public static void main(String[] args) {
-		final OrderedThreadPoolQueueExecutor o=new OrderedThreadPoolQueueExecutor(1,2);
-		new Thread(new Runnable() {
-			@Override
-			public void run() {
-				for(int i=0;i<100000;i++)
-				{
-					final int a=i;
-					o.execute("a", new Runnable() {
-						@Override
-						public void run() {
-							if(a%2==0)
-							{
-								OrderedThreadPoolQueueExecutor.a++;
-							}else
-							{
-								OrderedThreadPoolQueueExecutor.a--;
-							}
-							if(a==10000)
-							{
-								System.err.println(OrderedThreadPoolQueueExecutor.a);
-							}
-						}
-					});
-				}
-			}
-		}).start();
-		new Thread(new Runnable() {
-			@Override
-			public void run() {
-				for(int i=0;i<100000;i++)
-				{
-					final int b=i;
-					o.execute("b", new Runnable() {
-						@Override
-						public void run() {
-							if(b%2==0)
-							{
-								OrderedThreadPoolQueueExecutor.b++;
-							}else
-							{
-								OrderedThreadPoolQueueExecutor.b--;
-							}
-							if(b==10000)
-							{
-								System.err.println(OrderedThreadPoolQueueExecutor.b);
-							}
-						}
-					});
-				}
-			}
-		}).start();
+		new Test().test2();
 	}
 }

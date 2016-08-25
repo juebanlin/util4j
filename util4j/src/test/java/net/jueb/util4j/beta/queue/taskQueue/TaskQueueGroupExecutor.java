@@ -3,7 +3,7 @@ package net.jueb.util4j.beta.queue.taskQueue;
 import java.util.concurrent.Executor;
 
 /**
- * 任务队列执行器
+ * 任务队列组执行器
  * @author juebanlin
  */
 public interface TaskQueueGroupExecutor extends Executor{
