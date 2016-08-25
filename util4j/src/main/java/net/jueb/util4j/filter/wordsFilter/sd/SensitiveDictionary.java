@@ -143,10 +143,9 @@ public class SensitiveDictionary {
 	}
 
 	private Set<String> readSensitiveWord(InputStream in,Charset charset) throws Exception{
-		Set<String> set = null;
+		Set<String> set = new HashSet<String>();
 		InputStreamReader read = new InputStreamReader(in,charset);
 		try {
-			set = new HashSet<String>();
 			BufferedReader bufferedReader = new BufferedReader(read);
 			String txt = null;
 			while((txt = bufferedReader.readLine()) != null){    //读取文件，将文件内容放入到set中

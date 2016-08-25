@@ -4,7 +4,7 @@
 
 	<groupId>net.jueb</groupId>
 	<artifactId>util4j</artifactId>
-	<version>2.4</version>
+	<version>2.5</version>
 	<packaging>jar</packaging>
 
 	<name>util4j</name>
@@ -122,6 +122,13 @@
 			<artifactId>jave3-win64</artifactId>
 			<version>3.1</version>
 			<optional>true</optional>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.apache.mina/mina-core -->
+		<dependency>
+		    <groupId>org.apache.mina</groupId>
+		    <artifactId>mina-core</artifactId>
+		    <version>2.0.13</version>
+		    <optional>true</optional>
 		</dependency>
 	</dependencies>
 	<build>

@@ -1,8 +1,9 @@
 package net.jueb.util4j.filter.wordsFilter;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -25,16 +26,31 @@ public class SensitiveFilter
 	 * 包含敏感字符的文件,以行隔开
 	 * @param filePath
 	 */
-	public SensitiveFilter(String filePath)
+	public SensitiveFilter(InputStream in,Charset charset)
 	{
-		Set<String> words = new HashSet<String>();
 		try {
-			Path path = Paths.get(SensitiveFilter.class.getClassLoader().getResource(filePath).toURI());
-			words.addAll(Files.readAllLines(path));
+			createTree(readSensitiveWord(in, charset));
 		} catch (Exception e) {
 			log.error(e.getMessage(),e);
 		}
-		createTree(words);
+	}
+	
+	private Set<String> readSensitiveWord(InputStream in,Charset charset) throws Exception{
+		Set<String> set = new HashSet<String>();
+		InputStreamReader read = new InputStreamReader(in,charset);
+		try {
+			set = new HashSet<String>();
+			BufferedReader bufferedReader = new BufferedReader(read);
+			String txt = null;
+			while((txt = bufferedReader.readLine()) != null){    //读取文件，将文件内容放入到set中
+				set.add(txt);
+		    }
+		} catch (Exception e) {
+			throw e;
+		}finally{
+			read.close();     //关闭文件流
+		}
+		return set;
 	}
 	
 	public SensitiveFilter(Set<String> words)
