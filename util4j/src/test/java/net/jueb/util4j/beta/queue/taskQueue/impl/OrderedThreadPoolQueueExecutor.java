@@ -55,7 +55,7 @@ import net.jueb.util4j.beta.queue.taskQueue.TaskQueueGroupExecutor;
  */
 public class OrderedThreadPoolQueueExecutor extends ThreadPoolExecutor implements TaskQueueGroupExecutor{
     /** A logger for this class (commented as it breaks MDCFlter tests) */
-    protected final Logger log = LoggerFactory.getLogger(OrderedThreadPoolQueueExecutor.class);
+    protected final Logger log = LoggerFactory.getLogger(getClass());
 
     /** A default value for the initial pool size */
     private static final int DEFAULT_INITIAL_THREAD_POOL_SIZE = 0;
