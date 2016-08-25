@@ -13,18 +13,6 @@ public class DefaultTaskQueue extends ConcurrentLinkedQueue<Task> implements Tas
 
 	private final String name;
 	
-	public static enum QueueState{
-		/**
-		 * 处理中
-		 */
-		processing,
-		/**
-		 * 就绪中
-		 */
-		ready
-	}
-	protected volatile QueueState state;
-	
 	public DefaultTaskQueue(String name) {
 		if (name == null)
             throw new NullPointerException();
@@ -34,16 +22,5 @@ public class DefaultTaskQueue extends ConcurrentLinkedQueue<Task> implements Tas
 	@Override
 	public final String getQueueName() {
 		return name;
-	}
-
-	public final QueueState getState() {
-		return state;
-	}
-	
-	protected void setState(QueueState state)
-	{
-		if (state == null)
-            throw new NullPointerException();
-		this.state=state;
 	}
 }

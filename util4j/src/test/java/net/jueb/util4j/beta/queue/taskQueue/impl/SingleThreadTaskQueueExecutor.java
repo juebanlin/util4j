@@ -3,7 +3,6 @@ package net.jueb.util4j.beta.queue.taskQueue.impl;
 import java.util.HashSet;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
