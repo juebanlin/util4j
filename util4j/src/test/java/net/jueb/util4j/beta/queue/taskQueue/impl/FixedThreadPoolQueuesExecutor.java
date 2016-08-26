@@ -805,7 +805,7 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
 				
 				@Override
 				public String name() {
-					return UUID.randomUUID().toString();
+					return "";
 				}
 			};
     	 }
@@ -854,7 +854,7 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
 							@Override
 							public void run() {
 								long time= System.currentTimeMillis()-startTime.get(queueName);
-								System.err.println("队列："+queueName+",最后一个任务完成,队列耗时:"+time);
+								System.err.println("队列："+queueName+",最后一个任务完成,队列耗时:"+time+",当前线程ID:"+Thread.currentThread().getId());
 							}
 							@Override
 							public String name() {

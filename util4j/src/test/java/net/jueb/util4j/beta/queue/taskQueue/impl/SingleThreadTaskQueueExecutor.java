@@ -38,19 +38,30 @@ public class SingleThreadTaskQueueExecutor extends AbstractTaskQueueExecutor{
 	@Override
 	public void execute(Task task) {
 		super.execute(task);
-		addWorkerIfNecessary();
-		wakeUpWorkerIfNecessary();
+		update();
 	}
 	
 	private final Set<Worker> workers = new HashSet<Worker>();
 	
+	private final ReentrantLock lock=new ReentrantLock();
+	
+	protected void update()
+	{
+		lock.lock();
+		try {
+			addWorkerIfNecessary();
+			wakeUpWorkerIfNecessary();
+		} finally {
+			lock.unlock();
+		}
+	}
+	
 	private void addWorkerIfNecessary() 
 	{
-		synchronized (workers) {
-            if (workers.isEmpty()) {
-                addWorker();
-            }
-        }
+		if(workers.isEmpty())
+		{
+			addWorker();
+		}
     }
 	
 	private void addWorker()
@@ -68,66 +79,57 @@ public class SingleThreadTaskQueueExecutor extends AbstractTaskQueueExecutor{
 	{
 		for(Worker worker:workers)
 		{
-			worker.wakeUpIfNecessary();
+			worker.wakeUpUnsafe();
 		}
 	}
 
 	private class Worker implements Runnable {
 		
-		private CountDownLatch cd=new CountDownLatch(1);
+		private CountDownLatch cd;
 		private final ReentrantLock lock=new ReentrantLock();
 		
-		protected void wakeUpIfNecessary()
+		private void wakeUpUnsafe()
 		{
-			lock.lock();
-			try {
+			if(cd!=null)
+			{
 				cd.countDown();
-			} catch (Exception e) {
-				log.error(e.getMessage(),e);
-			}finally{
-				lock.unlock();
 			}
 		}
 		
-		private void sleep() throws InterruptedException 
+		private  void sleep() throws InterruptedException 
 		{
-			lock.lock();
-			try {
-				cd = new CountDownLatch(1);
-				cd.await();
-			} catch (Exception e) {
-				log.error(e.getMessage(),e);
-			}finally{
-				lock.unlock();
-			}
+			cd = new CountDownLatch(1);
+			cd.await();
 		}
 		
         public void run() {
             try {
-            	while(true)
+            	for(;;)
             	{
             		Task task=getQueue().poll();
-                    if(task!=null)
+                    if(task==null)
                     {
                     	try {
-                    		runTask(task);
-						} catch (Throwable e) {
-							log.error(e.getMessage(),e);
+							sleep();
+							continue;
+						} catch (InterruptedException e) {
+							e.printStackTrace();
 						}
-                    }else
-                    {
-                    	try {
-                    		sleep();
-    					} catch (InterruptedException e) {
-    						log.error(e.getMessage(),e);
-    					}
                     }
+                    try {
+                		runTask(task);
+					} catch (Throwable e) {
+						log.error(e.getMessage(),e);
+					}
             	}
             } finally {
-                synchronized (workers) {
-                    workers.remove(this);
-                    workers.notifyAll();
-                }
+            	lock.lock();
+        		try {
+        			 workers.remove(this);
+                     workers.notifyAll();
+        		} finally {
+        			lock.unlock();
+        		}
             }
         }
     }
@@ -139,9 +141,11 @@ public class SingleThreadTaskQueueExecutor extends AbstractTaskQueueExecutor{
 	
 	public static long start;
 	public static long end;
-	public static void main(String[] args) {
+	public static int i;
+	public static void main(String[] args) throws InterruptedException {
 		TaskQueueExecutor t=new SingleThreadTaskQueueExecutor("Test");
-		final int count=1000000;
+		Thread.sleep(5000);
+		final int count=10000000;
 		for(int i=1;i<=count;i++)
 		{
 			final int x=i;
@@ -160,6 +164,7 @@ public class SingleThreadTaskQueueExecutor extends AbstractTaskQueueExecutor{
 						System.err.println("t:"+TimeUnit.NANOSECONDS.toMillis(t));
 						System.err.println("t:"+t);
 					}
+					SingleThreadTaskQueueExecutor.i=x;
 //					System.out.println(x);
 //					UUID.randomUUID().toString();
 				}
