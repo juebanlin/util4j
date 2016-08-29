@@ -17,7 +17,7 @@
  *  under the License.
  *
  */
-package net.jueb.util4j.beta.queue.taskQueue.impl;
+package net.jueb.util4j.queue.taskQueue.impl;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,7 +25,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -36,14 +35,14 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import org.apache.commons.lang.math.RandomUtils;
+
 import org.apache.mina.filter.executor.UnorderedThreadPoolExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.jueb.util4j.beta.queue.taskQueue.Task;
-import net.jueb.util4j.beta.queue.taskQueue.TaskQueueExecutor;
-import net.jueb.util4j.beta.queue.taskQueue.TaskQueueGroupExecutor;
+import net.jueb.util4j.queue.taskQueue.Task;
+import net.jueb.util4j.queue.taskQueue.TaskQueueExecutor;
+import net.jueb.util4j.queue.taskQueue.TaskQueuesExecutor;
 
 /**
  * A {@link ThreadPoolExecutor} that maintains the order of {@link QueueTask}s.
@@ -54,7 +53,7 @@ import net.jueb.util4j.beta.queue.taskQueue.TaskQueueGroupExecutor;
  * @author <a href="http://mina.apache.org">Apache MINA Project</a>
  * @org.apache.xbean.XBean
  */
-public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements TaskQueueGroupExecutor{
+public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements TaskQueuesExecutor{
     /** A logger for this class (commented as it breaks MDCFlter tests) */
     protected final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -187,15 +186,19 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
     }
     
     private TaskQueueImpl getTaskQueueOrCreate(String queueName) {
-    	synchronized (queues) {
-    		TaskQueueImpl queue = queues.get(queueName);
-            if (queue == null) 
-            {
-                queue = new TaskQueueImpl(queueName);
-                queues.put(queueName, queue);
-            }
-            return queue;
-		}
+    	TaskQueueImpl queue = queues.get(queueName);
+        if (queue == null) 
+        {
+           synchronized (queues) {
+        	   queue = queues.get(queueName);
+               if (queue == null) 
+               {
+                   queue = new TaskQueueImpl(queueName);
+                   queues.put(queueName, queue);
+               }
+           }
+        }
+        return queue;
     }
 
     /**
@@ -210,37 +213,35 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
      * Add a new thread to execute a task, if needed and possible.
      * It depends on the current pool size. If it's full, we do nothing.
      */
-    private void addWorker() {
-        synchronized (workers) {
-            if (workers.size() >= super.getMaximumPoolSize()) {
-                return;
-            }
+    private void addWorkerUnsafe() {
+    	 if (workers.size() >= super.getMaximumPoolSize()) {
+             return;
+         }
 
-            // Create a new worker, and add it to the thread pool
-            Worker worker = new Worker();
-            Thread thread = getThreadFactory().newThread(worker);
+         // Create a new worker, and add it to the thread pool
+         Worker worker = new Worker();
+         Thread thread = getThreadFactory().newThread(worker);
 
-            // As we have added a new thread, it's considered as idle.
-            idleWorkers.incrementAndGet();
+         // As we have added a new thread, it's considered as idle.
+         idleWorkers.incrementAndGet();
 
-            // Now, we can start it.
-            thread.start();
-            workers.add(worker);
+         // Now, we can start it.
+         thread.start();
+         workers.add(worker);
 
-            if (workers.size() > largestPoolSize) {
-                largestPoolSize = workers.size();
-            }
-        }
+         if (workers.size() > largestPoolSize) {
+             largestPoolSize = workers.size();
+         }
     }
 
     /**
-     * Add a new Worker only if there are no idle worker.
+     * 如果活动的线程数量=0则添加线程
      */
     private void addWorkerIfNecessary() {
         if (idleWorkers.get() == 0) {
             synchronized (workers) {
                 if (workers.isEmpty() || (idleWorkers.get() == 0)) {
-                    addWorker();
+                    addWorkerUnsafe();
                 }
             }
         }
@@ -380,7 +381,7 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
     }
     
     public final void execute(String queueName,Runnable task) {
-    	execute(queueName,new RunnableTaskAdapter(task));
+    	execute(queueName,TaskQueueUtil.convert(task));
     }
 
     @Override
@@ -446,7 +447,6 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
             for (Worker w : workers) {
                 answer += w.completedTaskCount.get();
             }
-
             return answer;
         }
     }
@@ -495,7 +495,7 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
         int answer = 0;
         synchronized (workers) {
             for (int i = super.getCorePoolSize() - workers.size(); i > 0; i--) {
-                addWorker();
+                addWorkerUnsafe();
                 answer++;
             }
         }
@@ -509,7 +509,7 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
     public boolean prestartCoreThread() {
         synchronized (workers) {
             if (workers.size() < super.getCorePoolSize()) {
-                addWorker();
+                addWorkerUnsafe();
                 return true;
             } else {
                 return false;
@@ -595,11 +595,11 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
                 for (;;) 
                 {
                 	//获取一个队列
-                    String queueName = fetchQueueName();
-                    idleWorkers.decrementAndGet();
-                    if (queueName == null) 
-                    {
-                        synchronized (workers) 
+                	String queueName = fetchQueueName();
+					idleWorkers.decrementAndGet();
+					if(queueName==null)
+					{
+						synchronized (workers) 
                         {
                             if (workers.size() > getCorePoolSize()) 
                             {
@@ -608,8 +608,9 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
                                 break;
                             }
                         }
-                    }
-                    if (queueName == QUEUE_NAME_EXIT_SIGNAL) {
+					}
+                    if (queueName == QUEUE_NAME_EXIT_SIGNAL) 
+                    {
                         break;
                     }
                     try {
@@ -711,163 +712,11 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
         
 		@Override
 		public void execute(Runnable command) {
-			offer(new RunnableTaskAdapter(command));
+			offer(TaskQueueUtil.convert(command));
 		}
 		@Override
 		public void execute(Task task) {
 			offer(task);
 		}
     }
-    
-    private static class Test{
-    	 public static volatile int a;
-    	 public static volatile int b;
-    	 final FixedThreadPoolQueuesExecutor o=new FixedThreadPoolQueuesExecutor(4,4);
-    	 /**
-    	  * 测试有序和队列任务互不影响
-    	  */
-    	 public void test1()
-    	 {
-    			new Thread(new Runnable() {
-    				@Override
-    				public void run() {
-    					for(int i=0;i<1000000;i++)
-    					{
-    						final int x=i;
-    						o.execute("a",new Runnable() {
-    							@Override
-    							public void run() {
-    								try {
-    									Thread.sleep(1000);
-    								} catch (InterruptedException e) {
-    									e.printStackTrace();
-    								}
-    								if(x==0)
-    								{
-    									System.err.println("x:"+x);
-    								}
-    								if(x%2==0)
-    								{
-    									Test.a++;
-    								}else
-    								{
-    									Test.a--;
-    								}
-    								if(x==1000000)
-    								{
-    									System.err.println(Test.a);
-    								}
-    								System.out.println("x:"+x+",a:"+a);
-    							}
-    						});
-    					}
-    				}
-    			}).start();
-    			new Thread(new Runnable() {
-    				@Override
-    				public void run() {
-    					for(int i=0;i<1000000;i++)
-    					{
-    						final int y=i;
-    						o.execute("b",new Runnable() {
-    							@Override
-    							public void run() {
-    								if(y==0)
-    								{
-    									System.err.println("y:"+y);
-    								}
-    								if(y%2==0)
-    								{
-    									Test.b++;
-    								}else
-    								{
-    									Test.b--;
-    								}
-    								if(y==1000000)
-    								{
-    									System.err.println(Test.b);
-    								}
-    								System.out.println("y:"+y+",b:"+b);
-    							}
-    						});
-    					}
-    				}
-    			}).start();
-    	 }
-    	 
-    	 public Task buildTask()
-    	 {
-    		 return new Task() {
-				@Override
-				public void run() {
-					
-				}
-				
-				@Override
-				public String name() {
-					return "";
-				}
-			};
-    	 }
-    	 
-    	 
-    	 Map<Integer,Long> startTime=new HashMap<>();
-    	 /**
-    	  * 测试速度
-    	  */
-    	 public void test2()
-    	 {
-    		 new Thread(new Runnable() {
- 				@Override
- 				public void run() {
- 					int taskCount=10000000;
- 					int index=4;
- 					//开始时间标记任务
- 					for(int i=1;i<=index;i++)
- 					{
- 						Task t=buildTask();
- 						final int queueName=i;
- 						o.execute(queueName+"", new Task() {
-							@Override
-							public void run() {
-								startTime.put(queueName, System.currentTimeMillis());
-							}
-							@Override
-							public String name() {
-								return "";
-							}
-						});
- 					}
- 					//各个队列随机插入影响任务
- 					for(int i=1;i<=taskCount;i++)
- 					{
- 						Task t=buildTask();
- 						int queue=RandomUtils.nextInt(index)+1;
- 						o.execute(queue+"",t);
- 					}
- 					//结束时间标记任务
- 					for(int i=1;i<=index;i++)
- 					{
- 						Task t=buildTask();
- 						final int queueName=i;
- 						o.execute(queueName+"", new Task() {
-							@Override
-							public void run() {
-								long time= System.currentTimeMillis()-startTime.get(queueName);
-								System.err.println("队列："+queueName+",最后一个任务完成,队列耗时:"+time+",当前线程ID:"+Thread.currentThread().getId());
-							}
-							@Override
-							public String name() {
-								return "";
-							}
-						});
- 					}
- 				}
- 			}).start();
-    	 }
-    }
-   
-    public static void main(String[] args) {
-		new Test().test2();
-	}
 }

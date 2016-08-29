@@ -1,9 +1,9 @@
-package net.jueb.util4j.beta.queue.taskQueue.impl;
+package net.jueb.util4j.queue.taskQueue.impl;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import net.jueb.util4j.beta.queue.taskQueue.Task;
-import net.jueb.util4j.beta.queue.taskQueue.TaskQueue;
+import net.jueb.util4j.queue.taskQueue.Task;
+import net.jueb.util4j.queue.taskQueue.TaskQueue;
 
 public class DefaultTaskQueue extends ConcurrentLinkedQueue<Task> implements TaskQueue{
 	/**

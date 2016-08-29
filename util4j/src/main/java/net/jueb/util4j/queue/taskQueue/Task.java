@@ -1,4 +1,4 @@
-package net.jueb.util4j.beta.queue.taskQueue;
+package net.jueb.util4j.queue.taskQueue;
 
 /**
  * 任务

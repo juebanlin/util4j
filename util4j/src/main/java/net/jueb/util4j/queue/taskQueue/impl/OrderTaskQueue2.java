@@ -1,39 +1,39 @@
-package net.jueb.util4j.queue.order;
+package net.jueb.util4j.queue.taskQueue.impl;
 
 import java.sql.Date;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Queue;
-import java.util.Scanner;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import net.jueb.util4j.queue.taskQueue.Task;
+import net.jueb.util4j.queue.taskQueue.TaskQueueExecutor;
 
 /**
  * 顺序任务执行队列
  * 
  * @author Administrator
  */
-public class OrderTaskQueue implements Executor{
+public class OrderTaskQueue2 implements TaskQueueExecutor{
 	public final Logger log = LoggerFactory.getLogger(getClass());
+//	protected final Deque<Task> tasks = new ConcurrentLinkedDeque<Task>();
 	protected final Queue<Task> tasks = new ConcurrentLinkedQueue<Task>();
 	protected final TaskRunner runner;// 运行者
 	protected final CountMonitor cm=new CountMonitor();
 	public static long CountMonitorInterval=60*60*1000;//监视毫秒间隔
-	
-	public OrderTaskQueue(String name) {
+	private final ReentrantLock lock=new ReentrantLock();
+	private final Condition wakeUpCondition=lock.newCondition();//唤醒条件
+	public OrderTaskQueue2(String name) {
 		runner = new TaskRunner(name);
 	}
-	public OrderTaskQueue(String name,Collection<Task> tasks) {
+	public OrderTaskQueue2(String name,Collection<Task> tasks) {
 		this.tasks.addAll(tasks);
 		runner = new TaskRunner(name);
 	}
@@ -43,24 +43,16 @@ public class OrderTaskQueue implements Executor{
 	}
 
 	public void addTask(Task task) {
-		if (task != null) {
-			tasks.add(task);
-			runner.wakeUpIfSleep();
+		if (task == null) {
+			return ;
 		}
-	}
-	
-	@Override
-	public void execute(final Runnable command) {
-		addTask(new Task(){
-			@Override
-			public void action() throws Throwable {
-				command.run();
-			}
-			@Override
-			public String name() {
-				return command.toString();
-			}
-		});
+		lock.lock();
+		try {
+			tasks.add(task);
+			wakeUpCondition.signalAll();
+		} finally {
+			lock.unlock();
+		}
 	}
 
 	public Queue<Task> getTasks() {
@@ -92,13 +84,6 @@ public class OrderTaskQueue implements Executor{
 		runner.shutdown();
 	}
 
-	public static interface Task {
-
-		public void action()throws Throwable;
-
-		public String name();
-	}
-
 	/**
 	 * 任务对象
 	 * @author Administrator
@@ -115,9 +100,10 @@ public class OrderTaskQueue implements Executor{
 		public void start() {
 			startNanoTime = System.nanoTime();
 			try {
-				task.action();
+				task.run();
 			} catch (Throwable e) {
 				log.error("task error[" + task.getClass() + "]:"+ e.getMessage(),e);
+				e.printStackTrace();
 			}
 			endNanoTime = System.nanoTime();
 		}
@@ -168,30 +154,31 @@ public class OrderTaskQueue implements Executor{
 		}
 
 		private class RunnnerCore extends Thread {
-			private CountDownLatch latch;
 			private boolean isActive;// 关闭=false
-			private final ReentrantLock lock=new ReentrantLock();
-			
-			private void sleep() throws InterruptedException
-			{
-				latch = new CountDownLatch(1);
-				latch.await();
-			}
 			
 			@Override
-			public void run() {
+			public void run() 
+			{
 				isStarting=false;
 				isActive = true;
 				try {
-					while (isActive) {
-						Task task = tasks.poll();
-						if (task == null) {// 线程睡眠
-							sleep();
-						} else {// 线程被外部条件唤醒
-							taskObj = new TaskObj(task);
-							cm.taskRunBefore(taskObj);
-							taskObj.start();
-							cm.taskRunAfter(taskObj);
+					while (isActive) 
+					{
+						lock.lock();
+						try {
+							Task task = tasks.poll();
+							if (task == null) 
+							{// 线程睡眠
+								wakeUpCondition.await();
+							}else
+							{
+								taskObj = new TaskObj(task);
+								cm.taskRunBefore(taskObj);
+								taskObj.start();
+								cm.taskRunAfter(taskObj);
+							}
+						} finally {
+							lock.unlock();
 						}
 					}
 				} catch (Throwable e) {
@@ -200,25 +187,8 @@ public class OrderTaskQueue implements Executor{
 				isActive = false;
 			}
 
-			/**
-			 * 如果是睡眠,则唤醒
-			 */
-			public void wakeUpIfSleep() {
-				try {
-					lock.lock();
-					if (latch != null) {// 如果线程睡眠则唤醒
-						latch.countDown();
-					}
-				} catch (Exception e) {
-					log.error(e.getMessage(),e);
-				}finally{
-					lock.unlock();
-				}
-			}
-
 			public void shutdown() {
 				this.isActive = false;
-				this.wakeUpIfSleep();
 			}
 
 			public boolean isActive() {
@@ -234,15 +204,6 @@ public class OrderTaskQueue implements Executor{
 			if(this.runnnerCore!=null)
 			{
 				this.runnnerCore.shutdown();
-			}
-		}
-
-		/**
-		 * 如果是睡眠,则唤醒
-		 */
-		public void wakeUpIfSleep() {
-			if (!tasks.isEmpty() && runnnerCore != null) {
-				runnnerCore.wakeUpIfSleep();
 			}
 		}
 
@@ -393,56 +354,18 @@ public class OrderTaskQueue implements Executor{
 			}
 		}
 	}
-	public static void main(String[] args) {
-		final List<Task> ts=new ArrayList<Task>();
-		final Map<Integer,Long> map=new HashMap<Integer,Long>();
-		final int start=1;
-		final int end=1000000;
-		for(int i=start;i<=end;i++)
-		{
-			final int x=i;
-			ts.add(new Task(){
-				@Override
-				public void action() throws Throwable {
-					if(x==start)
-					{
-						System.err.println(System.currentTimeMillis());
-						map.put(1,System.currentTimeMillis());
-					}
-					if(x==end)
-					{
-						System.err.println(System.currentTimeMillis());
-						map.put(2,System.currentTimeMillis());
-					}
-//					log.debug("任务"+x+"执行");
-				}
-
-				@Override
-				public String name() {
-					return null;
-				}
-				
-			});
-		}
-		final OrderTaskQueue q=new OrderTaskQueue("123");
-		q.start();
-		new Thread(new Runnable() {
-			@Override
-			public void run() {
-				for(Task t:ts)
-				{
-					q.addTask(t);
-				}
-			}
-		}).start();
-		try {
-			Thread.sleep(5000);
-			long time=map.get(2)-map.get(1);
-			System.out.println(time);
-		} catch (InterruptedException e) {
-		}
-		Scanner sc=new Scanner(System.in);
-		sc.nextLine();
-		sc.close();
+	
+	@Override
+	public void execute(Runnable command) {
+		addTask(TaskQueueUtil.convert(command));
+	}
+	
+	@Override
+	public String getQueueName() {
+		return getName();
+	}
+	@Override
+	public void execute(Task task) {
+		addTask(task);
 	}
 }

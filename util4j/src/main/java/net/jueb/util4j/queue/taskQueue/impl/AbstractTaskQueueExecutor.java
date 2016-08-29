@@ -1,11 +1,11 @@
-package net.jueb.util4j.beta.queue.taskQueue.impl;
+package net.jueb.util4j.queue.taskQueue.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.jueb.util4j.beta.queue.taskQueue.Task;
-import net.jueb.util4j.beta.queue.taskQueue.TaskQueue;
-import net.jueb.util4j.beta.queue.taskQueue.TaskQueueExecutor;
+import net.jueb.util4j.queue.taskQueue.Task;
+import net.jueb.util4j.queue.taskQueue.TaskQueue;
+import net.jueb.util4j.queue.taskQueue.TaskQueueExecutor;
 
 public abstract class AbstractTaskQueueExecutor implements TaskQueueExecutor{
 
@@ -24,7 +24,7 @@ public abstract class AbstractTaskQueueExecutor implements TaskQueueExecutor{
 
 	@Override
 	public final void execute(Runnable command) {
-		execute(new RunnableTaskAdapter(command));
+		execute(TaskQueueUtil.convert(command));
 	}
 
 	@Override

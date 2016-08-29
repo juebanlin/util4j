@@ -1,4 +1,4 @@
-package net.jueb.util4j.beta.queue.taskQueue;
+package net.jueb.util4j.queue.taskQueue;
 
 import java.util.concurrent.Executor;
 
@@ -6,7 +6,7 @@ import java.util.concurrent.Executor;
  * 任务队列组执行器
  * @author juebanlin
  */
-public interface TaskQueueGroupExecutor extends Executor{
+public interface TaskQueuesExecutor extends Executor{
 	
 	/**
 	 * 执行队列任务

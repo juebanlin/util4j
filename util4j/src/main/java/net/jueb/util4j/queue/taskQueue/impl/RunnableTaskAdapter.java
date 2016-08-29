@@ -1,12 +1,16 @@
-package net.jueb.util4j.beta.queue.taskQueue.impl;
+package net.jueb.util4j.queue.taskQueue.impl;
 
-import net.jueb.util4j.beta.queue.taskQueue.Task;
+import net.jueb.util4j.queue.taskQueue.Task;
 
 class RunnableTaskAdapter implements Task{
 
 	private final Runnable runnable;
 	
 	public RunnableTaskAdapter(Runnable runnable) {
+		if(runnable==null)
+		{
+			throw new RuntimeException("runnable is null");
+		}
 		this.runnable=runnable;
 	}
 	
@@ -21,6 +25,11 @@ class RunnableTaskAdapter implements Task{
 
 	@Override
 	public String name() {
-		return runnable.toString();
+		return runnable.getClass().toString();
+	}
+
+	@Override
+	public String toString() {
+		return "RunnableTaskAdapter [runnable=" + runnable + "]";
 	}
 }
