@@ -1,13 +1,14 @@
-package net.jueb.util4j.queue.taskQueue.impl;
+package net.jueb.util4j.queue.taskQueue.impl.order.orderTask;
 
 import java.sql.Date;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
@@ -15,23 +16,25 @@ import org.slf4j.LoggerFactory;
 
 import net.jueb.util4j.queue.taskQueue.Task;
 import net.jueb.util4j.queue.taskQueue.TaskQueueExecutor;
+import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.TaskQueueUtil;
 
 /**
  * 顺序任务执行队列
  * 
  * @author Administrator
  */
-public class OrderTaskQueue implements TaskQueueExecutor{
+public class OrderTaskQueue2 implements TaskQueueExecutor{
 	public final Logger log = LoggerFactory.getLogger(getClass());
 	protected final Queue<Task> tasks = new ConcurrentLinkedQueue<Task>();
 	protected final TaskRunner runner;// 运行者
 	protected final CountMonitor cm=new CountMonitor();
 	public static long CountMonitorInterval=60*60*1000;//监视毫秒间隔
-	
-	public OrderTaskQueue(String name) {
+	private final ReentrantLock lock=new ReentrantLock();
+	private final Condition notEmpty=lock.newCondition();//唤醒条件
+	public OrderTaskQueue2(String name) {
 		runner = new TaskRunner(name);
 	}
-	public OrderTaskQueue(String name,Collection<Task> tasks) {
+	public OrderTaskQueue2(String name,Collection<Task> tasks) {
 		this.tasks.addAll(tasks);
 		runner = new TaskRunner(name);
 	}
@@ -41,15 +44,29 @@ public class OrderTaskQueue implements TaskQueueExecutor{
 	}
 
 	public void addTask(Task task) {
-		if (task != null) {
+		if (task == null) {
+			return ;
+		}
+		lock.lock();
+		try {
 			tasks.add(task);
-			runner.wakeUpIfSleep();
+			notEmpty.signalAll();
+		} finally {
+			lock.unlock();
 		}
 	}
 	
-	@Override
-	public void execute(final Runnable command) {
-		addTask(TaskQueueUtil.convert(command));
+	public void addTask(List<Task> tasks) {
+		if (tasks == null) {
+			return ;
+		}
+		lock.lock();
+		try {
+			tasks.addAll(tasks);
+			notEmpty.signalAll();
+		} finally {
+			lock.unlock();
+		}
 	}
 
 	public Queue<Task> getTasks() {
@@ -100,6 +117,7 @@ public class OrderTaskQueue implements TaskQueueExecutor{
 				task.run();
 			} catch (Throwable e) {
 				log.error("task error[" + task.getClass() + "]:"+ e.getMessage(),e);
+				e.printStackTrace();
 			}
 			endNanoTime = System.nanoTime();
 		}
@@ -150,30 +168,31 @@ public class OrderTaskQueue implements TaskQueueExecutor{
 		}
 
 		private class RunnnerCore extends Thread {
-			private CountDownLatch latch;
 			private boolean isActive;// 关闭=false
-			private final ReentrantLock lock=new ReentrantLock();
-			
-			private void sleep() throws InterruptedException
-			{
-				latch = new CountDownLatch(1);
-				latch.await();
-			}
 			
 			@Override
-			public void run() {
+			public void run() 
+			{
 				isStarting=false;
 				isActive = true;
 				try {
-					while (isActive) {
-						Task task = tasks.poll();
-						if (task == null) {// 线程睡眠
-							sleep();
-						} else {// 线程被外部条件唤醒
-							taskObj = new TaskObj(task);
-							cm.taskRunBefore(taskObj);
-							taskObj.start();
-							cm.taskRunAfter(taskObj);
+					while (isActive) 
+					{
+						lock.lock();
+						try {
+							Task task = tasks.poll();
+							if (task == null) 
+							{// 线程睡眠
+								notEmpty.await();//等待不为空的信号
+							}else
+							{
+								taskObj = new TaskObj(task);
+								cm.taskRunBefore(taskObj);
+								taskObj.start();
+								cm.taskRunAfter(taskObj);
+							}
+						} finally {
+							lock.unlock();
 						}
 					}
 				} catch (Throwable e) {
@@ -182,25 +201,8 @@ public class OrderTaskQueue implements TaskQueueExecutor{
 				isActive = false;
 			}
 
-			/**
-			 * 如果是睡眠,则唤醒
-			 */
-			public void wakeUpIfSleep() {
-				try {
-					lock.lock();
-					if (latch != null) {// 如果线程睡眠则唤醒
-						latch.countDown();
-					}
-				} catch (Exception e) {
-					log.error(e.getMessage(),e);
-				}finally{
-					lock.unlock();
-				}
-			}
-
 			public void shutdown() {
 				this.isActive = false;
-				this.wakeUpIfSleep();
 			}
 
 			public boolean isActive() {
@@ -216,15 +218,6 @@ public class OrderTaskQueue implements TaskQueueExecutor{
 			if(this.runnnerCore!=null)
 			{
 				this.runnnerCore.shutdown();
-			}
-		}
-
-		/**
-		 * 如果是睡眠,则唤醒
-		 */
-		public void wakeUpIfSleep() {
-			if (!tasks.isEmpty() && runnnerCore != null) {
-				runnnerCore.wakeUpIfSleep();
 			}
 		}
 
@@ -375,7 +368,12 @@ public class OrderTaskQueue implements TaskQueueExecutor{
 			}
 		}
 	}
-
+	
+	@Override
+	public void execute(Runnable command) {
+		addTask(TaskQueueUtil.convert(command));
+	}
+	
 	@Override
 	public String getQueueName() {
 		return getName();
@@ -383,5 +381,9 @@ public class OrderTaskQueue implements TaskQueueExecutor{
 	@Override
 	public void execute(Task task) {
 		addTask(task);
+	}
+	@Override
+	public void execute(List<Task> tasks) {
+		addTask(tasks);
 	}
 }

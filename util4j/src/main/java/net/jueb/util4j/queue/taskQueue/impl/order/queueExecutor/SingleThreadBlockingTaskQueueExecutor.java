@@ -1,8 +1,8 @@
-package net.jueb.util4j.queue.taskQueue.impl;
+package net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
@@ -10,18 +10,19 @@ import net.jueb.util4j.queue.taskQueue.Task;
 
 /**
  * 单线程任务队列执行器
+ * 采用阻塞队列驱动唤醒线程
  * @author juebanlin
  */
-public class SingleThreadTaskQueueExecutor extends AbstractTaskQueueExecutor{
+public class SingleThreadBlockingTaskQueueExecutor extends AbstractTaskQueueExecutor{
 
 	private final ThreadFactory threadFactory;
 	
-	public SingleThreadTaskQueueExecutor(String queueName) {
+	public SingleThreadBlockingTaskQueueExecutor(String queueName) {
 		this(queueName,Executors.defaultThreadFactory());
 	}
 	
-	public SingleThreadTaskQueueExecutor(String queueName,ThreadFactory threadFactory) {
-		super(queueName);
+	public SingleThreadBlockingTaskQueueExecutor(String queueName,ThreadFactory threadFactory) {
+		super(new DefaultBlockingTaskQueue(queueName));
 		if (threadFactory == null)
 	            throw new NullPointerException();
 		this.threadFactory = threadFactory;
@@ -33,16 +34,21 @@ public class SingleThreadTaskQueueExecutor extends AbstractTaskQueueExecutor{
 
 	@Override
 	public void execute(Task task) {
-		super.execute(task);
+		getQueue().offer(task);
 		update();
 	}
 	
+	@Override
+	public void execute(List<Task> tasks) {
+		getQueue().addAll(tasks);
+		update();
+	}
+
 	private final Set<Worker> workers = new HashSet<Worker>();
 	
 	protected void update()
 	{
 		addWorkerIfNecessary();
-		wakeUpWorkerIfNecessary();
 	}
 	
 	private void addWorkerIfNecessary() 
@@ -66,49 +72,19 @@ public class SingleThreadTaskQueueExecutor extends AbstractTaskQueueExecutor{
 	    workers.add(worker);
 	}
 
-	/**
-	 * 唤醒工作人员,如果有必要
-	 */
-	private void wakeUpWorkerIfNecessary()
-	{
-		for(Worker worker:workers)
-		{
-			worker.wakeUpUnsafe();
-		}
-	}
-
 	private class Worker implements Runnable {
-		
-		private volatile CountDownLatch cd;
-		
-		private void wakeUpUnsafe()
-		{
-			if(cd!=null)
-			{
-				cd.countDown();
-			}
-		}
-		
-		private  void sleep() throws InterruptedException 
-		{
-			cd = new CountDownLatch(1);
-			cd.await();
-		}
 		
         public void run() {
             try {
+            	DefaultBlockingTaskQueue queue=(DefaultBlockingTaskQueue) getQueue();
             	for(;;)
             	{
-            		Task task=getQueue().poll();
-                    if(task==null)
-                    {
-                    	try {
-							sleep();
-							continue;
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-                    }
+            		Task task=null;
+					try {
+						task =queue.take();
+					} catch (InterruptedException e1) {
+						
+					}
                     try {
                 		runTask(task);
 					} catch (Throwable e) {

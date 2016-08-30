@@ -1,8 +1,10 @@
-package net.jueb.util4j.queue.taskQueue.impl.taskCenter;
+package net.jueb.util4j.queue.taskQueue.impl.unOrder.taskCenter;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -24,12 +26,11 @@ import net.jueb.util4j.queue.taskQueue.TaskQueueExecutor;
 
 /**
  * 任务管理中心。管理多线程执行，一般的，常规任务执行都应当使用任务中心执行。
+ * 无序任务执行
  */
 public final class TaskCenter implements TaskQueueExecutor {
 
 	private final static Logger logger = LogManager.getLogger(TaskCenter.class.getName());
-
-	private final static TaskCenter instance = new TaskCenter();
 
 	private ExecutorService mainExecutor;
 	private ScheduledExecutorService scheduledExecutor;
@@ -48,26 +49,21 @@ public final class TaskCenter implements TaskQueueExecutor {
 	private Queue<Runnable> taskQueue;
 
 	private Queue<SpinningTask> taskPool;
-
-	private TaskCenter() {
+	private final String name;
+	
+	public TaskCenter(String queueName)
+	{
+		this.name=queueName;
 		this.mainExecutor = Executors.newCachedThreadPool();
 		this.scheduledExecutor = Executors.newScheduledThreadPool(this.corePoolSize);
 		this.taskQueue = new LinkedList<Runnable>();
 		this.taskPool = new LinkedList<SpinningTask>();
-
 		this.threadCounts = new AtomicInteger(0);
-
 		this.scheduledFutureList = new Vector<ScheduledFuture<?>>();
 		this.timers = new ConcurrentHashMap<String, Timer>();
-
 		this.slidingWindow = new TaskSlidingWindow(this);
 		this.slidingWindow.start();
-
 		this.monitoring = this.scheduledExecutor.scheduleAtFixedRate(new MonitoringTask(), 5, 60, TimeUnit.MINUTES);
-	}
-
-	public static TaskCenter getInstance() {
-		return TaskCenter.instance;
 	}
 
 	public void setMaxThread(int max) {
@@ -98,6 +94,19 @@ public final class TaskCenter implements TaskQueueExecutor {
 	public void execute(Runnable task) {
 		synchronized (this.taskQueue) {
 			this.taskQueue.offer(task);
+		}
+		try {
+			if (this.threadCounts.get() < this.maxThreads) {
+				this.mainExecutor.execute(this.borrowSpinningTask());
+			}
+		} catch (RejectedExecutionException e) {
+			logger.error("#execute", e);
+		}
+	}
+	
+	public void executes(List<Runnable> tasks) {
+		synchronized (this.taskQueue) {
+			this.taskQueue.addAll(tasks);
 		}
 		try {
 			if (this.threadCounts.get() < this.maxThreads) {
@@ -301,11 +310,21 @@ public final class TaskCenter implements TaskQueueExecutor {
 
 	@Override
 	public String getQueueName() {
-		return "";
+		return name;
 	}
 
 	@Override
 	public void execute(Task task) {
 		execute((Runnable)task);
+	}
+
+	@Override
+	public void execute(List<Task> tasks) {
+		ArrayList<Runnable> list=new ArrayList<Runnable>();
+		for(Task t:tasks)
+		{
+			list.add(t);
+		}
+		executes(list);
 	}
 }

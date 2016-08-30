@@ -1,5 +1,6 @@
-package net.jueb.util4j.queue.taskQueue.impl;
+package net.jueb.util4j.queue.taskQueue.impl.order.orderTask;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
@@ -9,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import net.jueb.util4j.queue.taskQueue.Task;
 import net.jueb.util4j.queue.taskQueue.TaskQueueExecutor;
 import net.jueb.util4j.queue.taskQueue.TaskQueuesExecutor;
+import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.TaskQueueUtil;
 
 public class OrderTaskQueueGroup implements TaskQueuesExecutor{
 	public final Logger log = LoggerFactory.getLogger(getClass());
@@ -52,6 +54,41 @@ public class OrderTaskQueueGroup implements TaskQueuesExecutor{
 			}
 		}
 		queue.addTask(task);
+		return queue;
+	}
+	
+	public OrderTaskQueue put(String key,List<Task> tasks)
+	{
+		OrderTaskQueue queue=queueMap.get(key);
+		if(queue==null || !queue.isActive())
+		{
+			try {
+				lock.lock();
+				queue=queueMap.get(key);
+				if(queue==null)
+				{//对null的处理
+					queue= new OrderTaskQueue(key);
+					queueMap.put(key,queue);
+					queue.start();
+				}else
+				{//对离线的处理
+					if(!queue.isActive())
+					{
+						log.warn("线程队列:"+key+",离线,未处理任务数:"+queue.getTasks().size()+",重建线程队列线程……");
+						queue.stop();
+						queue= new OrderTaskQueue(key,queue.getTasks());
+						queueMap.put(key,queue);
+						queue.start();
+						log.warn("线程队列:"+key+"重建:"+queue.isActive()+",未处理任务数:"+queue.getTasks().size()+"");
+					}
+				}
+			} catch (Exception e) {
+				log.error(e.getMessage(),e);
+			}finally{
+				lock.unlock();
+			}
+		}
+		queue.addTask(tasks);
 		return queue;
 	}
 	
@@ -119,5 +156,10 @@ public class OrderTaskQueueGroup implements TaskQueuesExecutor{
 			}
 		}
 		return queue;
+	}
+
+	@Override
+	public TaskQueueExecutor execute(String queueName, List<Task> tasks) {
+		return put(queueName, tasks);
 	}
 }

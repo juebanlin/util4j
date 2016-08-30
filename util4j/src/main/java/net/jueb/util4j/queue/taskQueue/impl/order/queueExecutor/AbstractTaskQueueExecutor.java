@@ -1,9 +1,8 @@
-package net.jueb.util4j.queue.taskQueue.impl;
+package net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.jueb.util4j.queue.taskQueue.Task;
 import net.jueb.util4j.queue.taskQueue.TaskQueue;
 import net.jueb.util4j.queue.taskQueue.TaskQueueExecutor;
 
@@ -32,12 +31,7 @@ public abstract class AbstractTaskQueueExecutor implements TaskQueueExecutor{
 		return queue.getQueueName();
 	}
 
-	@Override
-	public void execute(Task task) {
-		queue.offer(task);
-	}
-
-	public TaskQueue getQueue() {
+	public final TaskQueue getQueue() {
 		return queue;
 	}
 }
