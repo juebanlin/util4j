@@ -1,7 +1,6 @@
 package net.jueb.util4j.queue.taskQueue;
 
 import java.util.Queue;
-import java.util.concurrent.TimeUnit;
 
 /**
  * 任务队列
