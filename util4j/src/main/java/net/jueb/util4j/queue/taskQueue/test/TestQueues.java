@@ -14,6 +14,8 @@ import org.apache.commons.lang.math.RandomUtils;
 import net.jueb.util4j.queue.taskQueue.Task;
 import net.jueb.util4j.queue.taskQueue.TaskQueueExecutor;
 import net.jueb.util4j.queue.taskQueue.TaskQueuesExecutor;
+import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.multithread.disruptor.FixedThreadPoolQueuesExecutor_mina_disruptor;
+import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.multithread.mina.FixedThreadPoolQueuesExecutor_mina;
 
 public class TestQueues{
     	 public Task buildTask()
@@ -79,7 +81,6 @@ public class TestQueues{
 
 		public void test(final int taskCount,final int queueCount,final TaskQueuesExecutor o)
     	{
-    		 final Map<Integer,Integer> queueOp=new HashMap<>();
     		 final Map<Integer,Long> startTime=new HashMap<>();
     		 final AtomicLong addTime=new AtomicLong();
     		 Runnable t=new Runnable() {
@@ -93,7 +94,6 @@ public class TestQueues{
 							@Override
 							public void run() {
 								startTime.put(queueName, System.currentTimeMillis());
-								queueOp.put(queueName, 0);
 							}
 							@Override
 							public String name() {
@@ -176,19 +176,23 @@ public class TestQueues{
     		 Queue<Task> queue=new ConcurrentLinkedQueue<Task>();//queue存入耗时：36
     		 Queue<Task> queue2=new LinkedBlockingQueue<Task>();//BlockingQueue存入耗时：180
     		 long t=System.currentTimeMillis();
-			 for(int i=1;i<=qt;i++)
+			 Thread.sleep(5000);
+			 int queueCount=2;
+			 FixedThreadPoolQueuesExecutor_mina_disruptor queue3=new FixedThreadPoolQueuesExecutor_mina_disruptor(2,4);
+    		 t=System.currentTimeMillis();
+    		 for(int i=1;i<=qt;i++)
 			 {
-				Task t1=tq.buildTask();
-				queue.add(t1);
+    			queue3.execute(RandomUtils.nextInt(queueCount)+"", tq.buildTask());
 			 }
-			 System.err.println("queue存入耗时："+(System.currentTimeMillis()-t));
+			 System.err.println("QueuesExecutor1存入耗时："+(System.currentTimeMillis()-t));//3932
+			 
+			 FixedThreadPoolQueuesExecutor_mina queue4=new FixedThreadPoolQueuesExecutor_mina(2,4);
 			 t=System.currentTimeMillis();
-			 for(int i=1;i<=qt;i++)
+			 for(int i=1;i<=qt*queueCount;i++)
 			 {
-				Task t2=tq.buildTask();
-				queue2.add(t2);
+    			queue4.execute(RandomUtils.nextInt(queueCount)+"", tq.buildTask());
 			 }
-			 System.err.println("BlockingQueue存入耗时："+(System.currentTimeMillis()-t));
+			 System.err.println("QueuesExecutor2存入耗时："+(System.currentTimeMillis()-t));
 			 queue.clear();
 			 queue2.clear();
 			 Thread.sleep(10000);
@@ -196,10 +200,26 @@ public class TestQueues{
     		 * 多队列多线程测试
     		 */
 //    		TaskQueuesExecutor ft=new FixedThreadPoolQueuesExecutor_mina(1,8);
-//     		tq.test(qt,1, ft);//队列：1,最后一个任务完成,添加队列耗时:408,队列总耗时:438,当前线程ID:14
+//			tq.test(qt*8,8, ft);
+//			队列：1,最后一个任务完成,添加队列耗时:2710,队列总耗时:2976,当前线程ID:15
+//			 队列：3,最后一个任务完成,添加队列耗时:2710,队列总耗时:2976,当前线程ID:16
+//			 队列：5,最后一个任务完成,添加队列耗时:2710,队列总耗时:2976,当前线程ID:15
+//			 队列：4,最后一个任务完成,添加队列耗时:2710,队列总耗时:2976,当前线程ID:17
+//			 队列：2,最后一个任务完成,添加队列耗时:2710,队列总耗时:2976,当前线程ID:14
+//			 队列：8,最后一个任务完成,添加队列耗时:2710,队列总耗时:2976,当前线程ID:17
+//			 队列：7,最后一个任务完成,添加队列耗时:2710,队列总耗时:2976,当前线程ID:15
+//			 队列：6,最后一个任务完成,添加队列耗时:2710,队列总耗时:2976,当前线程ID:16
+			 
+//    		TaskQueuesExecutor ft=new FixedThreadPoolQueuesExecutor_mina_disruptor(4,8);
 //     		tq.test(qt*8,8, ft);
-//     		队列：1,最后一个任务完成,添加队列耗时:533,队列总耗时:708,当前线程ID:14
-//     		队列：2,最后一个任务完成,添加队列耗时:533,队列总耗时:707,当前线程ID:14
+//     		队列：6,最后一个任务完成,添加队列耗时:1894,队列总耗时:284,当前线程ID:21
+//     		队列：8,最后一个任务完成,添加队列耗时:1894,队列总耗时:285,当前线程ID:16
+//     		队列：5,最后一个任务完成,添加队列耗时:1894,队列总耗时:285,当前线程ID:20
+//     		队列：3,最后一个任务完成,添加队列耗时:1894,队列总耗时:285,当前线程ID:16
+//     		队列：7,最后一个任务完成,添加队列耗时:1894,队列总耗时:285,当前线程ID:19
+//     		队列：2,最后一个任务完成,添加队列耗时:1894,队列总耗时:285,当前线程ID:20
+//     		队列：1,最后一个任务完成,添加队列耗时:1894,队列总耗时:285,当前线程ID:21
+//     		队列：4,最后一个任务完成,添加队列耗时:1894,队列总耗时:285,当前线程ID:17
      		
 //    		TaskQueuesExecutor ft=new FixedThreadPoolQueuesExecutor_mina(2,2);
 //    		tq.test(qt*2,2, ft);

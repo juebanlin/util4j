@@ -23,7 +23,7 @@ public class LongEventMain
     {
     	final Logger log=LoggerFactory.getLogger("");
         // Executor that will be used to construct new threads for consumers
-        Executor executor = new ThreadPoolExecutor(2,2,0L, TimeUnit.MILLISECONDS,new LinkedBlockingQueue<Runnable>(),new NamedThreadFactory("disruptor"));
+        Executor executor = new ThreadPoolExecutor(1,1,0L, TimeUnit.MILLISECONDS,new LinkedBlockingQueue<Runnable>(),new NamedThreadFactory("disruptor"));
 
         // The factory for the event
         LongEventFactory factory = new LongEventFactory();

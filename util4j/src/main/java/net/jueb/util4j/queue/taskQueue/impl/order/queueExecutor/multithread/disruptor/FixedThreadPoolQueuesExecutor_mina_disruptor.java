@@ -17,7 +17,7 @@
  *  under the License.
  *
  */
-package net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.multithread;
+package net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.multithread.disruptor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
@@ -33,6 +34,7 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -40,11 +42,22 @@ import org.apache.mina.filter.executor.UnorderedThreadPoolExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.lmax.disruptor.BlockingWaitStrategy;
+import com.lmax.disruptor.BusySpinWaitStrategy;
+import com.lmax.disruptor.EventTranslator;
+import com.lmax.disruptor.SleepingWaitStrategy;
+import com.lmax.disruptor.WaitStrategy;
+import com.lmax.disruptor.WorkHandler;
+import com.lmax.disruptor.YieldingWaitStrategy;
+import com.lmax.disruptor.dsl.Disruptor;
+import com.lmax.disruptor.dsl.ProducerType;
+
 import net.jueb.util4j.queue.taskQueue.Task;
 import net.jueb.util4j.queue.taskQueue.TaskQueueExecutor;
 import net.jueb.util4j.queue.taskQueue.TaskQueuesExecutor;
 import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.DefaultTaskQueue;
 import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.TaskQueueUtil;
+import net.jueb.util4j.thread.NamedThreadFactory;
 
 /**
  * A {@link ThreadPoolExecutor} that maintains the order of {@link QueueTask}s.
@@ -55,7 +68,7 @@ import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.TaskQueueUtil;
  * @author <a href="http://mina.apache.org">Apache MINA Project</a>
  * @org.apache.xbean.XBean
  */
-public class FixedThreadPoolQueuesExecutor_mina extends ThreadPoolExecutor implements TaskQueuesExecutor{
+public class FixedThreadPoolQueuesExecutor_mina_disruptor extends ThreadPoolExecutor implements TaskQueuesExecutor{
     /** A logger for this class (commented as it breaks MDCFlter tests) */
     protected final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -95,7 +108,100 @@ public class FixedThreadPoolQueuesExecutor_mina extends ThreadPoolExecutor imple
 
     private volatile boolean shutdown;
     private final Map<String,TaskQueueImpl> queues=new HashMap<>();
+    
+    private Disruptor<QueueEvent> disruptor;
+    private ExecutorService disruptorExecutor;
+    
+    final static WaitStrategy BLOCKING_WAIT = new BlockingWaitStrategy();
+    final static WaitStrategy SLEEPING_WAIT = new SleepingWaitStrategy();
+    final static WaitStrategy YIELDING_WAIT = new YieldingWaitStrategy();
+    final static WaitStrategy BusySpinWait =  new BusySpinWaitStrategy();
+    
+    @SuppressWarnings("unchecked")
+	protected void initDis()
+    {
+    	disruptorExecutor = new ThreadPoolExecutor(1,1,0L, TimeUnit.MILLISECONDS,new LinkedBlockingQueue<Runnable>(),new NamedThreadFactory("disruptor"));
+        int bufferSize = 1024*1024;
+        disruptor = new Disruptor<>(new QueueEventFactory(), bufferSize, disruptorExecutor,ProducerType.MULTI,YIELDING_WAIT);
+        //注册消费者
+        disruptor.handleEventsWithWorkerPool(new QueueEventHandler());
+        disruptor.start();
+    }
+    
+    protected void shutdownDis()
+    {
+    	disruptor.shutdown();//关闭 disruptor，方法会堵塞，直至所有的事件都得到处理；
+    	disruptorExecutor.shutdown();
+    }
+    
+    protected void publishQueueTask(final String queueName,final Task task)
+    {
+//    	 RingBuffer<QueueEvent> ringBuffer=disruptor.getRingBuffer();
+//         long sequence = ringBuffer.next(); 
+//         try
+//         {
+//        	 QueueEvent event = ringBuffer.get(sequence);
+//        	 event.setQueueName(queueName);
+//             event.getTasks().add(task);
+//         }finally
+//         {
+//             ringBuffer.publish(sequence);
+//         }
+    	disruptor.publishEvent(new EventTranslator<QueueEvent>() {
+			@Override
+			public void translateTo(QueueEvent event, long sequence) {
+				event.setQueueName(queueName);
+				event.getTasks().add(task);
+			}
+		});
+    }
+    
+    protected void publishQueueTask(final String queueName,final List<Task> tasks)
+    {
+//    	RingBuffer<QueueEvent> ringBuffer=disruptor.getRingBuffer();
+//        long sequence = ringBuffer.next(); 
+//        try
+//        {
+//       	 	QueueEvent event = ringBuffer.get(sequence);
+//       	 	event.setQueueName(queueName);
+//            event.getTasks().addAll(tasks);
+//        }finally
+//        {
+//            ringBuffer.publish(sequence);
+//        }
+    	disruptor.publishEvent(new EventTranslator<QueueEvent>() {
+			@Override
+			public void translateTo(QueueEvent event, long sequence) {
+				event.setQueueName(queueName);
+				event.getTasks().addAll(tasks);
+			}
+		});
+    }
+    
+    class QueueEventHandler implements WorkHandler<QueueEvent>
+    {
 
+    	public void onEvent(QueueEvent event)
+        {
+    		//创建队列
+    		TaskQueueImpl tasksQueue = queues.get(event.getQueueName());
+            if (tasksQueue == null) 
+            {
+                tasksQueue = new TaskQueueImpl(event.getQueueName());
+                queues.put(event.getQueueName(), tasksQueue);
+            }
+            if(!event.getTasks().isEmpty())
+            {
+            	 tasksQueue.addAll(event.getTasks());
+            	 if (tasksQueue.processingCompleted_.compareAndSet(true, false)) 
+                 {//如果该队列没有线程占用
+                	 waitingQueues.offer(event.getQueueName());
+                 }
+            }
+            addWorkerIfNecessary();
+        }
+    }
+    
     /**
      * Creates a default ThreadPool, with default values :
      * - minimum pool size is 0
@@ -104,7 +210,7 @@ public class FixedThreadPoolQueuesExecutor_mina extends ThreadPoolExecutor imple
      * - A default ThreadFactory
      * - All events are accepted
      */
-    public FixedThreadPoolQueuesExecutor_mina() {
+    public FixedThreadPoolQueuesExecutor_mina_disruptor() {
         this(DEFAULT_INITIAL_THREAD_POOL_SIZE, DEFAULT_MAX_THREAD_POOL, DEFAULT_KEEP_ALIVE, TimeUnit.SECONDS, Executors
                 .defaultThreadFactory());
     }
@@ -118,7 +224,7 @@ public class FixedThreadPoolQueuesExecutor_mina extends ThreadPoolExecutor imple
      * 
      * @param maximumPoolSize The maximum pool size
      */
-    public FixedThreadPoolQueuesExecutor_mina(int maximumPoolSize) {
+    public FixedThreadPoolQueuesExecutor_mina_disruptor(int maximumPoolSize) {
         this(DEFAULT_INITIAL_THREAD_POOL_SIZE, maximumPoolSize, DEFAULT_KEEP_ALIVE, TimeUnit.SECONDS, Executors
                 .defaultThreadFactory());
     }
@@ -132,7 +238,7 @@ public class FixedThreadPoolQueuesExecutor_mina extends ThreadPoolExecutor imple
      * @param corePoolSize The initial pool sizePoolSize
      * @param maximumPoolSize The maximum pool size
      */
-    public FixedThreadPoolQueuesExecutor_mina(int corePoolSize, int maximumPoolSize) {
+    public FixedThreadPoolQueuesExecutor_mina_disruptor(int corePoolSize, int maximumPoolSize) {
         this(corePoolSize, maximumPoolSize, DEFAULT_KEEP_ALIVE, TimeUnit.SECONDS, Executors.defaultThreadFactory());
     }
 
@@ -146,7 +252,7 @@ public class FixedThreadPoolQueuesExecutor_mina extends ThreadPoolExecutor imple
      * @param keepAliveTime Default duration for a thread
      * @param unit Time unit used for the keepAlive value
      */
-    public FixedThreadPoolQueuesExecutor_mina(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit) {
+    public FixedThreadPoolQueuesExecutor_mina_disruptor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit) {
         this(corePoolSize, maximumPoolSize, keepAliveTime, unit, Executors.defaultThreadFactory());
     }
 
@@ -160,7 +266,7 @@ public class FixedThreadPoolQueuesExecutor_mina extends ThreadPoolExecutor imple
      * @param threadFactory The factory used to create threads
      * @param eventQueueHandler The queue used to store events
      */
-    public FixedThreadPoolQueuesExecutor_mina(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit,
+    public FixedThreadPoolQueuesExecutor_mina_disruptor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit,
             ThreadFactory threadFactory) {
         // We have to initialize the pool with default values (0 and 1) in order to
         // handle the exception in a better way. We can't add a try {} catch() {}
@@ -179,6 +285,7 @@ public class FixedThreadPoolQueuesExecutor_mina extends ThreadPoolExecutor imple
         // Now, we can setup the pool sizes
         super.setCorePoolSize(corePoolSize);
         super.setMaximumPoolSize(maximumPoolSize);
+        initDis();
     }
 
     
@@ -191,22 +298,6 @@ public class FixedThreadPoolQueuesExecutor_mina extends ThreadPoolExecutor imple
      */
     private TaskQueueImpl getTaskQueue(String queueName) {
         return queues.get(queueName);
-    }
-    
-    private TaskQueueImpl getTaskQueueOrCreate(String queueName) {
-    	TaskQueueImpl queue = queues.get(queueName);
-        if (queue == null) 
-        {
-           synchronized (queues) {
-        	   queue = queues.get(queueName);
-               if (queue == null) 
-               {
-                   queue = new TaskQueueImpl(queueName);
-                   queues.put(queueName, queue);
-               }
-           }
-        }
-        return queue;
     }
 
     /**
@@ -343,6 +434,7 @@ public class FixedThreadPoolQueuesExecutor_mina extends ThreadPoolExecutor imple
         {
             return;
         }
+        shutdownDis();
         shutdown = true;
         synchronized (workers) 
         {
@@ -402,23 +494,8 @@ public class FixedThreadPoolQueuesExecutor_mina extends ThreadPoolExecutor imple
     	{
     		throw new RuntimeException("queueName isEmpty");
     	}
-    	TaskQueueImpl tasksQueue = getTaskQueueOrCreate(queueName);
-        // propose the new event to the event queue handler. If we
-        // use a throttle queue handler, the message may be rejected
-        // if the maximum size has been reached.
-    	// Ok, the message has been accepted
-        synchronized (tasksQueue) 
-        {
-            //加入任务队列
-       	 	tasksQueue.offer(task);
-            if (tasksQueue.processingCompleted) 
-            {//如果该队列没有线程占用
-           	 	tasksQueue.processingCompleted = false;
-                waitingQueues.offer(queueName);
-            }
-        }
-        addWorkerIfNecessary();
-		return tasksQueue;
+    	publishQueueTask(queueName,task);
+		return null;
 	}
 
 	@Override
@@ -434,23 +511,8 @@ public class FixedThreadPoolQueuesExecutor_mina extends ThreadPoolExecutor imple
     	{
     		throw new RuntimeException("queueName isEmpty");
     	}
-    	TaskQueueImpl tasksQueue = getTaskQueueOrCreate(queueName);
-        // propose the new event to the event queue handler. If we
-        // use a throttle queue handler, the message may be rejected
-        // if the maximum size has been reached.
-    	// Ok, the message has been accepted
-        synchronized (tasksQueue) 
-        {
-            //加入任务队列
-       	 	tasksQueue.addAll(tasks);
-            if (tasksQueue.processingCompleted) 
-            {//如果该队列没有线程占用
-           	 	tasksQueue.processingCompleted = false;
-           	 	waitingQueues.offer(queueName);
-            }
-        }
-        addWorkerIfNecessary();
-		return tasksQueue;
+    	publishQueueTask(queueName,tasks);
+		return null;
 	}
 
 	@Override
@@ -460,7 +522,7 @@ public class FixedThreadPoolQueuesExecutor_mina extends ThreadPoolExecutor imple
 
 	@Override
 	public TaskQueueExecutor getQueueOrCreate(String queueName) {
-		return getTaskQueueOrCreate(queueName);
+		return null;
 	}
 
 	private void rejectTask(Runnable task) {
@@ -661,7 +723,7 @@ public class FixedThreadPoolQueuesExecutor_mina extends ThreadPoolExecutor imple
             } finally {
                 synchronized (workers) {
                     workers.remove(this);
-                    FixedThreadPoolQueuesExecutor_mina.this.completedTaskCount += completedTaskCount.get();
+                    FixedThreadPoolQueuesExecutor_mina_disruptor.this.completedTaskCount += completedTaskCount.get();
                     workers.notifyAll();
                 }
             }
@@ -704,17 +766,14 @@ public class FixedThreadPoolQueuesExecutor_mina extends ThreadPoolExecutor imple
             for (;;) 
             {
                 Runnable task;
-                synchronized (taskQueue) 
-                {
-                    task = taskQueue.poll();
-                    if (task == null) 
-                    {//标记队列已经处理完成
-                    	taskQueue.processingCompleted = true;
-                        break;
-                    }
+                task = taskQueue.poll();
+                if (task == null) 
+                {//标记队列已经处理完成
+                    break;
                 }
                 runTask(task);
             }
+            taskQueue.processingCompleted_.set(true);
         }
 
         private void runTask(Runnable task) {
@@ -745,7 +804,7 @@ public class FixedThreadPoolQueuesExecutor_mina extends ThreadPoolExecutor imple
 		/**The current task state 
          * 此队列是否处理完成
          */
-        private volatile boolean processingCompleted = true;
+        private volatile AtomicBoolean processingCompleted_=new AtomicBoolean(true);
         
 		@Override
 		public void execute(Runnable command) {
