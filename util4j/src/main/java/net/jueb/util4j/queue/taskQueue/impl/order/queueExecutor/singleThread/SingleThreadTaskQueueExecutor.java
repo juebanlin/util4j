@@ -1,18 +1,20 @@
-package net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor;
+package net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.singleThread;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 import net.jueb.util4j.queue.taskQueue.Task;
+import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.AbstractTaskQueueExecutor;
 
 /**
  * 单线程任务队列执行器
- * 采用CountDownLatch驱动线程执行任务
- * 速度最优,缺点是产生了很多CountDownLatch实例
+ * 采用半阻塞队列驱动唤醒线程
  * @author juebanlin
  */
 public class SingleThreadTaskQueueExecutor extends AbstractTaskQueueExecutor{
@@ -47,11 +49,39 @@ public class SingleThreadTaskQueueExecutor extends AbstractTaskQueueExecutor{
 	}
 
 	private final Set<Worker> workers = new HashSet<Worker>();
+	private final ReentrantLock lock=new ReentrantLock();
+	private final Condition notEmpty=lock.newCondition();
 	
 	protected void update()
 	{
 		addWorkerIfNecessary();
-		wakeUpWorkerIfNecessary();
+		signalNotEmpty();
+	}
+	
+	/**
+	 * 通知线程不为空
+	 */
+	protected void signalNotEmpty(){
+		lock.lock();
+		try {
+			notEmpty.signalAll();
+		} finally {
+			lock.unlock();
+		}
+	}
+	
+	/**
+	 * 等待不为空
+	 */
+	protected void waitNotEmpty(long time,TimeUnit unit)
+	{
+		lock.lock();
+		try {
+			notEmpty.await(time,unit);
+		} catch (InterruptedException e) {
+		} finally {
+			lock.unlock();
+		}
 	}
 	
 	private void addWorkerIfNecessary() 
@@ -75,49 +105,18 @@ public class SingleThreadTaskQueueExecutor extends AbstractTaskQueueExecutor{
 	    workers.add(worker);
 	}
 
-	/**
-	 * 唤醒工作人员,如果有必要
-	 */
-	private void wakeUpWorkerIfNecessary()
-	{
-		for(Worker worker:workers)
-		{
-			worker.wakeUpUnsafe();
-		}
-	}
-
 	private class Worker implements Runnable {
-		
-		private volatile CountDownLatch cd;
-		
-		private void wakeUpUnsafe()
-		{
-			if(cd!=null)
-			{
-				cd.countDown();
-			}
-		}
-		
-		private  void sleep() throws InterruptedException 
-		{
-			cd = new CountDownLatch(1);
-			cd.await();
-		}
 		
         public void run() {
             try {
             	for(;;)
             	{
             		Task task=getQueue().poll();
-                    if(task==null)
-                    {
-                    	try {
-							sleep();
-							continue;
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-                    }
+            		if(task==null)
+            		{
+            			waitNotEmpty(100,TimeUnit.MILLISECONDS);
+            			continue;
+            		}
                     try {
                 		runTask(task);
 					} catch (Throwable e) {

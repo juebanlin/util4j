@@ -17,19 +17,17 @@
  *  under the License.
  *
  */
-package net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor;
+package net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.multithread.dis;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
@@ -45,6 +43,8 @@ import org.slf4j.LoggerFactory;
 import net.jueb.util4j.queue.taskQueue.Task;
 import net.jueb.util4j.queue.taskQueue.TaskQueueExecutor;
 import net.jueb.util4j.queue.taskQueue.TaskQueuesExecutor;
+import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.DefaultTaskQueue;
+import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.TaskQueueUtil;
 
 /**
  * A {@link ThreadPoolExecutor} that maintains the order of {@link QueueTask}s.
@@ -55,7 +55,7 @@ import net.jueb.util4j.queue.taskQueue.TaskQueuesExecutor;
  * @author <a href="http://mina.apache.org">Apache MINA Project</a>
  * @org.apache.xbean.XBean
  */
-public class FixedThreadPoolQueuesExecutor_Condition2 extends ThreadPoolExecutor implements TaskQueuesExecutor{
+public class FixedThreadPoolQueuesExecutor_mina_dis extends ThreadPoolExecutor implements TaskQueuesExecutor{
     /** A logger for this class (commented as it breaks MDCFlter tests) */
     protected final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -71,28 +71,30 @@ public class FixedThreadPoolQueuesExecutor_Condition2 extends ThreadPoolExecutor
     private static final String QUEUE_NAME_EXIT_SIGNAL = "EXIT_SIGNAL";
 
     public static final String QUEUE_NAME_DEFAULT_QUEUE="DEFAULT_QUEUE";
-    /**
-     * 让线程自旋
-     */
-    public static final String QUEUE_NAME_NOOP="QUEUE_NOOP";
 
 	/**
      *等待处理的队列
      */
-    private final Queue<String> waitingQueues = new ConcurrentLinkedQueue<String>();
+    private final BlockingQueue<String> waitingQueues = new LinkedBlockingQueue<String>();
 
     private final Set<Worker> workers = new HashSet<Worker>();
-
+    
+    /**
+     * 用来记录线程池中曾经出现过的最大线程数
+     */
     private volatile int largestPoolSize;
 
     /**
      * 活动线程数量
      */
     private final AtomicInteger idleWorkers = new AtomicInteger();
-
+    /**
+     * 用来记录已经执行完毕的任务个数
+     */
     private long completedTaskCount;
 
     private volatile boolean shutdown;
+    private final Map<String,TaskQueueImpl> queues=new HashMap<>();
 
     /**
      * Creates a default ThreadPool, with default values :
@@ -102,7 +104,7 @@ public class FixedThreadPoolQueuesExecutor_Condition2 extends ThreadPoolExecutor
      * - A default ThreadFactory
      * - All events are accepted
      */
-    public FixedThreadPoolQueuesExecutor_Condition2() {
+    public FixedThreadPoolQueuesExecutor_mina_dis() {
         this(DEFAULT_INITIAL_THREAD_POOL_SIZE, DEFAULT_MAX_THREAD_POOL, DEFAULT_KEEP_ALIVE, TimeUnit.SECONDS, Executors
                 .defaultThreadFactory());
     }
@@ -116,7 +118,7 @@ public class FixedThreadPoolQueuesExecutor_Condition2 extends ThreadPoolExecutor
      * 
      * @param maximumPoolSize The maximum pool size
      */
-    public FixedThreadPoolQueuesExecutor_Condition2(int maximumPoolSize) {
+    public FixedThreadPoolQueuesExecutor_mina_dis(int maximumPoolSize) {
         this(DEFAULT_INITIAL_THREAD_POOL_SIZE, maximumPoolSize, DEFAULT_KEEP_ALIVE, TimeUnit.SECONDS, Executors
                 .defaultThreadFactory());
     }
@@ -130,7 +132,7 @@ public class FixedThreadPoolQueuesExecutor_Condition2 extends ThreadPoolExecutor
      * @param corePoolSize The initial pool sizePoolSize
      * @param maximumPoolSize The maximum pool size
      */
-    public FixedThreadPoolQueuesExecutor_Condition2(int corePoolSize, int maximumPoolSize) {
+    public FixedThreadPoolQueuesExecutor_mina_dis(int corePoolSize, int maximumPoolSize) {
         this(corePoolSize, maximumPoolSize, DEFAULT_KEEP_ALIVE, TimeUnit.SECONDS, Executors.defaultThreadFactory());
     }
 
@@ -144,7 +146,7 @@ public class FixedThreadPoolQueuesExecutor_Condition2 extends ThreadPoolExecutor
      * @param keepAliveTime Default duration for a thread
      * @param unit Time unit used for the keepAlive value
      */
-    public FixedThreadPoolQueuesExecutor_Condition2(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit) {
+    public FixedThreadPoolQueuesExecutor_mina_dis(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit) {
         this(corePoolSize, maximumPoolSize, keepAliveTime, unit, Executors.defaultThreadFactory());
     }
 
@@ -158,7 +160,7 @@ public class FixedThreadPoolQueuesExecutor_Condition2 extends ThreadPoolExecutor
      * @param threadFactory The factory used to create threads
      * @param eventQueueHandler The queue used to store events
      */
-    public FixedThreadPoolQueuesExecutor_Condition2(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit,
+    public FixedThreadPoolQueuesExecutor_mina_dis(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit,
             ThreadFactory threadFactory) {
         // We have to initialize the pool with default values (0 and 1) in order to
         // handle the exception in a better way. We can't add a try {} catch() {}
@@ -180,7 +182,7 @@ public class FixedThreadPoolQueuesExecutor_Condition2 extends ThreadPoolExecutor
     }
 
     
-    Map<String,TaskQueueImpl> queues=new HashMap<>();
+    
    
     /**
      * 取队列
@@ -202,7 +204,6 @@ public class FixedThreadPoolQueuesExecutor_Condition2 extends ThreadPoolExecutor
                    queue = new TaskQueueImpl(queueName);
                    queues.put(queueName, queue);
                }
-               return queue;
            }
         }
         return queue;
@@ -259,30 +260,8 @@ public class FixedThreadPoolQueuesExecutor_Condition2 extends ThreadPoolExecutor
             if (workers.size() <= super.getCorePoolSize()) {
                 return;
             }
-            waitingQueuesOffer(QUEUE_NAME_EXIT_SIGNAL);
-            wakeUpWorkerIfNecessary();
+            waitingQueues.offer(QUEUE_NAME_EXIT_SIGNAL);
         }
-    }
-    
-	/**
-	 * 唤醒工作人员,如果有必要
-	 */
-	private void wakeUpWorkerIfNecessary()
-	{
-		for(Worker worker:workers)
-		{
-			worker.wakeUpUnsafe();
-		}
-	}
-    
-    private void waitingQueuesOffer(String queueName)
-    {
-    	waitingQueues.offer(queueName);
-    }
-    
-    private String waitingQueuesPoll()
-    {
-    	 return waitingQueues.poll();
     }
 
     /**
@@ -369,8 +348,7 @@ public class FixedThreadPoolQueuesExecutor_Condition2 extends ThreadPoolExecutor
         {
             for (int i = workers.size(); i > 0; i--) 
             {
-            	waitingQueuesOffer(QUEUE_NAME_EXIT_SIGNAL);
-            	wakeUpWorkerIfNecessary();
+                waitingQueues.offer(QUEUE_NAME_EXIT_SIGNAL);
             }
         }
     }
@@ -383,13 +361,10 @@ public class FixedThreadPoolQueuesExecutor_Condition2 extends ThreadPoolExecutor
         shutdown();
         List<Runnable> answer = new ArrayList<Runnable>();
         String queueName;
-        while ((queueName = waitingQueuesPoll()) != null) 
+        while ((queueName = waitingQueues.poll()) != null) 
         {
             if (queueName == QUEUE_NAME_EXIT_SIGNAL) {
-            	waitingQueuesOffer(QUEUE_NAME_EXIT_SIGNAL);
-            	synchronized (workers) {
-          		  wakeUpWorkerIfNecessary();
-				}
+                waitingQueues.offer(QUEUE_NAME_EXIT_SIGNAL);
                 Thread.yield(); // Let others take the signal.
                 continue;
             }
@@ -418,8 +393,37 @@ public class FixedThreadPoolQueuesExecutor_Condition2 extends ThreadPoolExecutor
     }
 
     @Override
-	public TaskQueueExecutor execute(String queueName, List<Task> tasks) {
+	public TaskQueueExecutor execute(String queueName, Task task) {
     	if(shutdown)
+    	{
+    		rejectTask(task);
+    	}
+    	if(queueName==null || queueName.isEmpty())
+    	{
+    		throw new RuntimeException("queueName isEmpty");
+    	}
+    	TaskQueueImpl tasksQueue = getTaskQueueOrCreate(queueName);
+        // propose the new event to the event queue handler. If we
+        // use a throttle queue handler, the message may be rejected
+        // if the maximum size has been reached.
+    	// Ok, the message has been accepted
+        synchronized (tasksQueue) 
+        {
+            //加入任务队列
+       	 	tasksQueue.offer(task);
+            if (tasksQueue.processingCompleted) 
+            {//如果该队列没有线程占用
+           	 	tasksQueue.processingCompleted = false;
+                waitingQueues.offer(queueName);
+            }
+        }
+        addWorkerIfNecessary();
+		return tasksQueue;
+	}
+
+	@Override
+	public TaskQueueExecutor execute(String queueName, List<Task> tasks) {
+		if(shutdown)
     	{
     		for(Task t:tasks)
     		{
@@ -442,39 +446,7 @@ public class FixedThreadPoolQueuesExecutor_Condition2 extends ThreadPoolExecutor
             if (tasksQueue.processingCompleted) 
             {//如果该队列没有线程占用
            	 	tasksQueue.processingCompleted = false;
-           	 	waitingQueuesOffer(queueName);
-            }
-        }
-        addWorkerIfNecessary();
-		return tasksQueue;
-	}
-
-	@Override
-	public TaskQueueExecutor execute(String queueName, Task task) {
-    	if(shutdown)
-    	{
-    		rejectTask(task);
-    	}
-    	if(queueName==null || queueName.isEmpty())
-    	{
-    		throw new RuntimeException("queueName isEmpty");
-    	}
-    	TaskQueueImpl tasksQueue = getTaskQueueOrCreate(queueName);
-        // propose the new event to the event queue handler. If we
-        // use a throttle queue handler, the message may be rejected
-        // if the maximum size has been reached.
-    	// Ok, the message has been accepted
-        synchronized (tasksQueue) 
-        {
-            //加入任务队列
-       	 	tasksQueue.offer(task);
-            if (tasksQueue.processingCompleted) 
-            {//如果该队列没有线程占用
-           	 	tasksQueue.processingCompleted = false;
-           	 	waitingQueuesOffer(queueName);
-           	 	synchronized (workers) {
-           	 		wakeUpWorkerIfNecessary();
-				}
+           	 	waitingQueues.offer(queueName);
             }
         }
         addWorkerIfNecessary();
@@ -615,9 +587,6 @@ public class FixedThreadPoolQueuesExecutor_Condition2 extends ThreadPoolExecutor
         synchronized (taskQueue) {
             removed = taskQueue.remove(task);
         }
-        if (removed) {
-//        	getQueueEventListener().polled(this, task);
-        }
         return removed;
     }
 
@@ -656,15 +625,7 @@ public class FixedThreadPoolQueuesExecutor_Condition2 extends ThreadPoolExecutor
         private AtomicLong completedTaskCount = new AtomicLong(0);
 
         private Thread thread;
-        private CountDownLatch cd=null;
 
-        private void wakeUpUnsafe(){
-        	if(cd!=null)
-        	{
-        		cd.countDown();
-        	}
-        }
-        
         public void run() {
             thread = Thread.currentThread();
             try {
@@ -701,7 +662,7 @@ public class FixedThreadPoolQueuesExecutor_Condition2 extends ThreadPoolExecutor
             } finally {
                 synchronized (workers) {
                     workers.remove(this);
-                    FixedThreadPoolQueuesExecutor_Condition2.this.completedTaskCount += completedTaskCount.get();
+                    FixedThreadPoolQueuesExecutor_mina_dis.this.completedTaskCount += completedTaskCount.get();
                     workers.notifyAll();
                 }
             }
@@ -713,22 +674,29 @@ public class FixedThreadPoolQueuesExecutor_Condition2 extends ThreadPoolExecutor
          * @return
          */
         private String fetchQueueName() {
-        	String queueName=null;
-        	for(;;)
-        	{
-        		queueName=waitingQueues.poll();
-        		if(queueName!=null)
-        		{
-        			break;
-        		}
-        		try {
-        			cd=new CountDownLatch(1);
-        			cd.await();
-//					cd.await(100, TimeUnit.MILLISECONDS);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-        	}
+        	String queueName = null;
+            long currentTime = System.currentTimeMillis();
+            long deadline = currentTime + getKeepAliveTime(TimeUnit.MILLISECONDS);
+            for (;;) {
+                try {
+                    long waitTime = deadline - currentTime;
+                    if (waitTime <= 0) 
+                    {
+                        break;
+                    }
+                    try {
+                        queueName = waitingQueues.poll(waitTime, TimeUnit.MILLISECONDS);
+                        break;
+                    } finally {
+                        if (queueName == null) {
+                            currentTime = System.currentTimeMillis();
+                        }
+                    }
+                } catch (InterruptedException e) {
+                    // Ignore.
+                    continue;
+                }
+            }
             return queueName;
         }
 
@@ -783,12 +751,10 @@ public class FixedThreadPoolQueuesExecutor_Condition2 extends ThreadPoolExecutor
 		public void execute(Runnable command) {
 			offer(TaskQueueUtil.convert(command));
 		}
-		
 		@Override
 		public void execute(Task task) {
 			offer(task);
 		}
-		
 		@Override
 		public void execute(List<Task> tasks) {
 			addAll(tasks);

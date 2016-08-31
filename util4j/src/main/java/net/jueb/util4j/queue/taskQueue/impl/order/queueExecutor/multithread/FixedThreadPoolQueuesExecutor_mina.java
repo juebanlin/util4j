@@ -17,7 +17,7 @@
  *  under the License.
  *
  */
-package net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor;
+package net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.multithread;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,6 +43,8 @@ import org.slf4j.LoggerFactory;
 import net.jueb.util4j.queue.taskQueue.Task;
 import net.jueb.util4j.queue.taskQueue.TaskQueueExecutor;
 import net.jueb.util4j.queue.taskQueue.TaskQueuesExecutor;
+import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.DefaultTaskQueue;
+import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.TaskQueueUtil;
 
 /**
  * A {@link ThreadPoolExecutor} that maintains the order of {@link QueueTask}s.
@@ -53,7 +55,7 @@ import net.jueb.util4j.queue.taskQueue.TaskQueuesExecutor;
  * @author <a href="http://mina.apache.org">Apache MINA Project</a>
  * @org.apache.xbean.XBean
  */
-public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements TaskQueuesExecutor{
+public class FixedThreadPoolQueuesExecutor_mina extends ThreadPoolExecutor implements TaskQueuesExecutor{
     /** A logger for this class (commented as it breaks MDCFlter tests) */
     protected final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -76,17 +78,23 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
     private final BlockingQueue<String> waitingQueues = new LinkedBlockingQueue<String>();
 
     private final Set<Worker> workers = new HashSet<Worker>();
-
+    
+    /**
+     * 用来记录线程池中曾经出现过的最大线程数
+     */
     private volatile int largestPoolSize;
 
     /**
      * 活动线程数量
      */
     private final AtomicInteger idleWorkers = new AtomicInteger();
-
+    /**
+     * 用来记录已经执行完毕的任务个数
+     */
     private long completedTaskCount;
 
     private volatile boolean shutdown;
+    private final Map<String,TaskQueueImpl> queues=new HashMap<>();
 
     /**
      * Creates a default ThreadPool, with default values :
@@ -96,7 +104,7 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
      * - A default ThreadFactory
      * - All events are accepted
      */
-    public FixedThreadPoolQueuesExecutor() {
+    public FixedThreadPoolQueuesExecutor_mina() {
         this(DEFAULT_INITIAL_THREAD_POOL_SIZE, DEFAULT_MAX_THREAD_POOL, DEFAULT_KEEP_ALIVE, TimeUnit.SECONDS, Executors
                 .defaultThreadFactory());
     }
@@ -110,7 +118,7 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
      * 
      * @param maximumPoolSize The maximum pool size
      */
-    public FixedThreadPoolQueuesExecutor(int maximumPoolSize) {
+    public FixedThreadPoolQueuesExecutor_mina(int maximumPoolSize) {
         this(DEFAULT_INITIAL_THREAD_POOL_SIZE, maximumPoolSize, DEFAULT_KEEP_ALIVE, TimeUnit.SECONDS, Executors
                 .defaultThreadFactory());
     }
@@ -124,7 +132,7 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
      * @param corePoolSize The initial pool sizePoolSize
      * @param maximumPoolSize The maximum pool size
      */
-    public FixedThreadPoolQueuesExecutor(int corePoolSize, int maximumPoolSize) {
+    public FixedThreadPoolQueuesExecutor_mina(int corePoolSize, int maximumPoolSize) {
         this(corePoolSize, maximumPoolSize, DEFAULT_KEEP_ALIVE, TimeUnit.SECONDS, Executors.defaultThreadFactory());
     }
 
@@ -138,7 +146,7 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
      * @param keepAliveTime Default duration for a thread
      * @param unit Time unit used for the keepAlive value
      */
-    public FixedThreadPoolQueuesExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit) {
+    public FixedThreadPoolQueuesExecutor_mina(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit) {
         this(corePoolSize, maximumPoolSize, keepAliveTime, unit, Executors.defaultThreadFactory());
     }
 
@@ -152,7 +160,7 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
      * @param threadFactory The factory used to create threads
      * @param eventQueueHandler The queue used to store events
      */
-    public FixedThreadPoolQueuesExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit,
+    public FixedThreadPoolQueuesExecutor_mina(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit,
             ThreadFactory threadFactory) {
         // We have to initialize the pool with default values (0 and 1) in order to
         // handle the exception in a better way. We can't add a try {} catch() {}
@@ -174,7 +182,7 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
     }
 
     
-    Map<String,TaskQueueImpl> queues=new HashMap<>();
+    
    
     /**
      * 取队列
@@ -579,9 +587,6 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
         synchronized (taskQueue) {
             removed = taskQueue.remove(task);
         }
-        if (removed) {
-//        	getQueueEventListener().polled(this, task);
-        }
         return removed;
     }
 
@@ -627,17 +632,16 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
                 for (;;) 
                 {
                 	//获取一个队列
-                	String queueName = fetchQueueName();
+                	String queueName = fetchQueueName();//最长等待keepAlivetime
 					idleWorkers.decrementAndGet();
 					if(queueName==null)
-					{
+					{//判断是否释放线程
 						synchronized (workers) 
                         {
                             if (workers.size() > getCorePoolSize()) 
                             {
-                                // Remove now to prevent duplicate exit.
                                 workers.remove(this);
-                                break;
+                                break;//退出线程
                             }
                         }
 					}
@@ -657,7 +661,7 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
             } finally {
                 synchronized (workers) {
                     workers.remove(this);
-                    FixedThreadPoolQueuesExecutor.this.completedTaskCount += completedTaskCount.get();
+                    FixedThreadPoolQueuesExecutor_mina.this.completedTaskCount += completedTaskCount.get();
                     workers.notifyAll();
                 }
             }
@@ -665,7 +669,7 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
         
         /**
          * 取出一个队列
-         * 当某个队列有任务添加时,此队列会被加入线程处理队列
+         * 此方法阻塞
          * @return
          */
         private String fetchQueueName() {
@@ -680,6 +684,7 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
                         break;
                     }
                     try {
+                    	//等待队列有值或者释放信号到达
                         queueName = waitingQueues.poll(waitTime, TimeUnit.MILLISECONDS);
                         break;
                     } finally {

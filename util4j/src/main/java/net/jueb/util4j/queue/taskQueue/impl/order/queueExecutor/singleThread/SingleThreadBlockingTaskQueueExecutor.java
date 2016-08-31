@@ -1,16 +1,20 @@
-package net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor;
+package net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.singleThread;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 import net.jueb.util4j.queue.taskQueue.Task;
+import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.AbstractTaskQueueExecutor;
+import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.BlockingTaskQueue;
 
 /**
  * 单线程任务队列执行器
  * 采用阻塞队列驱动唤醒线程
+ * 效率较低,但安全
  * @author juebanlin
  */
 public class SingleThreadBlockingTaskQueueExecutor extends AbstractTaskQueueExecutor{
@@ -22,7 +26,7 @@ public class SingleThreadBlockingTaskQueueExecutor extends AbstractTaskQueueExec
 	}
 	
 	public SingleThreadBlockingTaskQueueExecutor(String queueName,ThreadFactory threadFactory) {
-		super(new DefaultBlockingTaskQueue(queueName));
+		super(new BlockingTaskQueue(queueName));
 		if (threadFactory == null)
 	            throw new NullPointerException();
 		this.threadFactory = threadFactory;
@@ -76,14 +80,18 @@ public class SingleThreadBlockingTaskQueueExecutor extends AbstractTaskQueueExec
 		
         public void run() {
             try {
-            	DefaultBlockingTaskQueue queue=(DefaultBlockingTaskQueue) getQueue();
+            	BlockingTaskQueue queue=(BlockingTaskQueue) getQueue();
             	for(;;)
             	{
             		Task task=null;
 					try {
-						task =queue.take();
-					} catch (InterruptedException e1) {
+						task =queue.poll(100,TimeUnit.MILLISECONDS);
+					} catch (Exception e) {
 						
+					}
+					if(task==null)
+					{
+						continue;
 					}
                     try {
                 		runTask(task);
