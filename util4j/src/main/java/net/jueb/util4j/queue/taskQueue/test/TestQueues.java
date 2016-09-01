@@ -182,9 +182,9 @@ public class TestQueues{
     		 Queue<Task> queue=new ConcurrentLinkedQueue<Task>();//queue存入耗时：36
     		 Queue<Task> queue2=new LinkedBlockingQueue<Task>();//BlockingQueue存入耗时：180
     		
-//    		 long t=System.currentTimeMillis();
-//			 Thread.sleep(5000);
-//			 int queueCount=20;
+    		 long t=System.currentTimeMillis();
+			 Thread.sleep(5000);
+			 int queueCount=20;
 //			 FixedThreadPoolQueuesExecutor_mina_disruptor queue3=new FixedThreadPoolQueuesExecutor_mina_disruptor(2,4);
 //    		 t=System.currentTimeMillis();
 //    		 for(int i=1;i<=qt;i++)
@@ -201,7 +201,7 @@ public class TestQueues{
 //			 }
 //			 System.err.println("queue4存入耗时："+(System.currentTimeMillis()-t));
 			 
-//			 FixedThreadPoolQueuesExecutor queue5=new FixedThreadPoolQueuesExecutor(1,8);
+//			 FixedThreadPoolQueuesExecutor queue5=new FixedThreadPoolQueuesExecutor(1,8,new LiteBlockingWaitConditionStrategy());
 //			 t=System.currentTimeMillis();
 //			 for(int i=1;i<=qt*queueCount;i++)
 //			 {
@@ -210,16 +210,12 @@ public class TestQueues{
 //			 System.err.println("queue5存入耗时："+(System.currentTimeMillis()-t));
 //			 queue.clear();
 //			 queue2.clear();
-			 Thread.sleep(10000);
+//			 Thread.sleep(10000);
     		/**
     		 * 多队列多线程测试
     		 */
-    		TaskQueuesExecutor ft=new FixedThreadPoolQueuesExecutor(1,8);
-			for(int i=0;i<1000;i++)
-			{
-				tq.test(qt,20, ft);
-				Thread.sleep(1000);
-			}
+//    		TaskQueuesExecutor ft=new FixedThreadPoolQueuesExecutor(1,8,new BlockingWaitConditionStrategy());
+//			tq.test(qt*20,20, ft);
 //			队列：1,最后一个任务完成,添加队列耗时:2710,队列总耗时:2976,当前线程ID:15
 //			 队列：3,最后一个任务完成,添加队列耗时:2710,队列总耗时:2976,当前线程ID:16
 //			 队列：5,最后一个任务完成,添加队列耗时:2710,队列总耗时:2976,当前线程ID:15
@@ -240,8 +236,8 @@ public class TestQueues{
 //     		队列：1,最后一个任务完成,添加队列耗时:2031,队列总耗时:126,当前线程ID:21
 //     		队列：2,最后一个任务完成,添加队列耗时:2031,队列总耗时:131,当前线程ID:26
      		
-//    		TaskQueuesExecutor ft=new FixedThreadPoolQueuesExecutor(4,8,new YieldingWaitConditionStrategy());
-//    		tq.test(qt*8,8, ft);
+    		TaskQueuesExecutor ft=new FixedThreadPoolQueuesExecutor(1,8,new LiteBlockingWaitConditionStrategy());
+    		tq.test(qt*20,20, ft);
 			 
 //			TaskQueueExecutor t1=new SingleThreadTaskQueueExecutor_CountDownLatch("");
 //			TaskQueueExecutor t2=new SingleThreadTaskQueueExecutor("");

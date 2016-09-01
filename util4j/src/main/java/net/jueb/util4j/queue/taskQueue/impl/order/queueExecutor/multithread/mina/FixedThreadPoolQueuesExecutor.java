@@ -78,19 +78,15 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
     private long completedTaskCount;
 
     private volatile boolean shutdown;
-    
 
     private final WaitConditionStrategy waitConditionStrategy;
     
-    private static final WaitConditionStrategy DEFAULT_waitConditionStrategy=new SleepingWaitConditionStrategy();
-    
     public FixedThreadPoolQueuesExecutor() {
-        this(DEFAULT_INITIAL_THREAD_POOL_SIZE, DEFAULT_MAX_THREAD_POOL, DEFAULT_KEEP_ALIVE, TimeUnit.SECONDS, Executors
-                .defaultThreadFactory(),DEFAULT_waitConditionStrategy);
+        this(DEFAULT_INITIAL_THREAD_POOL_SIZE, DEFAULT_MAX_THREAD_POOL);
     }
 
     public FixedThreadPoolQueuesExecutor(int corePoolSize, int maximumPoolSize) {
-        this(corePoolSize, maximumPoolSize, DEFAULT_KEEP_ALIVE, TimeUnit.SECONDS, Executors.defaultThreadFactory(),DEFAULT_waitConditionStrategy);
+        this(corePoolSize, maximumPoolSize,new SleepingWaitConditionStrategy());
     }
     
     public FixedThreadPoolQueuesExecutor(int corePoolSize, int maximumPoolSize,WaitConditionStrategy waitConditionStrategy) {
@@ -572,7 +568,7 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
                 {
                 	//获取一个队列
                 	String queueName = fetchQueueName();//最长等待keepAlivetime
-					idleWorkers.decrementAndGet();
+                	idleWorkers.decrementAndGet();//开始取
 					if(queueName==null)
 					{//判断是否释放线程
 						synchronized (workers) 
