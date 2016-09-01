@@ -2,8 +2,12 @@ package net.jueb.util4j.lock.waitCondition;
 
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public final class PhasedBackoffWaitConditionStrategy implements WaitConditionStrategy
 {
+	protected final Logger log=LoggerFactory.getLogger(getClass());
     private static final int SPIN_TRIES = 10000;
     private final long spinTimeoutNanos;
     private final long yieldTimeoutNanos;

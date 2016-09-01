@@ -568,7 +568,7 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
                 {
                 	//获取一个队列
                 	String queueName = fetchQueueName();//最长等待keepAlivetime
-                	idleWorkers.decrementAndGet();//开始取
+                	idleWorkers.decrementAndGet();
 					if(queueName==null)
 					{//判断是否释放线程
 						synchronized (workers) 
@@ -621,7 +621,10 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
                     try {
                     	//取出待执行的队列,阻塞waitTime
                         queueName = waitingQueuesPoll(waitTime, TimeUnit.MILLISECONDS);
-                        break;
+                        if(queueName!=null)
+                        { //TODO 如果waitingQueuesPoll方法没有达到最长等待时间,却返回了null,则循环继续;waitTime会计算实际超时时间并退出循环
+                        	break;
+                        }
                     } finally {
                         if (queueName == null) {
                             currentTime = System.currentTimeMillis();
@@ -638,8 +641,8 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
         WorkerWaitCondition workerWaitCondition=new WorkerWaitCondition();
         private class WorkerWaitCondition implements WaitCondition<String>
         {
-        	private String queueName;
-        	long endTime;
+        	private volatile String queueName;
+        	private volatile long  endTime;
         	
         	public void init(long waiteTime,TimeUnit unit)
         	{
@@ -659,7 +662,10 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
 
 			@Override
 			public void doComplete() {
-				queueName=waitingQueuePoll();
+				if(queueName==null)
+				{
+					queueName=waitingQueuePoll();
+				}
 			}
         }
        

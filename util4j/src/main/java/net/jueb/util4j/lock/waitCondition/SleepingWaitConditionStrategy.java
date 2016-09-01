@@ -3,8 +3,12 @@ package net.jueb.util4j.lock.waitCondition;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public final class SleepingWaitConditionStrategy implements WaitConditionStrategy
 {
+	protected final Logger log=LoggerFactory.getLogger(getClass());
     private static final int DEFAULT_RETRIES = 200;
 
     private final int retries;

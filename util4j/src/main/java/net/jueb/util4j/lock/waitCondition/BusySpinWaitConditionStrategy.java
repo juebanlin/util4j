@@ -2,8 +2,12 @@ package net.jueb.util4j.lock.waitCondition;
 
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public final class BusySpinWaitConditionStrategy implements WaitConditionStrategy
 {
+	protected final Logger log=LoggerFactory.getLogger(getClass());
     @Override
 	public <T> T waitFor(WaitCondition<T> waitCondition) throws InterruptedException {
     	waitCondition.doComplete();

@@ -236,8 +236,8 @@ public class TestQueues{
 //     		队列：1,最后一个任务完成,添加队列耗时:2031,队列总耗时:126,当前线程ID:21
 //     		队列：2,最后一个任务完成,添加队列耗时:2031,队列总耗时:131,当前线程ID:26
      		
-    		TaskQueuesExecutor ft=new FixedThreadPoolQueuesExecutor(1,8,new LiteBlockingWaitConditionStrategy());
-    		tq.test(qt*20,20, ft);
+    		TaskQueuesExecutor ft=new FixedThreadPoolQueuesExecutor(2,4);
+    		tq.test(qt*10,10, ft);
 			 
 //			TaskQueueExecutor t1=new SingleThreadTaskQueueExecutor_CountDownLatch("");
 //			TaskQueueExecutor t2=new SingleThreadTaskQueueExecutor("");
