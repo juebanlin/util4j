@@ -174,11 +174,14 @@ public class OrderTaskQueue implements TaskQueueExecutor{
 				isStarting=false;
 				isActive = true;
 				try {
-					while (isActive) {
+					while (isActive) 
+					{
 						Task task = tasks.poll();
-						if (task == null) {// 线程睡眠
+						if (task == null) 
+						{// 线程睡眠
 							sleep();
-						} else {// 线程被外部条件唤醒
+						} else 
+						{// 线程被外部条件唤醒
 							taskObj = new TaskObj(task);
 							cm.taskRunBefore(taskObj);
 							taskObj.start();
@@ -323,6 +326,10 @@ public class OrderTaskQueue implements TaskQueueExecutor{
 		
 		public void syso(HashMap<String, MonitorEntry> entrys,String title)
 		{
+			if(entrys.isEmpty())
+			{
+				return;
+			}
 			StringBuffer sb=new StringBuffer();
 			sb.append("\n");
 			sb.append("****************"+title+"********************\n");
