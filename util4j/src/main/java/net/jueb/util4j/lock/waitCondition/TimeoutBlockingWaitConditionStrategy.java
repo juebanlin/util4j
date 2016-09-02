@@ -30,14 +30,15 @@ public class TimeoutBlockingWaitConditionStrategy implements WaitConditionStrate
              lock.lock();
              try
              {
+            	 waitCondition.doComplete();
                  while (!waitCondition.isComplete())
                  {
-                	 waitCondition.doComplete();
                      nanos = processorNotifyCondition.awaitNanos(nanos);
                      if (nanos <= 0)
                      {
                          break;
                      }
+                     waitCondition.doComplete();
                  }
              }
              finally

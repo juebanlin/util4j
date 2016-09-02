@@ -22,6 +22,7 @@ public final class BlockingWaitConditionStrategy implements WaitConditionStrateg
     		lock.lock();
             try
             {
+            	waitCondition.doComplete();
                 while (!waitCondition.isComplete())
                 {//条件是否成立
                     processorNotifyCondition.await();

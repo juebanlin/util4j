@@ -12,8 +12,8 @@ public final class YieldingWaitConditionStrategy implements WaitConditionStrateg
 
     @Override
 	public <T> T waitFor(WaitCondition<T> waitCondition) throws InterruptedException {
-    	waitCondition.doComplete();
     	int counter = SPIN_TRIES;
+    	waitCondition.doComplete();
     	while (!waitCondition.isComplete())
         {
             counter = applyWaitMethod(counter);

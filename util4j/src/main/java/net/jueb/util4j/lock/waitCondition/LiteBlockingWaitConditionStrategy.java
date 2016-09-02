@@ -26,12 +26,12 @@ public final class LiteBlockingWaitConditionStrategy implements WaitConditionStr
              {
                  do
                  {
-                     signalNeeded.getAndSet(true);
+                	 waitCondition.doComplete();
                      if (waitCondition.isComplete())
                      {
                          break;
                      }
-                     waitCondition.doComplete();
+                     signalNeeded.getAndSet(true);
                      processorNotifyCondition.await();
                  }
                  while (!waitCondition.isComplete());
