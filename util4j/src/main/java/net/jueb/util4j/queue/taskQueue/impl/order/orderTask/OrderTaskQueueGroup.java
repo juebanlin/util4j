@@ -8,8 +8,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.jueb.util4j.queue.taskQueue.Task;
+import net.jueb.util4j.queue.taskQueue.TaskQueue;
 import net.jueb.util4j.queue.taskQueue.TaskQueueExecutor;
 import net.jueb.util4j.queue.taskQueue.TaskQueuesExecutor;
+import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.DefaultTaskQueue;
 import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.TaskQueueUtil;
 
 public class OrderTaskQueueGroup implements TaskQueuesExecutor{
@@ -115,17 +117,22 @@ public class OrderTaskQueueGroup implements TaskQueuesExecutor{
 	}
 
 	@Override
-	public TaskQueueExecutor execute(String queueName, Task task) {
-		return put(queueName, task);
+	public void execute(String queueName, Task task) {
+		put(queueName, task);
 	}
 
 	@Override
-	public TaskQueueExecutor getQueue(String queueName) {
+	public void execute(String queueName, List<Task> tasks) {
+		put(queueName, tasks);
+	}
+
+	@Override
+	public TaskQueueExecutor getQueueExecutor(String queueName) {
 		return queueMap.get(queueName);
 	}
 
 	@Override
-	public TaskQueueExecutor getQueueOrCreate(String queueName) {
+	public TaskQueueExecutor openQueue(String queueName) {
 		OrderTaskQueue queue=queueMap.get(queueName);
 		if(queue==null || !queue.isActive())
 		{
@@ -159,7 +166,14 @@ public class OrderTaskQueueGroup implements TaskQueuesExecutor{
 	}
 
 	@Override
-	public TaskQueueExecutor execute(String queueName, List<Task> tasks) {
-		return put(queueName, tasks);
+	public TaskQueue closeQueue(String queueName) {
+		OrderTaskQueue queue=queueMap.remove(queueName);
+		if(queue!=null)
+		{
+			queue.stop();
+		}
+		DefaultTaskQueue d=new DefaultTaskQueue(queueName);
+		d.addAll(queue.getTasks());
+		return d;
 	}
 }

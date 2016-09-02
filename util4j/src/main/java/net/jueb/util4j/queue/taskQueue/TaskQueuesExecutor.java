@@ -15,7 +15,7 @@ public interface TaskQueuesExecutor extends Executor{
 	 * @param queue
 	 * @param task
 	 */
-	public TaskQueueExecutor execute(String queueName,Task task);
+	public void execute(String queueName,Task task);
 	
 	/**
 	 * 批量执行队列任务
@@ -23,19 +23,25 @@ public interface TaskQueuesExecutor extends Executor{
 	 * @param queue
 	 * @param tasks
 	 */
-	public TaskQueueExecutor execute(String queueName,List<Task> tasks);
+	public void execute(String queueName,List<Task> tasks);
 	
 	/**
-	 * 获取任务队列
+	 * 打开一个队列
+	 * 返回一个队列执行器
+	 */
+	public TaskQueueExecutor openQueue(String queueName);
+	
+	/**
+	 * 关闭队列
+	 * @param queueName
+	 * @return
+	 */
+	public TaskQueue closeQueue(String queueName);
+	
+	/**
+	 * 获取任务执行器
 	 * @param queue
 	 * @return
 	 */
-	public TaskQueueExecutor getQueue(String queueName);
-	
-	/**
-	 * 获取任务队列,如果不存在则创建
-	 * @param queue
-	 * @return
-	 */
-	public TaskQueueExecutor getQueueOrCreate(String queueName);
+	public TaskQueueExecutor getQueueExecutor(String queueName);
 }

@@ -3,7 +3,6 @@ package net.jueb.util4j.queue.taskQueue.test;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
-import java.util.Scanner;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -11,17 +10,10 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.lang.math.RandomUtils;
 
-import net.jueb.util4j.lock.waitCondition.BlockingWaitConditionStrategy;
-import net.jueb.util4j.lock.waitCondition.BusySpinWaitConditionStrategy;
-import net.jueb.util4j.lock.waitCondition.LiteBlockingWaitConditionStrategy;
-import net.jueb.util4j.lock.waitCondition.SleepingWaitConditionStrategy;
-import net.jueb.util4j.lock.waitCondition.YieldingWaitConditionStrategy;
 import net.jueb.util4j.queue.taskQueue.Task;
 import net.jueb.util4j.queue.taskQueue.TaskQueueExecutor;
 import net.jueb.util4j.queue.taskQueue.TaskQueuesExecutor;
-import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.multithread.disruptor.FixedThreadPoolQueuesExecutor_mina_disruptor;
 import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.multithread.mina.FixedThreadPoolQueuesExecutor;
-import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.multithread.mina.FixedThreadPoolQueuesExecutor_mina;
 
 public class TestQueues{
     	 public Task buildTask()
@@ -87,6 +79,10 @@ public class TestQueues{
 
 		public void test(final int taskCount,final int queueCount,final TaskQueuesExecutor o)
     	{
+			for(int i=1;i<=queueCount;i++)
+			{
+				o.openQueue(i+"");
+			}
     		 final Map<Integer,Long> startTime=new HashMap<>();
     		 final AtomicLong addTime=new AtomicLong();
     		 Runnable t=new Runnable() {
@@ -157,11 +153,11 @@ public class TestQueues{
 							{
 								System.err.println("i="+x+",value="+atomicInteger.decrementAndGet()+",sleep="+sleep);
 							}
-							try {
-								Thread.sleep(sleep);
-							} catch (InterruptedException e) {
-								e.printStackTrace();
-							}
+//							try {
+//								Thread.sleep(sleep);
+//							} catch (InterruptedException e) {
+//								e.printStackTrace();
+//							}
 						}
 						@Override
 						public String name() {
@@ -171,9 +167,98 @@ public class TestQueues{
     		 }
     	 }
     	 
-    	 public void testOrder(final TaskQueuesExecutor o)
+    	 public void testOrder(final int taskCount,final int queueCount,final TaskQueuesExecutor o)
     	 {
-//    		 
+    		 final Map<String,AtomicInteger> map1=new HashMap<>();
+    		 final Map<String,AtomicInteger> map2=new HashMap<>();
+    		 for(int i=1;i<=queueCount;i++)
+    		 {
+    			 map1.put(""+i, new AtomicInteger());
+    			 map2.put(""+i, new AtomicInteger());
+    			 o.openQueue(i+"");
+    		 }
+    		 final Map<Integer,Long> startTime=new HashMap<>();
+    		 final AtomicLong addTime=new AtomicLong();
+    		 Runnable t=new Runnable() {
+ 				public void run() {
+ 					//开始时间标记任务
+					for(int i=1;i<=queueCount;i++)
+					{
+						final int queueName=i;
+						long t=System.currentTimeMillis();
+						o.execute(queueName+"", new Task() {
+							@Override
+							public void run() {
+								startTime.put(queueName, System.currentTimeMillis());
+							}
+							@Override
+							public String name() {
+								return "";
+							}
+						});
+						t=System.currentTimeMillis()-t;
+						addTime.addAndGet(t);
+					}
+					//各个队列随机插入影响任务
+ 					for(int i=1;i<=taskCount;i++)
+ 					{
+ 						final int queue=RandomUtils.nextInt(queueCount)+1;//随机加入队列
+ 						final String queueName=queue+"";
+ 						Task t=new Task() {
+							@Override
+							public void run() {
+								int sleep=RandomUtils.nextInt(100);
+								AtomicInteger count=map1.get(queueName);
+								AtomicInteger value=map2.get(queueName);
+								int index=count.incrementAndGet();
+								if(index%2==0)
+								{
+									value.incrementAndGet();
+//									System.err.println("i="+index+",value="+value.incrementAndGet()+",sleep="+sleep);
+								}else
+								{
+									value.decrementAndGet();
+//									System.err.println("i="+index+",value="+value.decrementAndGet()+",sleep="+sleep);
+								}
+//								try {
+//									Thread.sleep(sleep);
+//								} catch (InterruptedException e) {
+//									e.printStackTrace();
+//								}
+							}
+							@Override
+							public String name() {
+								return null;
+							}
+						};
+ 						
+ 						long time=System.currentTimeMillis();
+ 						o.execute(queueName+"",t);
+ 						time=System.currentTimeMillis()-time;
+						addTime.addAndGet(time);
+ 					}
+ 					//结束时间标记任务
+ 					for(int i=1;i<=queueCount;i++)
+ 					{
+ 						final int queue=i;
+ 						final String queueName=i+"";
+ 						o.execute(queueName+"", new Task() {
+							@Override
+							public void run() {
+								long time= System.currentTimeMillis()-startTime.get(queue);
+								AtomicInteger count=map1.get(queueName);
+								AtomicInteger value=map2.get(queueName);
+								System.err.println("队列："+queueName+"count="+count+",value="+value+"最后一个任务完成,添加队列耗时:"+addTime.get()+",队列总耗时:"+time+",当前线程ID:"+Thread.currentThread().getId());
+							}
+							@Override
+							public String name() {
+								return "";
+							}
+						});
+ 					}
+ 				}
+ 			};
+ 			new Thread(t).start();
     	 }
     	 
     	 public static void main(String[] args) throws InterruptedException {
@@ -214,7 +299,7 @@ public class TestQueues{
     		/**
     		 * 多队列多线程测试
     		 */
-//    		TaskQueuesExecutor ft=new FixedThreadPoolQueuesExecutor(1,8,new BlockingWaitConditionStrategy());
+//    		TaskQueuesExecutor ft=new FixedThreadPoolQueuesExecutor(1,8);
 //			tq.test(qt*20,20, ft);
 //			队列：1,最后一个任务完成,添加队列耗时:2710,队列总耗时:2976,当前线程ID:15
 //			 队列：3,最后一个任务完成,添加队列耗时:2710,队列总耗时:2976,当前线程ID:16
@@ -237,7 +322,9 @@ public class TestQueues{
 //     		队列：2,最后一个任务完成,添加队列耗时:2031,队列总耗时:131,当前线程ID:26
      		
     		TaskQueuesExecutor ft=new FixedThreadPoolQueuesExecutor(2,4);
-    		tq.test(qt*10,10, ft);
+//    		tq.test(qt*10,10, ft);
+    		
+    		tq.testOrder(qt*10,10, ft);
 			 
 //			TaskQueueExecutor t1=new SingleThreadTaskQueueExecutor_CountDownLatch("");
 //			TaskQueueExecutor t2=new SingleThreadTaskQueueExecutor("");

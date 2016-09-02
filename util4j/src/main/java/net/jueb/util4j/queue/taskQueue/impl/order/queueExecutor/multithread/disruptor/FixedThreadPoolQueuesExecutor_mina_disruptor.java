@@ -20,6 +20,7 @@
 package net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.multithread.disruptor;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -53,6 +54,7 @@ import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
 
 import net.jueb.util4j.queue.taskQueue.Task;
+import net.jueb.util4j.queue.taskQueue.TaskQueue;
 import net.jueb.util4j.queue.taskQueue.TaskQueueExecutor;
 import net.jueb.util4j.queue.taskQueue.TaskQueuesExecutor;
 import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.DefaultTaskQueue;
@@ -183,12 +185,10 @@ public class FixedThreadPoolQueuesExecutor_mina_disruptor extends ThreadPoolExec
 
     	public void onEvent(QueueEvent event)
         {
-    		//创建队列
     		TaskQueueImpl tasksQueue = queues.get(event.getQueueName());
             if (tasksQueue == null) 
             {
-                tasksQueue = new TaskQueueImpl(event.getQueueName());
-                queues.put(event.getQueueName(), tasksQueue);
+            	return ;
             }
             if(!event.getTasks().isEmpty())
             {
@@ -460,13 +460,11 @@ public class FixedThreadPoolQueuesExecutor_mina_disruptor extends ThreadPoolExec
                 Thread.yield(); // Let others take the signal.
                 continue;
             }
-            TaskQueueImpl tasksQueue = getTaskQueue(queueName);
-            synchronized (tasksQueue) {
-                for (Runnable task :tasksQueue) 
-                {
-                    answer.add(task);
-                }
-                tasksQueue.clear();
+            TaskQueue tasksQueue = closeQueue(queueName);
+            if(tasksQueue!=null)
+            {
+            	answer.addAll(tasksQueue);
+            	tasksQueue.clear();
             }
         }
         return answer;
@@ -485,7 +483,7 @@ public class FixedThreadPoolQueuesExecutor_mina_disruptor extends ThreadPoolExec
     }
 
     @Override
-	public TaskQueueExecutor execute(String queueName, Task task) {
+	public void execute(String queueName, Task task) {
     	if(shutdown)
     	{
     		rejectTask(task);
@@ -494,12 +492,16 @@ public class FixedThreadPoolQueuesExecutor_mina_disruptor extends ThreadPoolExec
     	{
     		throw new RuntimeException("queueName isEmpty");
     	}
+    	TaskQueueImpl tasksQueue = queues.get(queueName);
+        if (tasksQueue == null) 
+        {
+        	return ;
+        }
     	publishQueueTask(queueName,task);
-		return null;
 	}
 
 	@Override
-	public TaskQueueExecutor execute(String queueName, List<Task> tasks) {
+	public void execute(String queueName, List<Task> tasks) {
 		if(shutdown)
     	{
     		for(Task t:tasks)
@@ -511,18 +513,44 @@ public class FixedThreadPoolQueuesExecutor_mina_disruptor extends ThreadPoolExec
     	{
     		throw new RuntimeException("queueName isEmpty");
     	}
+    	TaskQueueImpl tasksQueue = queues.get(queueName);
+        if (tasksQueue == null) 
+        {
+        	return ;
+        }
     	publishQueueTask(queueName,tasks);
-		return null;
 	}
 
 	@Override
-	public TaskQueueExecutor getQueue(String queueName) {
+	public TaskQueueExecutor getQueueExecutor(String queueName) {
 		return getTaskQueue(queueName);
 	}
+	
+	@Override
+	public TaskQueueExecutor openQueue(String queueName) {
+		TaskQueueImpl queue = queues.get(queueName);
+        if (queue == null) 
+        {
+           synchronized (queues) {
+        	   queue = queues.get(queueName);
+               if (queue == null) 
+               {
+                   queue = new TaskQueueImpl(queueName);
+                   queues.put(queueName, queue);
+               }
+           }
+        }
+        return queue;
+	}
 
 	@Override
-	public TaskQueueExecutor getQueueOrCreate(String queueName) {
-		return null;
+	public TaskQueue closeQueue(String queueName) {
+		TaskQueueImpl queue=queues.remove(queueName);
+		if(queue!=null)
+		{
+			queue.setOpen(false);
+		}
+		return queue;
 	}
 
 	private void rejectTask(Runnable task) {
@@ -765,6 +793,11 @@ public class FixedThreadPoolQueuesExecutor_mina_disruptor extends ThreadPoolExec
         private void runTasks(TaskQueueImpl taskQueue) {
             for (;;) 
             {
+            	if(!taskQueue.isOpen())
+                {
+                	log.debug("队列["+taskQueue.getQueueName()+"]关闭,停止执行剩余任务");
+                	return;
+                }
                 Runnable task;
                 task = taskQueue.poll();
                 if (task == null) 
@@ -805,6 +838,33 @@ public class FixedThreadPoolQueuesExecutor_mina_disruptor extends ThreadPoolExec
          * 此队列是否处理完成
          */
         private volatile AtomicBoolean processingCompleted_=new AtomicBoolean(true);
+		private volatile boolean isOpen=true;
+        
+        public boolean isOpen() {
+			return isOpen;
+		}
+
+		public void setOpen(boolean isOpen) {
+			this.isOpen = isOpen;
+		}
+		
+		@Override
+        public final boolean offer(Task e) {
+			if(!isOpen())
+			{//还在当前队列执行器
+				return false;
+			}
+        	return super.offer(e);
+        }
+
+		@Override
+		public boolean addAll(Collection<? extends Task> c) {
+			if(!isOpen())
+			{//还在当前队列执行器
+				return false;
+			}
+			return super.addAll(c);
+		}
         
 		@Override
 		public void execute(Runnable command) {

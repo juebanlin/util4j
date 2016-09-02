@@ -1,6 +1,7 @@
 package net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.multithread.mina;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -19,6 +20,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.commons.lang.NullArgumentException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +28,7 @@ import net.jueb.util4j.lock.waitCondition.SleepingWaitConditionStrategy;
 import net.jueb.util4j.lock.waitCondition.WaitCondition;
 import net.jueb.util4j.lock.waitCondition.WaitConditionStrategy;
 import net.jueb.util4j.queue.taskQueue.Task;
+import net.jueb.util4j.queue.taskQueue.TaskQueue;
 import net.jueb.util4j.queue.taskQueue.TaskQueueExecutor;
 import net.jueb.util4j.queue.taskQueue.TaskQueuesExecutor;
 import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.DefaultTaskQueue;
@@ -134,22 +137,6 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
      */
     private TaskQueueImpl getTaskQueue(String queueName) {
         return queues.get(queueName);
-    }
-    
-    private TaskQueueImpl getTaskQueueOrCreate(String queueName) {
-    	TaskQueueImpl queue = queues.get(queueName);
-        if (queue == null) 
-        {
-           synchronized (queues) {
-        	   queue = queues.get(queueName);
-               if (queue == null) 
-               {
-                   queue = new TaskQueueImpl(queueName);
-                   queues.put(queueName, queue);
-               }
-           }
-        }
-        return queue;
     }
 
     /**
@@ -311,12 +298,10 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
                 Thread.yield(); // Let others take the signal.
                 continue;
             }
-            TaskQueueImpl tasksQueue = getTaskQueue(queueName);
-            synchronized (tasksQueue) {
-                for (Runnable task :tasksQueue) 
-                {
-                    answer.add(task);
-                }
+            TaskQueue tasksQueue = closeQueue(queueName);
+            if(tasksQueue!=null)
+            {
+            	answer.addAll(tasksQueue);
                 tasksQueue.clear();
             }
         }
@@ -336,67 +321,86 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
     }
 
     @Override
-	public TaskQueueExecutor execute(String queueName, Task task) {
+	public void execute(String queueName, Task task) {
     	if(shutdown)
     	{
     		rejectTask(task);
     	}
-    	if(queueName==null || queueName.isEmpty())
+    	if(queueName==null || task ==null)
     	{
-    		throw new RuntimeException("queueName isEmpty");
+    		throw new NullArgumentException("queueName is null");
     	}
-    	TaskQueueImpl tasksQueue = getTaskQueueOrCreate(queueName);
-        
-    	// propose the new event to the event queue handler. If we
-        // use a throttle queue handler, the message may be rejected
-        // if the maximum size has been reached.
-    	// Ok, the message has been accepted
-    	 //加入任务队列
-   	 	tasksQueue.offer(task);
-        if (tasksQueue.processingCompleted.compareAndSet(true, false)) 
-        {//如果该队列没有线程占用
-        	waitingQueueOffer(queueName);
-        }
-        addWorkerIfNecessary();
-		return tasksQueue;
+    	TaskQueueImpl tasksQueue = getTaskQueue(queueName);
+    	if(tasksQueue!=null)
+    	{
+    		tasksQueue.offer(task);
+    	}
 	}
-
-	@Override
-	public TaskQueueExecutor execute(String queueName, List<Task> tasks) {
+    
+    @Override
+	public void execute(String queueName,List<Task> tasks) {
 		if(shutdown)
+		{
+			for(Task t:tasks)
+			{
+				rejectTask(t);
+			}
+		}
+		if(queueName==null || tasks ==null)
     	{
-    		for(Task t:tasks)
-    		{
-    			rejectTask(t);
-    		}
+    		throw new NullArgumentException("queueName is null");
     	}
-    	if(queueName==null || queueName.isEmpty())
+    	TaskQueueImpl tasksQueue = getTaskQueue(queueName);
+    	if(tasksQueue!=null)
     	{
-    		throw new RuntimeException("queueName isEmpty");
+    		tasksQueue.addAll(tasks);
     	}
-    	TaskQueueImpl tasksQueue = getTaskQueueOrCreate(queueName);
-        // propose the new event to the event queue handler. If we
-        // use a throttle queue handler, the message may be rejected
-        // if the maximum size has been reached.
-    	// Ok, the message has been accepted
-    	//加入任务队列
-   	 	tasksQueue.addAll(tasks);
-   	 	if (tasksQueue.processingCompleted.compareAndSet(true, false)) 
-        {//如果该队列没有线程占用
-   	 		waitingQueueOffer(queueName);
-        }
-        addWorkerIfNecessary();
-		return tasksQueue;
 	}
 
+	/**
+     * 队列添加事件
+     * @param queue
+     */
+    protected void queueOfferEvent(TaskQueueImpl tasksQueue)
+    {
+    	 if (tasksQueue.processingCompleted.compareAndSet(true, false)) 
+         {//如果该队列没有线程占用
+         	waitingQueueOffer(tasksQueue.getQueueName());
+         }
+         addWorkerIfNecessary();
+    }
+    
+
 	@Override
-	public TaskQueueExecutor getQueue(String queueName) {
+	public TaskQueueExecutor getQueueExecutor(String queueName) {
 		return getTaskQueue(queueName);
 	}
+	
+	@Override
+	public TaskQueueExecutor openQueue(String queueName) {
+		TaskQueueImpl queue = queues.get(queueName);
+        if (queue == null) 
+        {
+           synchronized (queues) {
+        	   queue = queues.get(queueName);
+               if (queue == null) 
+               {
+                   queue = new TaskQueueImpl(queueName);
+                   queues.put(queueName, queue);
+               }
+           }
+        }
+        return queue;
+	}
 
 	@Override
-	public TaskQueueExecutor getQueueOrCreate(String queueName) {
-		return getTaskQueueOrCreate(queueName);
+	public TaskQueue closeQueue(String queueName) {
+		TaskQueueImpl queue=queues.remove(queueName);
+		if(queue!=null)
+		{
+			queue.setOpen(false);
+		}
+		return queue;
 	}
 
 	private void rejectTask(Runnable task) {
@@ -678,6 +682,11 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
         private void runTasks(TaskQueueImpl taskQueue) {
             for (;;) 
             {
+            	if(!taskQueue.isOpen())
+                {
+                	log.debug("队列["+taskQueue.getQueueName()+"]关闭,停止执行剩余任务");
+                	return;
+                }
             	Runnable task = taskQueue.poll();
                 if (task == null) 
                 {//标记队列已经处理完成
@@ -710,6 +719,7 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
 		 * 
 		 */
 		private static final long serialVersionUID = -741373262667864219L;
+		private volatile boolean isOpen=true;
 		public TaskQueueImpl(String name) {
 			super(name);
 		}
@@ -717,6 +727,34 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
          * 此队列是否处理完成
          */
         private volatile AtomicBoolean processingCompleted = new AtomicBoolean(true);
+        
+		public boolean isOpen() {
+			return isOpen;
+		}
+
+		public void setOpen(boolean isOpen) {
+			this.isOpen = isOpen;
+		}
+		
+		@Override
+        public final boolean offer(Task e) {
+        	boolean bool=super.offer(e);
+        	if(isOpen())
+			{//还在当前队列执行器
+				queueOfferEvent(this);
+			}
+        	return bool;
+        }
+
+		@Override
+		public boolean addAll(Collection<? extends Task> c) {
+			boolean bool=super.addAll(c);
+			if(isOpen())
+			{//还在当前队列执行器
+				queueOfferEvent(this);
+			}
+        	return bool;
+		}
         
 		@Override
 		public void execute(Runnable command) {
