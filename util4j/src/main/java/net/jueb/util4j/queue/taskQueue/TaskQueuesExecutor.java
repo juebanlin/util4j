@@ -11,7 +11,6 @@ public interface TaskQueuesExecutor extends Executor{
 	
 	/**
 	 * 执行队列任务
-	 * 如果队列不存在则创建
 	 * @param queue
 	 * @param task
 	 */
@@ -19,7 +18,6 @@ public interface TaskQueuesExecutor extends Executor{
 	
 	/**
 	 * 批量执行队列任务
-	 * 如果队列不存在则创建
 	 * @param queue
 	 * @param tasks
 	 */
