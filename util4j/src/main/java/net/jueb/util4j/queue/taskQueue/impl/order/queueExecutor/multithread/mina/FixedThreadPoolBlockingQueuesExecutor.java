@@ -58,7 +58,7 @@ import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.TaskQueueUtil;
  * @author <a href="http://mina.apache.org">Apache MINA Project</a>
  * @org.apache.xbean.XBean
  */
-public class FixedThreadPoolQueuesExecutor_mina extends ThreadPoolExecutor implements TaskQueuesExecutor{
+public class FixedThreadPoolBlockingQueuesExecutor extends ThreadPoolExecutor implements TaskQueuesExecutor{
     /** A logger for this class (commented as it breaks MDCFlter tests) */
     protected final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -107,7 +107,7 @@ public class FixedThreadPoolQueuesExecutor_mina extends ThreadPoolExecutor imple
      * - A default ThreadFactory
      * - All events are accepted
      */
-    public FixedThreadPoolQueuesExecutor_mina() {
+    public FixedThreadPoolBlockingQueuesExecutor() {
         this(DEFAULT_INITIAL_THREAD_POOL_SIZE, DEFAULT_MAX_THREAD_POOL, DEFAULT_KEEP_ALIVE, TimeUnit.SECONDS, Executors
                 .defaultThreadFactory());
     }
@@ -121,7 +121,7 @@ public class FixedThreadPoolQueuesExecutor_mina extends ThreadPoolExecutor imple
      * 
      * @param maximumPoolSize The maximum pool size
      */
-    public FixedThreadPoolQueuesExecutor_mina(int maximumPoolSize) {
+    public FixedThreadPoolBlockingQueuesExecutor(int maximumPoolSize) {
         this(DEFAULT_INITIAL_THREAD_POOL_SIZE, maximumPoolSize, DEFAULT_KEEP_ALIVE, TimeUnit.SECONDS, Executors
                 .defaultThreadFactory());
     }
@@ -135,7 +135,7 @@ public class FixedThreadPoolQueuesExecutor_mina extends ThreadPoolExecutor imple
      * @param corePoolSize The initial pool sizePoolSize
      * @param maximumPoolSize The maximum pool size
      */
-    public FixedThreadPoolQueuesExecutor_mina(int corePoolSize, int maximumPoolSize) {
+    public FixedThreadPoolBlockingQueuesExecutor(int corePoolSize, int maximumPoolSize) {
         this(corePoolSize, maximumPoolSize, DEFAULT_KEEP_ALIVE, TimeUnit.SECONDS, Executors.defaultThreadFactory());
     }
 
@@ -149,7 +149,7 @@ public class FixedThreadPoolQueuesExecutor_mina extends ThreadPoolExecutor imple
      * @param keepAliveTime Default duration for a thread
      * @param unit Time unit used for the keepAlive value
      */
-    public FixedThreadPoolQueuesExecutor_mina(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit) {
+    public FixedThreadPoolBlockingQueuesExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit) {
         this(corePoolSize, maximumPoolSize, keepAliveTime, unit, Executors.defaultThreadFactory());
     }
 
@@ -163,7 +163,7 @@ public class FixedThreadPoolQueuesExecutor_mina extends ThreadPoolExecutor imple
      * @param threadFactory The factory used to create threads
      * @param eventQueueHandler The queue used to store events
      */
-    public FixedThreadPoolQueuesExecutor_mina(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit,
+    public FixedThreadPoolBlockingQueuesExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit,
             ThreadFactory threadFactory) {
         // We have to initialize the pool with default values (0 and 1) in order to
         // handle the exception in a better way. We can't add a try {} catch() {}
@@ -668,7 +668,7 @@ public class FixedThreadPoolQueuesExecutor_mina extends ThreadPoolExecutor imple
             } finally {
                 synchronized (workers) {
                     workers.remove(this);
-                    FixedThreadPoolQueuesExecutor_mina.this.completedTaskCount += completedTaskCount.get();
+                    FixedThreadPoolBlockingQueuesExecutor.this.completedTaskCount += completedTaskCount.get();
                     workers.notifyAll();
                 }
             }

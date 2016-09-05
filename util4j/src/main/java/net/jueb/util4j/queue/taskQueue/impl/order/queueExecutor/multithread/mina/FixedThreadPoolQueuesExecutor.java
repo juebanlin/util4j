@@ -59,7 +59,7 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
      * 
      * 队列
      */
-    private final Map<String,TaskQueueImpl> queues=new HashMap<>();
+    private final Map<String,TaskQueueImpl> queues=new HashMap<String,TaskQueueImpl>();
     
     /**
      * 队列处理线程
@@ -319,7 +319,7 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
     public final void execute(String queueName,Runnable task) {
     	execute(queueName,TaskQueueUtil.convert(task));
     }
-
+    
     @Override
 	public void execute(String queueName, Task task) {
     	if(shutdown)
