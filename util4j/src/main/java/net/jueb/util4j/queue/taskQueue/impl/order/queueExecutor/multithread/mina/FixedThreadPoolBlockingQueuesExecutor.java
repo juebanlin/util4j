@@ -43,11 +43,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.jueb.util4j.queue.taskQueue.Task;
+import net.jueb.util4j.queue.taskQueue.TaskConvert;
 import net.jueb.util4j.queue.taskQueue.TaskQueue;
 import net.jueb.util4j.queue.taskQueue.TaskQueueExecutor;
 import net.jueb.util4j.queue.taskQueue.TaskQueuesExecutor;
-import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.DefaultTaskQueue;
-import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.TaskQueueUtil;
+import net.jueb.util4j.queue.taskQueue.impl.DefaultTaskQueue;
+import net.jueb.util4j.queue.taskQueue.impl.DefaultTaskConvert;
 
 /**
  * A {@link ThreadPoolExecutor} that maintains the order of {@link QueueTask}s.
@@ -186,7 +187,22 @@ public class FixedThreadPoolBlockingQueuesExecutor extends ThreadPoolExecutor im
 
     
     
-   
+    public static final TaskConvert DEFAULT_TASK_CONVERT=new DefaultTaskConvert();
+	private TaskConvert taskConvert=DEFAULT_TASK_CONVERT;
+	
+	@Override
+	public TaskConvert getTaskConvert() {
+		return taskConvert;
+	}
+	
+	@Override
+	public void setTaskConvert(TaskConvert taskConvert) {
+		if(taskConvert==null)
+		{
+			throw new NullArgumentException("taskConvert is null");
+		}
+		this.taskConvert=taskConvert;
+	}
     /**
      * 取队列
      * @param queueName
@@ -374,7 +390,7 @@ public class FixedThreadPoolBlockingQueuesExecutor extends ThreadPoolExecutor im
     }
     
     public final void execute(String queueName,Runnable task) {
-    	execute(queueName,TaskQueueUtil.convert(task));
+    	execute(queueName,getTaskConvert().convert(task));
     }
 
     @Override
@@ -788,7 +804,7 @@ public class FixedThreadPoolBlockingQueuesExecutor extends ThreadPoolExecutor im
         
 		@Override
 		public void execute(Runnable command) {
-			offer(TaskQueueUtil.convert(command));
+			offer(getTaskConvert().convert(command));
 		}
 		@Override
 		public void execute(Task task) {
@@ -797,6 +813,16 @@ public class FixedThreadPoolBlockingQueuesExecutor extends ThreadPoolExecutor im
 		@Override
 		public void execute(List<Task> tasks) {
 			addAll(tasks);
+		}
+
+		@Override
+		public TaskConvert getTaskConvert() {
+			return FixedThreadPoolBlockingQueuesExecutor.this.getTaskConvert();
+		}
+
+		@Override
+		public void setTaskConvert(TaskConvert taskConvert) {
+			FixedThreadPoolBlockingQueuesExecutor.this.setTaskConvert(taskConvert);
 		}
     }
 }

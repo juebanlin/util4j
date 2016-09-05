@@ -8,8 +8,8 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import net.jueb.util4j.queue.taskQueue.Task;
+import net.jueb.util4j.queue.taskQueue.impl.BlockingTaskQueue;
 import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.AbstractTaskQueueExecutor;
-import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.BlockingTaskQueue;
 
 /**
  * 单线程任务队列执行器

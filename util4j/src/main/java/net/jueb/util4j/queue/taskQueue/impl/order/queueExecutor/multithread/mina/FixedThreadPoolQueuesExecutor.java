@@ -28,11 +28,12 @@ import net.jueb.util4j.lock.waitCondition.SleepingWaitConditionStrategy;
 import net.jueb.util4j.lock.waitCondition.WaitCondition;
 import net.jueb.util4j.lock.waitCondition.WaitConditionStrategy;
 import net.jueb.util4j.queue.taskQueue.Task;
+import net.jueb.util4j.queue.taskQueue.TaskConvert;
 import net.jueb.util4j.queue.taskQueue.TaskQueue;
 import net.jueb.util4j.queue.taskQueue.TaskQueueExecutor;
 import net.jueb.util4j.queue.taskQueue.TaskQueuesExecutor;
-import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.DefaultTaskQueue;
-import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.TaskQueueUtil;
+import net.jueb.util4j.queue.taskQueue.impl.DefaultTaskQueue;
+import net.jueb.util4j.queue.taskQueue.impl.DefaultTaskConvert;
 
 public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements TaskQueuesExecutor{
     /** A logger for this class (commented as it breaks MDCFlter tests) */
@@ -118,6 +119,23 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
         this.waitConditionStrategy=waitConditionStrategy;
     }
    
+    public static final TaskConvert DEFAULT_TASK_CONVERT=new DefaultTaskConvert();
+   	private TaskConvert taskConvert=DEFAULT_TASK_CONVERT;
+   	
+   	@Override
+   	public TaskConvert getTaskConvert() {
+   		return taskConvert;
+   	}
+   	
+   	@Override
+   	public void setTaskConvert(TaskConvert taskConvert) {
+   		if(taskConvert==null)
+   		{
+   			throw new NullArgumentException("taskConvert is null");
+   		}
+   		this.taskConvert=taskConvert;
+   	}
+    
     protected String waitingQueuePoll()
     {
     	return waitingQueues.poll();
@@ -317,7 +335,7 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
     }
     
     public final void execute(String queueName,Runnable task) {
-    	execute(queueName,TaskQueueUtil.convert(task));
+    	execute(queueName,getTaskConvert().convert(task));
     }
     
     @Override
@@ -758,7 +776,7 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
         
 		@Override
 		public void execute(Runnable command) {
-			offer(TaskQueueUtil.convert(command));
+			offer(getTaskConvert().convert(command));
 		}
 		@Override
 		public void execute(Task task) {
@@ -767,6 +785,16 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
 		@Override
 		public void execute(List<Task> tasks) {
 			addAll(tasks);
+		}
+
+		@Override
+		public TaskConvert getTaskConvert() {
+			return FixedThreadPoolQueuesExecutor.this.getTaskConvert();
+		}
+
+		@Override
+		public void setTaskConvert(TaskConvert taskConvert) {
+			FixedThreadPoolQueuesExecutor.this.setTaskConvert(taskConvert);
 		}
     }
 }

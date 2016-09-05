@@ -4,15 +4,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
+
+import org.apache.commons.lang.NullArgumentException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.jueb.util4j.queue.taskQueue.Task;
+import net.jueb.util4j.queue.taskQueue.TaskConvert;
 import net.jueb.util4j.queue.taskQueue.TaskQueue;
 import net.jueb.util4j.queue.taskQueue.TaskQueueExecutor;
 import net.jueb.util4j.queue.taskQueue.TaskQueuesExecutor;
-import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.DefaultTaskQueue;
-import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.TaskQueueUtil;
+import net.jueb.util4j.queue.taskQueue.impl.DefaultTaskQueue;
+import net.jueb.util4j.queue.taskQueue.impl.DefaultTaskConvert;
 
 public class OrderTaskQueueGroup implements TaskQueuesExecutor{
 	public final Logger log = LoggerFactory.getLogger(getClass());
@@ -113,7 +116,7 @@ public class OrderTaskQueueGroup implements TaskQueuesExecutor{
 
 	@Override
 	public void execute(Runnable command) {
-		put("Runnable",TaskQueueUtil.convert(command));
+		put("Runnable",getTaskConvert().convert(command));
 	}
 
 	@Override
@@ -176,4 +179,21 @@ public class OrderTaskQueueGroup implements TaskQueuesExecutor{
 		d.addAll(queue.getTasks());
 		return d;
 	}
+
+	public static final TaskConvert DEFAULT_TASK_CONVERT=new DefaultTaskConvert();
+   	private TaskConvert taskConvert=DEFAULT_TASK_CONVERT;
+   	
+   	@Override
+   	public TaskConvert getTaskConvert() {
+   		return taskConvert;
+   	}
+   	
+   	@Override
+   	public void setTaskConvert(TaskConvert taskConvert) {
+   		if(taskConvert==null)
+   		{
+   			throw new NullArgumentException("taskConvert is null");
+   		}
+   		this.taskConvert=taskConvert;
+   	}
 }

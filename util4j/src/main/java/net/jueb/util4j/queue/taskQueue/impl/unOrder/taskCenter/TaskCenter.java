@@ -18,11 +18,14 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.commons.lang.NullArgumentException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import net.jueb.util4j.queue.taskQueue.Task;
+import net.jueb.util4j.queue.taskQueue.TaskConvert;
 import net.jueb.util4j.queue.taskQueue.TaskQueueExecutor;
+import net.jueb.util4j.queue.taskQueue.impl.DefaultTaskConvert;
 
 /**
  * 任务管理中心。管理多线程执行，一般的，常规任务执行都应当使用任务中心执行。
@@ -327,4 +330,21 @@ public final class TaskCenter implements TaskQueueExecutor {
 		}
 		executes(list);
 	}
+
+	public static final TaskConvert DEFAULT_TASK_CONVERT=new DefaultTaskConvert();
+   	private TaskConvert taskConvert=DEFAULT_TASK_CONVERT;
+   	
+   	@Override
+   	public TaskConvert getTaskConvert() {
+   		return taskConvert;
+   	}
+   	
+   	@Override
+   	public void setTaskConvert(TaskConvert taskConvert) {
+   		if(taskConvert==null)
+   		{
+   			throw new NullArgumentException("taskConvert is null");
+   		}
+   		this.taskConvert=taskConvert;
+   	}
 }

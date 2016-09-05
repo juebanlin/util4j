@@ -26,4 +26,16 @@ public interface TaskQueueExecutor extends Executor{
 	 * @param tasks
 	 */
 	public void execute(List<Task> tasks);
+	
+	/**
+	 * 获取任务转换器
+	 * @return
+	 */
+	public TaskConvert getTaskConvert();
+	
+	/**
+	 * 设置任务转换器
+	 * @param taskConvert
+	 */
+	public void setTaskConvert(TaskConvert taskConvert);
 }

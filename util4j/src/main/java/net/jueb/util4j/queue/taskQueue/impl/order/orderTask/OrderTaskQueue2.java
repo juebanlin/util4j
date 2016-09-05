@@ -11,12 +11,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.apache.commons.lang.NullArgumentException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.jueb.util4j.queue.taskQueue.Task;
+import net.jueb.util4j.queue.taskQueue.TaskConvert;
 import net.jueb.util4j.queue.taskQueue.TaskQueueExecutor;
-import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.TaskQueueUtil;
+import net.jueb.util4j.queue.taskQueue.impl.DefaultTaskConvert;
 
 /**
  * 顺序任务执行队列
@@ -371,7 +373,7 @@ public class OrderTaskQueue2 implements TaskQueueExecutor{
 	
 	@Override
 	public void execute(Runnable command) {
-		addTask(TaskQueueUtil.convert(command));
+		addTask(getTaskConvert().convert(command));
 	}
 	
 	@Override
@@ -385,5 +387,22 @@ public class OrderTaskQueue2 implements TaskQueueExecutor{
 	@Override
 	public void execute(List<Task> tasks) {
 		addTask(tasks);
+	}
+	
+	public static final TaskConvert DEFAULT_TASK_CONVERT=new DefaultTaskConvert();
+	private TaskConvert taskConvert=DEFAULT_TASK_CONVERT;
+	
+	@Override
+	public TaskConvert getTaskConvert() {
+		return taskConvert;
+	}
+	
+	@Override
+	public void setTaskConvert(TaskConvert taskConvert) {
+		if(taskConvert==null)
+		{
+			throw new NullArgumentException("taskConvert is null");
+		}
+		this.taskConvert=taskConvert;
 	}
 }

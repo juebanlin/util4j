@@ -1,4 +1,4 @@
-package net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor;
+package net.jueb.util4j.queue.taskQueue.impl;
 
 import net.jueb.util4j.queue.taskQueue.Task;
 

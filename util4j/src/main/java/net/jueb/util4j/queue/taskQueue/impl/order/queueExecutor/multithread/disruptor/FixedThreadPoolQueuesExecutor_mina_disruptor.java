@@ -39,6 +39,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.commons.lang.NullArgumentException;
 import org.apache.mina.filter.executor.UnorderedThreadPoolExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,11 +55,12 @@ import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
 
 import net.jueb.util4j.queue.taskQueue.Task;
+import net.jueb.util4j.queue.taskQueue.TaskConvert;
 import net.jueb.util4j.queue.taskQueue.TaskQueue;
 import net.jueb.util4j.queue.taskQueue.TaskQueueExecutor;
 import net.jueb.util4j.queue.taskQueue.TaskQueuesExecutor;
-import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.DefaultTaskQueue;
-import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.TaskQueueUtil;
+import net.jueb.util4j.queue.taskQueue.impl.DefaultTaskQueue;
+import net.jueb.util4j.queue.taskQueue.impl.DefaultTaskConvert;
 import net.jueb.util4j.thread.NamedThreadFactory;
 
 /**
@@ -119,6 +121,22 @@ public class FixedThreadPoolQueuesExecutor_mina_disruptor extends ThreadPoolExec
     final static WaitStrategy YIELDING_WAIT = new YieldingWaitStrategy();
     final static WaitStrategy BusySpinWait =  new BusySpinWaitStrategy();
     
+    public static final TaskConvert DEFAULT_TASK_CONVERT=new DefaultTaskConvert();
+	private TaskConvert taskConvert=DEFAULT_TASK_CONVERT;
+	
+	@Override
+	public TaskConvert getTaskConvert() {
+		return taskConvert;
+	}
+	
+	@Override
+	public void setTaskConvert(TaskConvert taskConvert) {
+		if(taskConvert==null)
+		{
+			throw new NullArgumentException("taskConvert is null");
+		}
+		this.taskConvert=taskConvert;
+	}
     @SuppressWarnings("unchecked")
 	protected void initDis()
     {
@@ -479,7 +497,7 @@ public class FixedThreadPoolQueuesExecutor_mina_disruptor extends ThreadPoolExec
     }
     
     public final void execute(String queueName,Runnable task) {
-    	execute(queueName,TaskQueueUtil.convert(task));
+    	execute(queueName,getTaskConvert().convert(task));
     }
 
     @Override
@@ -868,7 +886,7 @@ public class FixedThreadPoolQueuesExecutor_mina_disruptor extends ThreadPoolExec
         
 		@Override
 		public void execute(Runnable command) {
-			offer(TaskQueueUtil.convert(command));
+			offer(getTaskConvert().convert(command));
 		}
 		@Override
 		public void execute(Task task) {
@@ -877,6 +895,16 @@ public class FixedThreadPoolQueuesExecutor_mina_disruptor extends ThreadPoolExec
 		@Override
 		public void execute(List<Task> tasks) {
 			addAll(tasks);
+		}
+
+		@Override
+		public TaskConvert getTaskConvert() {
+			return FixedThreadPoolQueuesExecutor_mina_disruptor.this.getTaskConvert();
+		}
+
+		@Override
+		public void setTaskConvert(TaskConvert taskConvert) {
+			FixedThreadPoolQueuesExecutor_mina_disruptor.this.setTaskConvert(taskConvert);
 		}
     }
 }

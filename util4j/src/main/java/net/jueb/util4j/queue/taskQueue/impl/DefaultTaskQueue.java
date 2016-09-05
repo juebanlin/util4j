@@ -1,10 +1,12 @@
-package net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor;
+package net.jueb.util4j.queue.taskQueue.impl;
 
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 import net.jueb.util4j.queue.taskQueue.Task;
 import net.jueb.util4j.queue.taskQueue.TaskQueue;
 
-public class BlockingTaskQueue extends LinkedBlockingQueue<Task> implements TaskQueue{
+public class DefaultTaskQueue extends ConcurrentLinkedQueue<Task> implements TaskQueue{
+	
 	/**
 	 * 
 	 */
@@ -12,7 +14,7 @@ public class BlockingTaskQueue extends LinkedBlockingQueue<Task> implements Task
 
 	private final String name;
 	
-	public BlockingTaskQueue(String name) {
+	public DefaultTaskQueue(String name) {
 		if (name == null)
             throw new NullPointerException();
 		this.name=name;
