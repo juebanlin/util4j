@@ -590,7 +590,7 @@ public class FixedThreadPoolQueuesExecutor extends ThreadPoolExecutor implements
                 {
                 	//获取一个队列
                 	String queueName = fetchQueueName();//最长等待keepAlivetime
-                	idleWorkers.decrementAndGet();
+                	idleWorkers.decrementAndGet();//活动线程-1,如果还有队列没有人处理则会增加线程
 					if(queueName==null)
 					{//判断是否释放线程
 						synchronized (workers) 

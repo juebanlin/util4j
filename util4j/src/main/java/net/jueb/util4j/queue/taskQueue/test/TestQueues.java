@@ -3,13 +3,16 @@ package net.jueb.util4j.queue.taskQueue.test;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.math.RandomUtils;
 
+import net.jueb.util4j.common.game.cdkey.CdkeyFactoryRandomImpl;
 import net.jueb.util4j.queue.taskQueue.Task;
 import net.jueb.util4j.queue.taskQueue.TaskQueueExecutor;
 import net.jueb.util4j.queue.taskQueue.TaskQueuesExecutor;
@@ -21,7 +24,11 @@ public class TestQueues{
     		 return new Task() {
 				@Override
 				public void run() {
-					
+					CdkeyFactoryRandomImpl cd=new CdkeyFactoryRandomImpl();
+					cd.build();
+					cd.build();
+					cd.build();
+					cd.build();
 				}
 				
 				@Override
@@ -321,9 +328,9 @@ public class TestQueues{
 //     		队列：1,最后一个任务完成,添加队列耗时:2031,队列总耗时:126,当前线程ID:21
 //     		队列：2,最后一个任务完成,添加队列耗时:2031,队列总耗时:131,当前线程ID:26
      		
-			FixedThreadPoolQueuesExecutor ft=new FixedThreadPoolQueuesExecutor(2,4);
+			FixedThreadPoolQueuesExecutor ft=new FixedThreadPoolQueuesExecutor(1,30);
 //    		tq.test(qt*10,10, ft);
-    		tq.test(qt*10,10, ft);
+    		tq.test(qt*50,100, ft);
 //			TaskQueueExecutor t1=new SingleThreadTaskQueueExecutor_CountDownLatch("");
 //			TaskQueueExecutor t2=new SingleThreadTaskQueueExecutor("");
 //			TaskQueueExecutor t3=new SingleThreadBlockingTaskQueueExecutor("");
