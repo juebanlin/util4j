@@ -277,7 +277,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 			try {
 				for(Object key:removeKeys)
 				{
-					EntryAdapter<K, V> entry=removeAndListener(key);
+					EntryAdapter<K, V> entry=removeAndListener(key,true);
 					if(entry!=null)
 					{
 						map.put(entry.key, entry.value);
@@ -296,9 +296,10 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 	/**
 	 * 移除缓存对象并通知事件
 	 * @param key
+	 * @param expire 是否超时才执行的移除
 	 * @return
 	 */
-	protected EntryAdapter<K, V> removeAndListener(Object key)
+	protected EntryAdapter<K, V> removeAndListener(Object key,final boolean expire)
 	{
 		final EntryAdapter<K, V> entry=entryMap.remove(key);
 		try {
@@ -311,7 +312,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 						@Override
 						public void run() {
 							try {
-								listener.removed(entry.getKey(),entry.getValue());
+								listener.removed(entry.getKey(),entry.getValue(),expire);
 							} catch (Throwable e) {
 								log.error(e.getMessage(),e);
 							}
@@ -420,7 +421,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		{
 			rwLock.writeLock().lock();
 			try {
-				removeAndListener(key);
+				removeAndListener(key,true);
 			} catch (Exception e) {
 				log.error(e.getMessage(),e);
 			}finally {
@@ -440,7 +441,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		rwLock.writeLock().lock();
 		EntryAdapter<K,V> value=null;
 		try {
-			value=removeAndListener(key);
+			value=removeAndListener(key,false);
 		} catch (Exception e) {
 			log.error(e.getMessage(),e);
 		}finally {
@@ -533,7 +534,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 				e.setLastActiveTime(System.currentTimeMillis());
 				if(e.isTimeOut())
 				{//已过期
-					removeAndListener(key);
+					removeAndListener(key,true);
 				}else
 				{
 					e.setLastActiveTime(System.currentTimeMillis());
@@ -582,7 +583,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		{
 			rwLock.writeLock().lock();
 			try {
-				removeAndListener(key);
+				removeAndListener(key,true);
 				result= -1;
 			} catch (Exception e) {
 				log.error(e.getMessage(),e);
@@ -624,7 +625,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		{
 			rwLock.writeLock().lock();
 			try {
-				removeAndListener(key);
+				removeAndListener(key,true);
 			} catch (Exception e) {
 				log.error(e.getMessage(),e);
 			}finally {
@@ -665,7 +666,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		{
 			rwLock.writeLock().lock();
 			try {
-				removeAndListener(key);
+				removeAndListener(key,true);
 			}catch (Exception e) {
 				log.error(e.getMessage(),e);
 			}finally {
@@ -703,7 +704,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		{
 			rwLock.writeLock().lock();
 			try {
-				removeAndListener(key);
+				removeAndListener(key,true);
 			}catch (Exception e) {
 				log.error(e.getMessage(),e);
 			}finally {
@@ -721,7 +722,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		 * 当RoleAgent被移除后执行此方法
 		 */
 		@Override
-		public void removed(String key,String value) {
+		public void removed(String key,String value,boolean expire) {
 			System.err.println("玩家断线未重连移除"+value.toString());
 		}
 		
@@ -752,7 +753,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 						map.put(key,value,ttl);
 						map.addEventListener(key, new EventListener<String,String>() {
 							@Override
-							public void removed(String key, String value) {
+							public void removed(String key, String value,boolean expire) {
 							}
 						});
 						t=System.currentTimeMillis()-t;

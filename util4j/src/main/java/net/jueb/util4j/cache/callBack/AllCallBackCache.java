@@ -1,12 +1,23 @@
 package net.jueb.util4j.cache.callBack;
 
+import java.util.concurrent.Executor;
+
 /**
  * 效率稍微低
  * @author jaci
  */
-public class CallBackCacheGroup {
+public class AllCallBackCache {
 
-	protected final CallBackCache<Object> caches=new CallBackCache<Object>();
+	protected final CallBackCache<Object> caches;
+	
+	public AllCallBackCache(Executor lisenterExecutor) {
+		caches=new CallBackCache<Object>(lisenterExecutor);
+	}
+	
+	public Runnable getCleanTask()
+	{
+		return caches.getCleanTask();
+	}
 	
 	@SuppressWarnings("unchecked")
 	public final <T> String put(CallBack<T> callBack)

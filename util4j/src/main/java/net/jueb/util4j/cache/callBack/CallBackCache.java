@@ -1,26 +1,24 @@
 package net.jueb.util4j.cache.callBack;
 
 import java.lang.management.ManagementFactory;
-import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.jueb.util4j.cache.map.LRULinkedHashMap;
-import net.jueb.util4j.thread.NamedThreadFactory;
+import net.jueb.util4j.cache.map.TimedMap;
+import net.jueb.util4j.cache.map.TimedMap.EventListener;
+import net.jueb.util4j.cache.map.TimedMapSimpleImpl;
 
 public class CallBackCache<T> {
 	protected Logger _log = LoggerFactory.getLogger(this.getClass());
 	public volatile boolean clearing;
-	protected final ScheduledExecutorService scheduled=Executors.newScheduledThreadPool(2,new NamedThreadFactory("CallBackCacheTimeOutRemove", true));
 	
-	private final Map<String,CallBack<T>> callBacks=new LRULinkedHashMap<String,CallBack<T>>();
+	private final TimedMap<String,CallBack<T>> callBacks;
 	
-	public CallBackCache() {
+	public CallBackCache(Executor lisenterExecutor) {
+		 callBacks=new TimedMapSimpleImpl<String,CallBack<T>>(lisenterExecutor);
 	}
 	
 	public String put(CallBack<T> callBack)
@@ -29,17 +27,23 @@ public class CallBackCache<T> {
 		{
 			return null;
 		}
-		synchronized (callBack) {
-			String ck=nextCallKey();
-			callBacks.put(ck,callBack);
-			long timeOut=callBack.getTimeOut();
-			if(timeOut==0)
-			{
-				timeOut=CallBack.DEFAULT_TIMEOUT;
-			}
-			scheduled.schedule(new RemoveTimeOutTask(ck),timeOut, TimeUnit.MILLISECONDS);
-			return ck;
+		String ck=nextCallKey();
+		long timeOut=callBack.getTimeOut();
+		if(timeOut==0)
+		{
+			timeOut=CallBack.DEFAULT_TIMEOUT;
 		}
+		callBacks.put(ck, callBack, timeOut);
+		callBacks.addEventListener(ck, new EventListener<String,CallBack<T>>(){
+			@Override
+			public void removed(String key, CallBack<T> value, boolean expire) {
+				if(expire)
+				{
+					value.timeOutCall();
+				}
+			}
+		});
+		return ck;
 	}
 	
 	public CallBack<T> poll(String callKey)
@@ -52,46 +56,9 @@ public class CallBackCache<T> {
 		return callBacks.size();
 	}
 	
-	/**
-	 * 超时移除并回调
-	 * @author juebanlin@gmail.com
-	 * time:2015年6月15日
-	 */
-	class RemoveTimeOutTask implements Runnable{
-
-		String callKey;
-		public RemoveTimeOutTask(String callKey) {
-			this.callKey=callKey;
-		}
-		@Override
-		public void run() {
-			try {
-				CallBack<T> cb=callBacks.remove(callKey);
-				if(cb!=null)
-				{
-					cb.timeOutCall();
-				}
-			} catch (Exception e) {
-				_log.error(e.getMessage(),e);
-			}
-		}
-	}
-	
-	class CallBackEntry
+	public Runnable getCleanTask()
 	{
-		final CallBack<T> cb;
-		final long addTime;
-		public CallBackEntry(CallBack<T> cb, long addTime) {
-			super();
-			this.cb = cb;
-			this.addTime = addTime;
-		}
-		public CallBack<T> getCb() {
-			return cb;
-		}
-		public long getAddTime() {
-			return addTime;
-		}
+		return callBacks.getCleanTask();
 	}
 	
 	protected static final AtomicLong seq=new AtomicLong();

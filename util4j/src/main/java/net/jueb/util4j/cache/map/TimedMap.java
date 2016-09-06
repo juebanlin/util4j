@@ -81,7 +81,8 @@ public interface TimedMap<K,V> extends Map<K,V>{
 		 * 移除后调用此方法
 		 * @param key
 		 * @param value
+		 * @param expire 是否超时移除
 		 */
-		public void removed(K key,V value);
+		public void removed(K key,V value,boolean expire);
 	}
 }

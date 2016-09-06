@@ -6,15 +6,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.apache.commons.lang.math.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -268,7 +264,7 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 			}
 			for(K key:removeKeys)
 			{
-				EntryAdapter<K, V> e=removeAndListener(key);
+				EntryAdapter<K, V> e=removeAndListener(key,true);
 				if(e!=null)
 				{
 					map.put(e.getKey(),e.getValue());
@@ -342,7 +338,7 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
         return value;
 	}
 
-	protected EntryAdapter<K, V> removeAndListener(Object key)
+	protected EntryAdapter<K, V> removeAndListener(Object key,final boolean expire)
 	{
 		final EntryAdapter<K, V> e=entryMap.remove(key);
 		if(e!=null)
@@ -353,7 +349,7 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 					for(EventListener<K, V> l:e.getListeners())
 					{
 						try {
-							l.removed(e.getKey(),e.getValue());
+							l.removed(e.getKey(),e.getValue(),expire);
 						} catch (Throwable e) {
 							log.error(e.getMessage(),e);
 						}
@@ -375,7 +371,7 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 				e.setLastActiveTime(System.currentTimeMillis());
 				if(e.isTimeOut())
 				{
-					removeAndListener(key);
+					removeAndListener(key,true);
 				}else
 				{
 					return e.getValue();
@@ -399,7 +395,7 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 				e.setLastActiveTime(System.currentTimeMillis());
 				if(e.isTimeOut())
 				{
-					removeAndListener(key);
+					removeAndListener(key,true);
 				}else
 				{
 					return e.getValue();
@@ -417,7 +413,7 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 	public V remove(Object key) {
 		lock.lock();
 		try {
-			EntryAdapter<K,V> value=removeAndListener(key);
+			EntryAdapter<K,V> value=removeAndListener(key,false);
 			if(value!=null)
 			{
 				return value.getValue();
@@ -432,19 +428,7 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 
 	@Override
 	public V removeBy(K key) {
-		lock.lock();
-		try {
-			Entry<K, V> e=removeAndListener(key);
-			if(e!=null)
-			{
-				return e.getValue();
-			}
-		} catch (Exception e) {
-			log.error(e.getMessage(),e);
-		}finally{
-			lock.unlock();
-		}
-		return null;
+		return remove(key);
 	}
 
 	@Override
@@ -524,7 +508,7 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 				e.setLastActiveTime(System.currentTimeMillis());
 				if(e.isTimeOut())
 				{//已过期
-					removeAndListener(key);
+					removeAndListener(key,true);
 				}else
 				{
 					e.setLastActiveTime(System.currentTimeMillis());
@@ -551,7 +535,7 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 				{//有过期时间
 					if(e.isTimeOut())
 					{//过期移除
-						removeAndListener(key);
+						removeAndListener(key,true);
 						return -1;
 					}
 					return e.getLastActiveTime()+e.getTtl()-System.currentTimeMillis();
@@ -578,7 +562,7 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 				e.setLastActiveTime(System.currentTimeMillis());
 				if(e.isTimeOut())
 				{
-					removeAndListener(key);
+					removeAndListener(key,true);
 				}else
 				{
 					if(lisnener!=null)
@@ -606,7 +590,7 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 				e.setLastActiveTime(System.currentTimeMillis());
 				if(e.isTimeOut())
 				{
-					removeAndListener(key);
+					removeAndListener(key,true);
 				}else
 				{
 					if(lisnener!=null)
@@ -634,7 +618,7 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 				e.setLastActiveTime(System.currentTimeMillis());
 				if(e.isTimeOut())
 				{
-					removeAndListener(key);
+					removeAndListener(key,true);
 				}else
 				{
 					e.getListeners().clear();
@@ -647,101 +631,5 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 			lock.unlock();
 		}
 		return null;
-	}
-	public static class Test implements EventListener<String,String>{
-		TimedMapSimpleImpl<String,String> map=new TimedMapSimpleImpl<String,String>();
-
-		/**
-		 * 当RoleAgent被移除后执行此方法
-		 */
-		@Override
-		public void removed(String key,String value) {
-			System.err.println("玩家断线未重连移除"+value.toString());
-		}
-		
-		public void test()
-		{
-			ScheduledExecutorService s=Executors.newScheduledThreadPool(2);
-			s.scheduleAtFixedRate(map.getCleanTask(),1, 1, TimeUnit.SECONDS);
-			final Logger log=LoggerFactory.getLogger(getClass());
-			int num=1000000;
-			//固化数据
-			for(int i=0;i<num;i++)
-			{
-				String key="StaticKey"+i;
-				String value="StaticValue"+i;
-				map.put(key,value,0);
-			}
-			final int count=5000000;//测试次数
-			//写入线程
-			Thread putThread=new Thread(){
-				public void run() {
-					long times=0;
-					for(int i=0;i<count;i++)
-					{
-						long t=System.currentTimeMillis();
-						String key="TestKey"+i;
-						String value="TestValue"+i;
-						long ttl=TimeUnit.SECONDS.toMillis(RandomUtils.nextInt(300))+1;
-						map.put(key,value,ttl);
-						map.addEventListener(key, new EventListener<String,String>() {
-							@Override
-							public void removed(String key, String value) {
-							}
-						});
-						t=System.currentTimeMillis()-t;
-						log.debug("putTime="+t);
-						times+=t;
-						try {
-							Thread.sleep(100);
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-					}
-					System.err.println("putTimes="+times);//putTimes=2914
-				};
-			};
-			putThread.setName("putThread");
-			putThread.start();
-			try {
-				Thread.sleep(2000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			//读取线程
-			Thread getThread=new Thread(){
-				public void run() {
-					long times=0;
-					for(int i=0;i<count;i++)
-					{
-						long t=System.currentTimeMillis();
-						String key="TestKey"+i;
-						String v=map.get(key);
-						t=System.currentTimeMillis()-t;
-						times+=t;
-						if(v!=null)
-						{
-							log.debug("getTime="+t);
-						}
-						try {
-							Thread.sleep(150);
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-					}
-					System.err.println("getTimes="+times);//getTimes=1054
-				};
-			};
-			getThread.setName("getThread");
-			getThread.start();
-		}
-		
-	}
-	public static void main(String[] args) {
-		Test t=new Test();
-		t.test();
-		Scanner sc=new Scanner(System.in);
-		sc.nextLine();
-		sc.close();
 	}
 }
