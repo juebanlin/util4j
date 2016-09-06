@@ -15,9 +15,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+
 import org.apache.commons.lang.NullArgumentException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 import net.jueb.util4j.lock.waitCondition.SleepingWaitConditionStrategy;
 import net.jueb.util4j.lock.waitCondition.WaitCondition;
 import net.jueb.util4j.lock.waitCondition.WaitConditionStrategy;
@@ -31,8 +31,6 @@ import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.AbstractThreadPo
 
 public class ThreadPoolTaskQueuesExecutor extends AbstractThreadPoolTaskQueuesExecutor implements TaskQueuesExecutor{
     
-    protected final Logger log = LoggerFactory.getLogger(getClass());
-
     private static final int DEFAULT_INITIAL_THREAD_POOL_SIZE = 0;
 
     private static final int DEFAULT_MAX_THREAD_POOL = 8;
@@ -525,7 +523,6 @@ public class ThreadPoolTaskQueuesExecutor extends AbstractThreadPoolTaskQueuesEx
             {
             	if(!taskQueue.isOpen())
                 {
-                	log.debug("队列["+taskQueue.getQueueName()+"]关闭,停止执行剩余任务");
                 	return;
                 }
             	Runnable task = taskQueue.poll();
