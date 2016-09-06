@@ -257,7 +257,10 @@ public class FixedThreadPoolBlockingQueuesExecutor extends ThreadPoolExecutor im
             }
         }
     }
-
+    
+    /**
+     * 移除工作者
+     */
     private void removeWorker() {
         synchronized (workers) {
             if (workers.size() <= super.getCorePoolSize()) {

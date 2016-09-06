@@ -14,8 +14,8 @@ import net.jueb.util4j.queue.taskQueue.TaskConvert;
 import net.jueb.util4j.queue.taskQueue.TaskQueue;
 import net.jueb.util4j.queue.taskQueue.TaskQueueExecutor;
 import net.jueb.util4j.queue.taskQueue.TaskQueuesExecutor;
-import net.jueb.util4j.queue.taskQueue.impl.DefaultTaskQueue;
 import net.jueb.util4j.queue.taskQueue.impl.DefaultTaskConvert;
+import net.jueb.util4j.queue.taskQueue.impl.DefaultTaskQueue;
 
 public class OrderTaskQueueGroup implements TaskQueuesExecutor{
 	public final Logger log = LoggerFactory.getLogger(getClass());
@@ -115,11 +115,6 @@ public class OrderTaskQueueGroup implements TaskQueuesExecutor{
 	}
 
 	@Override
-	public void execute(Runnable command) {
-		put("Runnable",getTaskConvert().convert(command));
-	}
-
-	@Override
 	public void execute(String queueName, Task task) {
 		put(queueName, task);
 	}
@@ -181,9 +176,8 @@ public class OrderTaskQueueGroup implements TaskQueuesExecutor{
 	}
 
 	public static final TaskConvert DEFAULT_TASK_CONVERT=new DefaultTaskConvert();
-   	private TaskConvert taskConvert=DEFAULT_TASK_CONVERT;
-   	
-   	@Override
+	private TaskConvert taskConvert=DEFAULT_TASK_CONVERT;
+	@Override
    	public TaskConvert getTaskConvert() {
    		return taskConvert;
    	}
@@ -196,4 +190,19 @@ public class OrderTaskQueueGroup implements TaskQueuesExecutor{
    		}
    		this.taskConvert=taskConvert;
    	}
+
+   	@Override
+	public final void execute(String queueName, Runnable task) {
+		if(queueName==null || task==null)
+		{
+			throw new NullArgumentException("arg is null");
+		}
+		if(task instanceof Task)
+		{
+			execute(queueName,(Task)task);
+		}else
+		{
+			execute(queueName,getTaskConvert().convert(task));
+		}
+	}   	
 }

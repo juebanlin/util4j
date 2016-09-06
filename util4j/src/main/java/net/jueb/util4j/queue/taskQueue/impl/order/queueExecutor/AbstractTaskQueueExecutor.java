@@ -7,8 +7,8 @@ import org.slf4j.LoggerFactory;
 import net.jueb.util4j.queue.taskQueue.TaskConvert;
 import net.jueb.util4j.queue.taskQueue.TaskQueue;
 import net.jueb.util4j.queue.taskQueue.TaskQueueExecutor;
-import net.jueb.util4j.queue.taskQueue.impl.DefaultTaskQueue;
 import net.jueb.util4j.queue.taskQueue.impl.DefaultTaskConvert;
+import net.jueb.util4j.queue.taskQueue.impl.DefaultTaskQueue;
 
 public abstract class AbstractTaskQueueExecutor implements TaskQueueExecutor{
 

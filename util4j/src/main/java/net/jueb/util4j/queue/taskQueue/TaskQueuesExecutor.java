@@ -1,14 +1,20 @@
 package net.jueb.util4j.queue.taskQueue;
 
 import java.util.List;
-import java.util.concurrent.Executor;
 
 /**
  * 任务队列组执行器
  * @author juebanlin
  */
-public interface TaskQueuesExecutor extends Executor{
+public interface TaskQueuesExecutor{
 	
+	/**
+	 * 执行队列任务
+	 * @param queueName
+	 * @param task
+	 */
+	public void execute(String queueName, Runnable task);
+		
 	/**
 	 * 执行队列任务
 	 * @param queue
