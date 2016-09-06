@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import net.jueb.util4j.cache.map.TimedMap;
 import net.jueb.util4j.cache.map.TimedMap.EventListener;
-import net.jueb.util4j.cache.map.TimedMapSimpleImpl;
+import net.jueb.util4j.cache.map.TimedMapImpl;
 
 public class CallBackCache<T> {
 	protected Logger _log = LoggerFactory.getLogger(this.getClass());
@@ -18,7 +18,7 @@ public class CallBackCache<T> {
 	private final TimedMap<String,CallBack<T>> callBacks;
 	
 	public CallBackCache(Executor lisenterExecutor) {
-		 callBacks=new TimedMapSimpleImpl<String,CallBack<T>>(lisenterExecutor);
+		 callBacks=new TimedMapImpl<String,CallBack<T>>(lisenterExecutor);
 	}
 	
 	public String put(CallBack<T> callBack)
@@ -58,7 +58,16 @@ public class CallBackCache<T> {
 	
 	public Runnable getCleanTask()
 	{
-		return callBacks.getCleanTask();
+		return cleanTask;
+	}
+	
+	CleanTask cleanTask=new CleanTask();
+	
+	class CleanTask implements Runnable{
+		@Override
+		public void run() {
+			callBacks.cleanExpire();
+		}
 	}
 	
 	protected static final AtomicLong seq=new AtomicLong();
