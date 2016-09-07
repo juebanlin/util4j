@@ -30,6 +30,17 @@ public class AllCallBackCache {
 		return ck;
 	}
 	
+	@SuppressWarnings("unchecked")
+	public final <T> String put(CallBack<T> callBack,Executor timeOutExecutor)
+	{
+		String ck=null;
+		if(callBack!=null)
+		{
+			ck=caches.put((CallBack<Object>) callBack,timeOutExecutor);
+		}
+		return ck;
+	}
+	
 	/**
 	 * 不支持泛型嵌套
 	 */

@@ -273,9 +273,6 @@ public class TestQueues{
     	 public static void main(String[] args) throws InterruptedException {
     		 TestQueues tq=new TestQueues();
     		 int qt=1000000;//每个队列测试任务数量 
-    		 Queue<Task> queue=new ConcurrentLinkedQueue<Task>();//queue存入耗时：36
-    		 Queue<Task> queue2=new LinkedBlockingQueue<Task>();//BlockingQueue存入耗时：180
-    		
     		 long t=System.currentTimeMillis();
 			 Thread.sleep(5000);
 			 int queueCount=20;
@@ -332,7 +329,7 @@ public class TestQueues{
      		
 			ThreadPoolTaskQueuesExecutor ft=new ThreadPoolTaskQueuesExecutor(2,8);
 //    		tq.test(qt*10,10, ft);
-    		tq.test(qt,50, ft);
+    		tq.test(qt/10,10, ft);
 //			TaskQueueExecutor t1=new SingleThreadTaskQueueExecutor_CountDownLatch("");
 //			TaskQueueExecutor t2=new SingleThreadTaskQueueExecutor("");
 //			TaskQueueExecutor t3=new SingleThreadBlockingTaskQueueExecutor("");

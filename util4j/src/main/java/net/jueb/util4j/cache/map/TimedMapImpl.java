@@ -237,14 +237,10 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 	}
 	
 	private class CleanTask implements Runnable{
-
 		@Override
 		public void run() {
 			try {
-				long time=System.currentTimeMillis();
-				String info="cleanBefore:"+size()+",cleanTimeOutCount:"+cleanExpire().size()+",cleanAfter:"+size();
-				time=System.currentTimeMillis()-time;
-				log.debug(info+",useTimeMillis:"+time);
+				cleanExpire();
 			} catch (Throwable e) {
 				log.error(e.getMessage(),e);
 			}

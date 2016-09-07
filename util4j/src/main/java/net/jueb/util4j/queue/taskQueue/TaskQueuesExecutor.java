@@ -50,13 +50,13 @@ public interface TaskQueuesExecutor{
 	public TaskQueueExecutor getQueueExecutor(String queueName);
 	
 	/**
-	 * 获取任务转换器
+	 * 获取队列公共任务转换器
 	 * @return
 	 */
 	public TaskConvert getTaskConvert();
 	
 	/**
-	 * 设置任务转换器
+	 * 设置队列公共任务转换器(将覆盖队列特有的)
 	 * @param taskConvert
 	 */
 	public void setTaskConvert(TaskConvert taskConvert);

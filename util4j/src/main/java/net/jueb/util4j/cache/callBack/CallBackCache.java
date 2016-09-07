@@ -17,8 +17,12 @@ public class CallBackCache<T> {
 	
 	private final TimedMap<String,CallBack<T>> callBacks;
 	
-	public CallBackCache(Executor lisenterExecutor) {
-		 callBacks=new TimedMapImpl<String,CallBack<T>>(lisenterExecutor);
+	/**
+	 * 超时执行器
+	 * @param timeOutExecutor
+	 */
+	public CallBackCache(Executor timeOutExecutor) {
+		 callBacks=new TimedMapImpl<String,CallBack<T>>(timeOutExecutor);
 	}
 	
 	public String put(CallBack<T> callBack)
@@ -40,6 +44,42 @@ public class CallBackCache<T> {
 				if(expire)
 				{
 					value.timeOutCall();
+				}
+			}
+		});
+		return ck;
+	}
+	
+	/**
+	 * 手动指定超时执行器
+	 * @param callBack
+	 * @param timeOutExecutor
+	 * @return
+	 */
+	public String put(CallBack<T> callBack,final Executor timeOutExecutor)
+	{
+		if(callBack==null)
+		{
+			return null;
+		}
+		String ck=nextCallKey();
+		long timeOut=callBack.getTimeOut();
+		if(timeOut==0)
+		{
+			timeOut=CallBack.DEFAULT_TIMEOUT;
+		}
+		callBacks.put(ck, callBack, timeOut);
+		callBacks.addEventListener(ck, new EventListener<String,CallBack<T>>(){
+			@Override
+			public void removed(String key, final CallBack<T> value, boolean expire) {
+				if(expire)
+				{
+					timeOutExecutor.execute(new Runnable() {
+						@Override
+						public void run() {
+							value.timeOutCall();
+						}
+					});
 				}
 			}
 		});
