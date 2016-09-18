@@ -38,7 +38,8 @@ public interface TimedMap<K,V> extends Map<K,V>{
 	public long getExpireTime(K key);
 	
 	/**
-	 * 清理过期
+	 * 清理过期,返回被清理的键值对
+	 * 不需要不定时清理,建议在容量达到某大小时清理
 	 * @return
 	 */
 	public Map<K,V> cleanExpire();
