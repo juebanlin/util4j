@@ -288,7 +288,7 @@ public class ThreadPoolTaskQueuesExecutor extends AbstractThreadPoolTaskQueuesEx
     protected void queueOfferEvent(TaskQueueImpl tasksQueue)
     {
     	 if (tasksQueue.processingCompleted.compareAndSet(true, false)) 
-         {//如果该队列没有线程占用
+         {//如果该队列没有线程占用则放入公共任务队列,如果有线程占用,则不放入,因为不允许其它线程同时访问此队列
          	waitingQueueOffer(tasksQueue.getQueueName());
          }
          addWorkerIfNecessary();
@@ -427,13 +427,22 @@ public class ThreadPoolTaskQueuesExecutor extends AbstractThreadPoolTaskQueuesEx
                     {
                         break;
                     }
+                    TaskQueueImpl queue=null;
                     try {
-                        if (queueName != null) 
+                    	if(queueName!=null)
                         {
-                            runTasks(getTaskQueue(queueName));
+                    		queue=getTaskQueue(queueName);
+                        }
+                        if (queue != null) 
+                        {
+                            handleQueueTask(queue);
                         }
                     } finally {
                         idleWorkers.incrementAndGet();
+                        if(queue!=null)
+                        {//这里一定要设置队列状态,如果任务异常会导致其它线程获取不到该队列的处理权
+                        	queue.processingCompleted.set(true);
+                        }
                     }
                 }
             } finally {
@@ -518,21 +527,20 @@ public class ThreadPoolTaskQueuesExecutor extends AbstractThreadPoolTaskQueuesEx
         	return waitConditionStrategy.waitFor(workerWaitCondition,waiteTime,unit);
         }
         
-        private void runTasks(TaskQueueImpl taskQueue) {
-            for (;;) 
+        /**
+         * 处理队列任务
+         * @param queue
+         */
+        private void handleQueueTask(TaskQueueImpl queue) {
+        	for (;;) 
             {
-            	if(!taskQueue.isOpen())
+        		Runnable task = queue.poll();
+            	if(!queue.isOpen() || task == null)
                 {
-                	return;
-                }
-            	Runnable task = taskQueue.poll();
-                if (task == null) 
-                {//标记队列已经处理完成
-                    break;
+            		break;//停止处理队列
                 }
                 runTask(task);
             }
-            taskQueue.processingCompleted.set(true);
         }
 
         private void runTask(Runnable task) {
