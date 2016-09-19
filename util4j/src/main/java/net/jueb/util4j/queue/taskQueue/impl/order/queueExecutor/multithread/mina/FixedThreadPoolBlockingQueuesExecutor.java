@@ -47,8 +47,8 @@ import net.jueb.util4j.queue.taskQueue.TaskConvert;
 import net.jueb.util4j.queue.taskQueue.TaskQueue;
 import net.jueb.util4j.queue.taskQueue.TaskQueueExecutor;
 import net.jueb.util4j.queue.taskQueue.TaskQueuesExecutor;
-import net.jueb.util4j.queue.taskQueue.impl.DefaultTaskQueue;
 import net.jueb.util4j.queue.taskQueue.impl.DefaultTaskConvert;
+import net.jueb.util4j.queue.taskQueue.impl.DefaultTaskQueue;
 
 /**
  * A {@link ThreadPoolExecutor} that maintains the order of {@link QueueTask}s.
@@ -675,13 +675,22 @@ public class FixedThreadPoolBlockingQueuesExecutor extends ThreadPoolExecutor im
                     {
                         break;
                     }
+                    TaskQueueImpl queue=null;
                     try {
-                        if (queueName != null) 
+                    	if(queueName!=null)
                         {
-                            runTasks(getTaskQueue(queueName));
+                    		queue=getTaskQueue(queueName);
+                        }
+                        if (queue != null) 
+                        {
+                            handleQueueTask(queue);
                         }
                     } finally {
                         idleWorkers.incrementAndGet();
+                        if(queue!=null)
+                        {//这里一定要设置队列状态,如果任务异常会导致其它线程获取不到该队列的处理权
+                        	queue.processingCompleted=true;
+                        }
                     }
                 }
             } finally {
@@ -726,23 +735,17 @@ public class FixedThreadPoolBlockingQueuesExecutor extends ThreadPoolExecutor im
             return queueName;
         }
 
-        private void runTasks(TaskQueueImpl taskQueue) {
-            for (;;) 
+        /**
+         * 处理队列任务
+         * @param queue
+         */
+        private void handleQueueTask(TaskQueueImpl queue) {
+        	for (;;) 
             {
-            	if(!taskQueue.isOpen())
+        		Runnable task = queue.poll();
+            	if(!queue.isOpen() || task == null)
                 {
-                	log.debug("队列["+taskQueue.getQueueName()+"]关闭,停止执行剩余任务");
-                	return;
-                }
-                Runnable task;
-                synchronized (taskQueue) 
-                {
-                    task = taskQueue.poll();
-                    if (task == null) 
-                    {//标记队列已经处理完成
-                    	taskQueue.processingCompleted = true;
-                        break;
-                    }
+            		break;//停止处理队列
                 }
                 runTask(task);
             }
