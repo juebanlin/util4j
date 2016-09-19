@@ -685,13 +685,15 @@ public class FixedThreadPoolBlockingQueuesExecutor extends ThreadPoolExecutor im
                         {
                             handleQueueTask(queue);
                         }
-                    } finally {
-                        idleWorkers.incrementAndGet();
+                    } 
+                    finally {
                         if(queue!=null)
                         {//这里一定要设置队列状态,如果任务异常会导致其它线程获取不到该队列的处理权
                         	queue.processingCompleted=true;
                         }
                     }
+                    //正常处理完任务后,归为活跃线程(异常会放弃回归)
+                    idleWorkers.incrementAndGet();
                 }
             } finally {
                 synchronized (workers) {
