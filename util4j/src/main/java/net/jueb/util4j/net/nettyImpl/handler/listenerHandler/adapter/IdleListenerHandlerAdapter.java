@@ -11,7 +11,7 @@ import net.jueb.util4j.net.JConnection;
 import net.jueb.util4j.net.JConnectionIdleListener;
 
 /**
- * 负责chanel绑定监听器以及消息的调发 有自己的心跳超时监测
+ * 具有心跳机制的chanle 监听适配器
  * 该handler必须放在编码解码器handler后面才能起作用
  * @author Administrator
  * @param <M>

@@ -4,8 +4,7 @@ import io.netty.channel.ChannelHandler.Sharable;
 import net.jueb.util4j.net.JConnectionListener;
 
 /**
- * 负责chanel绑定监听器以及消息的调发 有自己的心跳超时监测
- * 该handler必须放在编码解码器handler后面才能起作用
+ * 链路监听适配器
  * @author Administrator
  * @param <M>
  */
