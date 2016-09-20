@@ -12,9 +12,45 @@ import net.jueb.util4j.bytesStream.InputStreamUtils;
 
 public class HttpUtil {
 
-	public static byte[] httpGet(String url) throws Exception
-	{
+	private int readTimeOut=3000;
+	private int connectTimeOut=3000;
+	
+	public HttpUtil() {
+
+	}
+	
+	public HttpUtil(int readTimeOut, int connectTimeOut) {
+		super();
+		this.readTimeOut = readTimeOut;
+		this.connectTimeOut = connectTimeOut;
+	}
+
+	public int getReadTimeOut() {
+		return readTimeOut;
+	}
+
+	public void setReadTimeOut(int readTimeOut) {
+		this.readTimeOut = readTimeOut;
+	}
+
+	public long getConnectTimeOut() {
+		return connectTimeOut;
+	}
+
+	public void setConnectTimeOut(int connectTimeOut) {
+		this.connectTimeOut = connectTimeOut;
+	}
+
+	protected HttpURLConnection buildConn(String url)throws Exception {
 		HttpURLConnection conn=(HttpURLConnection) new URL(url).openConnection();
+		conn.setConnectTimeout(connectTimeOut);
+		conn.setReadTimeout(readTimeOut);
+		return conn;
+	}
+	
+	public byte[] httpGet(String url) throws Exception
+	{
+		HttpURLConnection conn=buildConn(url);
 		try {
 			return InputStreamUtils.getBytes(conn.getInputStream());
 		} finally {
@@ -22,7 +58,7 @@ public class HttpUtil {
 		}
 	}
 	
-	public static byte[] httpPost(String url,Map<String,String> args) throws Exception
+	public byte[] httpPost(String url,Map<String,String> args) throws Exception
 	{
 		List<String> list=new ArrayList<String>();
 		for(Entry<String, String> entry:args.entrySet())
@@ -33,11 +69,10 @@ public class HttpUtil {
 		return httpPost(url,content.getBytes("utf-8"));
 	}
 	
-	public static byte[] httpPost(String url,byte[] data) throws Exception
+	public byte[] httpPost(String url,byte[] data) throws Exception
 	{
-		HttpURLConnection conn=(HttpURLConnection) new URL(url).openConnection();
+		HttpURLConnection conn=buildConn(url);
 		try {
-			
 			conn.setRequestMethod("POST");
 			conn.setDoOutput(true);
 			conn.getOutputStream().write(data);
@@ -49,14 +84,14 @@ public class HttpUtil {
 		}
 	}
 	
-	public static void httpPostJson(String urlPath,String json) throws Exception
+	public void httpPostJson(String url,String json) throws Exception
 	{
-		HttpURLConnection url=(HttpURLConnection)new URL(urlPath).openConnection();
-		url.setRequestMethod("POST");
-		url.setDoOutput(true);
-		url.setRequestProperty("Content-Type","application/json");
-		url.getOutputStream().write(json.getBytes(CharsetUtil.UTF_8));
-		url.getOutputStream().flush();
-		url.getOutputStream().close();
+		HttpURLConnection conn=buildConn(url);
+		conn.setRequestMethod("POST");
+		conn.setDoOutput(true);
+		conn.setRequestProperty("Content-Type","application/json");
+		conn.getOutputStream().write(json.getBytes(CharsetUtil.UTF_8));
+		conn.getOutputStream().flush();
+		conn.getOutputStream().close();
 	}
 }
