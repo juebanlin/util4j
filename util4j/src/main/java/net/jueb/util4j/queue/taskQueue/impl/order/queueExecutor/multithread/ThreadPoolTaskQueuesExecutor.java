@@ -246,13 +246,13 @@ public class ThreadPoolTaskQueuesExecutor extends AbstractThreadPoolTaskQueuesEx
 
 	@Override
 	public void execute(String queueName, Task task) {
-    	if(shutdown)
-    	{
-    		rejectTask(task);
-    	}
     	if(queueName==null || task ==null)
     	{
     		throw new NullArgumentException("queueName is null");
+    	}
+    	if(shutdown)
+    	{
+    		rejectTask(task);
     	}
     	TaskQueueImpl tasksQueue = getTaskQueue(queueName);
     	if(tasksQueue!=null)
@@ -263,6 +263,10 @@ public class ThreadPoolTaskQueuesExecutor extends AbstractThreadPoolTaskQueuesEx
     
     @Override
 	public void execute(String queueName,List<Task> tasks) {
+		if(queueName==null || tasks ==null)
+    	{
+    		throw new NullArgumentException("queueName is null");
+    	}
 		if(shutdown)
 		{
 			for(Task t:tasks)
@@ -270,10 +274,6 @@ public class ThreadPoolTaskQueuesExecutor extends AbstractThreadPoolTaskQueuesEx
 				rejectTask(t);
 			}
 		}
-		if(queueName==null || tasks ==null)
-    	{
-    		throw new NullArgumentException("queueName is null");
-    	}
     	TaskQueueImpl tasksQueue = getTaskQueue(queueName);
     	if(tasksQueue!=null)
     	{
