@@ -1,5 +1,10 @@
 package net.jueb.util4j.net.nettyImpl.client;
 
+import java.net.InetSocketAddress;
+import java.util.TimerTask;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -9,13 +14,6 @@ import io.netty.util.internal.logging.InternalLogLevel;
 import io.netty.util.internal.logging.InternalLogger;
 import net.jueb.util4j.net.JNetClient;
 import net.jueb.util4j.net.nettyImpl.NetLogFactory;
-import net.jueb.util4j.thread.NamedThreadFactory;
-
-import java.net.InetSocketAddress;
-import java.util.TimerTask;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 /**
  * 抽象netty客户端 已实现断线重连逻辑
  * 只关心状态,重连,地址,不关心启动器和线程
@@ -26,10 +24,6 @@ import java.util.concurrent.TimeUnit;
 public abstract class AbstractNettyClient implements JNetClient{
 
 	protected final InternalLogger log = NetLogFactory.getLogger(getClass()); 
-	/**
-	 * 重连调度器
-	 */
-	protected final static ScheduledExecutorService scheduled=Executors.newScheduledThreadPool(2,new NamedThreadFactory("NettyClientReConnectTimer", true));//重连调度器
 	
 	protected InternalLogLevel logLevel=InternalLogLevel.DEBUG;
 	/**
@@ -41,7 +35,13 @@ public abstract class AbstractNettyClient implements JNetClient{
 	protected final InetSocketAddress target;
 	private Channel channel;
 	protected final ReconectListener reconectListener=new ReconectListener();
-		
+	
+	/**
+	 * 重连调度器
+	 */
+	private ScheduledExecutorService reconnectExecutor;//重连调度器
+	
+	
 	public AbstractNettyClient(InetSocketAddress target){
 		this.target=target;
 	}
@@ -68,6 +68,15 @@ public abstract class AbstractNettyClient implements JNetClient{
 	 * @return
 	 */
 	protected abstract EventLoopGroup getIoWorkers();
+	
+	protected final ScheduledExecutorService getReconnectExecutor()
+	{
+		if(reconnectExecutor!=null)
+		{
+			return reconnectExecutor;
+		}
+		return getIoWorkers();
+	}
 	
 	/**
 	 * 执行连接调用{@link ChannelFuture executeBooterConnect(InetSocketAddress target)}
@@ -127,7 +136,7 @@ public abstract class AbstractNettyClient implements JNetClient{
 	{
 		if(reconect)
 		{
-			scheduled.schedule(new ReConnectTask(), reconectSeconds,TimeUnit.SECONDS);//这里不能占用IO线程池
+			getReconnectExecutor().schedule(new ReConnectTask(), reconectSeconds,TimeUnit.SECONDS);//这里不能占用IO线程池
 		}
 	}
 	private class ReconectListener implements ChannelFutureListener
@@ -153,6 +162,16 @@ public abstract class AbstractNettyClient implements JNetClient{
 				e.printStackTrace();
 			}
 		}
+	}
+	
+	/**
+	 * 设置重连任务调度器
+	 * 如果设置为null,则默认使用IO调度器执行
+	 * @param ses
+	 */
+	public void setReconnectExecutor(ScheduledExecutorService ses)
+	{
+		reconnectExecutor=ses;
 	}
 	
 	@Override
