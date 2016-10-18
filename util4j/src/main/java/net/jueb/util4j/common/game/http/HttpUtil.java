@@ -1,4 +1,4 @@
-package net.jueb.util4j.common.game;
+package net.jueb.util4j.common.game.http;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -6,7 +6,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+
 import org.apache.commons.lang.StringUtils;
+
 import io.netty.util.CharsetUtil;
 import net.jueb.util4j.bytesStream.InputStreamUtils;
 
@@ -41,7 +47,19 @@ public class HttpUtil {
 		this.connectTimeOut = connectTimeOut;
 	}
 
-	protected HttpURLConnection buildConn(String url)throws Exception {
+	public HttpURLConnection buildSSLConn(String url)throws Exception {
+		SSLContext sc = SSLContext.getInstance("SSL");  
+        sc.init(null, new TrustManager[]{new TrustAnyTrustManager()}, new java.security.SecureRandom());  
+        URL console = new URL(url);  
+        HttpsURLConnection conn = (HttpsURLConnection) console.openConnection();  
+        conn.setSSLSocketFactory(sc.getSocketFactory());  
+        conn.setHostnameVerifier(new TrustAnyHostnameVerifier());  
+		conn.setConnectTimeout(connectTimeOut);
+		conn.setReadTimeout(readTimeOut);
+		return conn;
+	}
+	
+	public HttpURLConnection buildConn(String url)throws Exception {
 		HttpURLConnection conn=(HttpURLConnection) new URL(url).openConnection();
 		conn.setConnectTimeout(connectTimeOut);
 		conn.setReadTimeout(readTimeOut);
@@ -67,6 +85,32 @@ public class HttpUtil {
 		}
 		String content=StringUtils.join(list, "&");
 		return httpPost(url,content.getBytes("utf-8"));
+	}
+	
+	public byte[] httpsPost(String url,Map<String,String> args) throws Exception
+	{
+		List<String> list=new ArrayList<String>();
+		for(Entry<String, String> entry:args.entrySet())
+		{
+			list.add(entry.getKey()+"="+entry.getValue());
+		}
+		String content=StringUtils.join(list, "&");
+		return httpsPost(url,content.getBytes("utf-8"));
+	}
+	
+	public byte[] httpsPost(String url,byte[] data) throws Exception
+	{
+		HttpURLConnection conn=buildSSLConn(url);
+		try {
+			conn.setRequestMethod("POST");
+			conn.setDoOutput(true);
+			conn.getOutputStream().write(data);
+			conn.getOutputStream().flush();
+			conn.getOutputStream().close();
+			return InputStreamUtils.getBytes(conn.getInputStream());
+		} finally {
+			conn.getInputStream().close();
+		}
 	}
 	
 	public byte[] httpPost(String url,byte[] data) throws Exception
