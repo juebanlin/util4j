@@ -21,8 +21,8 @@ import net.jueb.util4j.net.JConnection;
 import net.jueb.util4j.net.JConnectionFactory;
 import net.jueb.util4j.net.JConnectionListener;
 import net.jueb.util4j.net.nettyImpl.NettyConnectionFactory;
-import net.jueb.util4j.net.nettyImpl.client.MultiNettyClient;
-import net.jueb.util4j.net.nettyImpl.client.MultiNettyClientConfig;
+import net.jueb.util4j.net.nettyImpl.client.NettyClient;
+import net.jueb.util4j.net.nettyImpl.client.NettyClientConfig;
 import net.jueb.util4j.net.nettyImpl.handler.http.HttpClientInitHandler;
 import net.jueb.util4j.thread.NamedThreadFactory;
 
@@ -32,7 +32,7 @@ import net.jueb.util4j.thread.NamedThreadFactory;
 public class NettyHttpClient{
 	
 	private static ExecutorService scheduExec=Executors.newCachedThreadPool(new NamedThreadFactory("NettyHttpClient-ASYNC",true));
-	private static MultiNettyClientConfig config=new MultiNettyClientConfig();
+	private static NettyClientConfig config=new NettyClientConfig();
 	
 	public HttpResponse syncRequest(URI uri,HttpRequest request)
 	{
@@ -54,7 +54,7 @@ public class NettyHttpClient{
 			if(response==null)
 			{
 				HttpListener listener=new HttpListener(request);
-				MultiNettyClient client=new MultiNettyClient(config,new InetSocketAddress(host, port),new HttpClientInitHandler(listener));
+				NettyClient client=new NettyClient(config,new InetSocketAddress(host, port),new HttpClientInitHandler(listener));
 				client.enableReconnect(false);
 				client.start();
 				response=listener.waitResponse();//阻塞等待结果
@@ -85,7 +85,7 @@ public class NettyHttpClient{
 			if(response==null)
 			{
 				HttpListener listener=new HttpListener(request);
-				MultiNettyClient client=new MultiNettyClient(config,new InetSocketAddress(host, port),new HttpClientInitHandler(listener));
+				NettyClient client=new NettyClient(config,new InetSocketAddress(host, port),new HttpClientInitHandler(listener));
 				client.enableReconnect(false);
 				client.start();
 				response=listener.waitResponse(waiteTimeMills);//阻塞等待结果
@@ -112,7 +112,7 @@ public class NettyHttpClient{
 	{
 		synchronized (request) {
 			final HttpListener listener=new HttpListener(request);
-			final MultiNettyClient client=new MultiNettyClient(config,new InetSocketAddress(host, port),new HttpClientInitHandler(listener));
+			final NettyClient client=new NettyClient(config,new InetSocketAddress(host, port),new HttpClientInitHandler(listener));
 			client.enableReconnect(false);
 			client.start();
 			if(callback!=null)

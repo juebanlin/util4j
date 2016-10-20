@@ -1,4 +1,6 @@
-package net.jueb.util4j.net.nettyImpl.client;
+package net.jueb.util4j.net.nettyImpl.client.websocket;
+import java.net.URI;
+
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -10,21 +12,28 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshakerFactory;
 import io.netty.handler.codec.http.websocketx.WebSocketClientProtocolHandler;
 import io.netty.handler.codec.http.websocketx.WebSocketVersion;
-import net.jueb.util4j.net.nettyImpl.handler.websocket.codec.BinaryWebSocketFrameByteBufAdapter;
-
-import java.net.InetSocketAddress;
-import java.net.URI;
+import net.jueb.util4j.net.nettyImpl.client.NettyClient;
+import net.jueb.util4j.net.nettyImpl.client.NettyClientConfig;
+import net.jueb.util4j.net.nettyImpl.handler.websocket.codec.TextWebSocketFrameByteBufAdapter;
 
 /**
  *适配了websocket的复合型客户端 
  */
-public class MultiNettyWebSocketClient extends MultiNettyClient {
+public class NettyTextWebSocketClient extends NettyClient {
 	
 	protected final URI uri;
-	public MultiNettyWebSocketClient(MultiNettyClientConfig config, String host,
+	
+	public NettyTextWebSocketClient(String host,
 			int port,String url, ChannelInitializer<SocketChannel> channelInitializer)
 			throws Exception {
-		super(config,new InetSocketAddress(host, port), channelInitializer);
+		super(host, port, channelInitializer);
+		this.uri=new URI(url);
+	}
+	
+	public NettyTextWebSocketClient(NettyClientConfig config, String host,
+			int port,String url, ChannelInitializer<SocketChannel> channelInitializer)
+			throws Exception {
+		super(config,host, port, channelInitializer);
 		this.uri=new URI(url);
 	}
 	
@@ -61,7 +70,7 @@ public class MultiNettyWebSocketClient extends MultiNettyClient {
 				throws Exception {
 			if (evt == WebSocketClientProtocolHandler.ClientHandshakeStateEvent.HANDSHAKE_COMPLETE) {
 				log.log(logLevel,"WebSocket:HANDSHAKE_COMPLETE,pipeline:"+ctx.channel().pipeline().toMap().toString());
-				ctx.pipeline().addLast(new BinaryWebSocketFrameByteBufAdapter());//适配器
+				ctx.pipeline().addLast(new TextWebSocketFrameByteBufAdapter());//适配器
 				ctx.pipeline().addLast(this.handler);//业务层handler
 				//为新加的handler手动触发必要事件
 				ctx.fireChannelRegistered();

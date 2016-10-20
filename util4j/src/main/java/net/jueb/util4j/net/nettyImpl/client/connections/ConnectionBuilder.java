@@ -1,13 +1,14 @@
 package net.jueb.util4j.net.nettyImpl.client.connections;
 
 import java.net.InetSocketAddress;
+
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
-import net.jueb.util4j.net.nettyImpl.client.MultiNettyClientConfig;
+import net.jueb.util4j.net.nettyImpl.client.NettyClientConfig;
 
-public class ConnectionBuilder extends MultiNettyClientConfig{
+public class ConnectionBuilder extends NettyClientConfig{
 	
 	public ConnectionBuilder() {
 		super();

@@ -1,10 +1,10 @@
-package net.jueb.util4j.net.nettyImpl.client;
-import io.netty.bootstrap.Bootstrap;
+package net.jueb.util4j.net.nettyImpl.client.websocket;
+import java.net.URI;
+
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
-import io.netty.channel.EventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpClientCodec;
@@ -12,37 +12,34 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshakerFactory;
 import io.netty.handler.codec.http.websocketx.WebSocketClientProtocolHandler;
 import io.netty.handler.codec.http.websocketx.WebSocketVersion;
+import net.jueb.util4j.net.nettyImpl.client.NettyClient;
+import net.jueb.util4j.net.nettyImpl.client.NettyClientConfig;
 import net.jueb.util4j.net.nettyImpl.handler.websocket.codec.BinaryWebSocketFrameByteBufAdapter;
 
-import java.net.InetSocketAddress;
-import java.net.URI;
-
 /**
- * 
- * @author Administrator
+ *适配了websocket的复合型客户端 
  */
-public class NettyWebSocketClient extends NettyClient {
+public class NettyBinaryWebSocketClient extends NettyClient {
 	
-	protected EventLoopGroup group;
-	protected Bootstrap bootstrap;
-	protected ChannelInitializer<SocketChannel> channelInitializer;
 	protected final URI uri;
 	
-
-	public NettyWebSocketClient(String host, int port,String url,
-			ChannelInitializer<SocketChannel> channelInitializer,
-			EventLoopGroup group) throws Exception {
-		super(new InetSocketAddress(host, port), channelInitializer);
+	public NettyBinaryWebSocketClient(String host,
+			int port,String url, ChannelInitializer<SocketChannel> channelInitializer)
+			throws Exception {
+		super(host, port, channelInitializer);
 		this.uri=new URI(url);
 	}
-
-	public NettyWebSocketClient(String host, int port,String url,
-			ChannelInitializer<SocketChannel> channelInitializer)
+	
+	public NettyBinaryWebSocketClient(NettyClientConfig config, String host,
+			int port,String url, ChannelInitializer<SocketChannel> channelInitializer)
 			throws Exception {
-		this(host, port, url, channelInitializer, null);
+		super(config,host, port, channelInitializer);
+		this.uri=new URI(url);
 	}
 	
-	
+	/**
+	 * 适配
+	 */
 	@Override
 	protected ChannelHandler fixHandlerBeforeConnect(final ChannelHandler handler) {
 		ChannelInitializer<SocketChannel> result=new ChannelInitializer<SocketChannel>() {
@@ -55,7 +52,7 @@ public class NettyWebSocketClient extends NettyClient {
             }
         };
         return result;
-	}
+	}	
 	
 	/**
 	 * 用于监测WebSocketClientProtocolHandler的事件
@@ -64,25 +61,21 @@ public class NettyWebSocketClient extends NettyClient {
 	 */
 	class WebSocketConnectedClientHandler extends ChannelInboundHandlerAdapter
 	{
-		private ChannelHandler hander;
-		
-		public WebSocketConnectedClientHandler(ChannelHandler hander) {
-			super();
-			this.hander = hander;
+		private ChannelHandler handler;
+		public WebSocketConnectedClientHandler(ChannelHandler handler) {
+			this.handler=handler;
 		}
-
 		@Override
 		public void userEventTriggered(ChannelHandlerContext ctx, Object evt)
 				throws Exception {
 			if (evt == WebSocketClientProtocolHandler.ClientHandshakeStateEvent.HANDSHAKE_COMPLETE) {
-				log.info("WebSocket:HANDSHAKE_COMPLETE");
-				log.debug("pipeline:"+ctx.channel().pipeline().toMap().toString());
+				log.log(logLevel,"WebSocket:HANDSHAKE_COMPLETE,pipeline:"+ctx.channel().pipeline().toMap().toString());
 				ctx.pipeline().addLast(new BinaryWebSocketFrameByteBufAdapter());//适配器
-				ctx.pipeline().addLast(hander);//业务层handler
+				ctx.pipeline().addLast(this.handler);//业务层handler
 				//为新加的handler手动触发必要事件
 				ctx.fireChannelRegistered();
 				ctx.fireChannelActive();
-				log.debug("HANDSHAKE_COMPLETED HANDLERS:"+ctx.channel().pipeline().toMap().toString());
+				log.log(logLevel,"HANDSHAKE_COMPLETED HANDLERS:"+ctx.channel().pipeline().toMap().toString());
 			}
 			super.userEventTriggered(ctx, evt);
 		}

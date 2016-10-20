@@ -4,7 +4,7 @@ import java.net.InetSocketAddress;
 
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import net.jueb.util4j.net.nettyImpl.handler.websocket.WebSocketServerAdapterHandler;
+import net.jueb.util4j.net.nettyImpl.handler.websocket.BinaryWebSocketServerAdapterHandler;
 
 public class NettyWebSocketServer extends NettyServer{
 	private String uri;
@@ -32,6 +32,6 @@ public class NettyWebSocketServer extends NettyServer{
 
 	@Override
 	protected ChannelInboundHandlerAdapter fixHandlerBeforeDoBooterBind(ChannelHandler handler) {
-		return new WebSocketServerAdapterHandler(uri, handler);
+		return new BinaryWebSocketServerAdapterHandler(uri, handler);
 	}
 }

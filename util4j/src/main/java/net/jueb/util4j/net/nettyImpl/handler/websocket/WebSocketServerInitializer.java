@@ -9,6 +9,7 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
+import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler.HandshakeComplete;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.util.internal.logging.InternalLogger;
 import net.jueb.util4j.net.nettyImpl.NetLogFactory;
@@ -57,18 +58,27 @@ public abstract class WebSocketServerInitializer extends ChannelInitializer<Chan
 	 */
 	private class WebSocketConnectedServerHandler extends ChannelInboundHandlerAdapter
 	{
+		@SuppressWarnings("deprecation")
 		@Override
 		public void userEventTriggered(ChannelHandlerContext ctx, Object evt)throws Exception {
 			if (evt == WebSocketServerProtocolHandler.ServerHandshakeStateEvent.HANDSHAKE_COMPLETE)
-			{
+			{//旧版本
 				log.debug("excute webSocketHandComplete……");
 				webSocketHandComplete(ctx);
 				ctx.pipeline().remove(this);
 				log.debug("excuted webSocketHandComplete:"+ctx.pipeline().toMap().toString());
-			}else
-			{
-				super.userEventTriggered(ctx, evt);
+				return;
 			}
+			if(evt instanceof HandshakeComplete)
+			{//新版本
+				HandshakeComplete hc=(HandshakeComplete)evt;
+				log.debug("excute webSocketHandComplete……,HandshakeComplete="+hc);
+				webSocketHandComplete(ctx);
+				ctx.pipeline().remove(this);
+				log.debug("excuted webSocketHandComplete:"+ctx.pipeline().toMap().toString());
+				return;
+			}
+			super.userEventTriggered(ctx, evt);
 		}
 	}
 }
