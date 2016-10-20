@@ -55,7 +55,6 @@ public class NettyHttpClient{
 			{
 				HttpListener listener=new HttpListener(request);
 				NettyClient client=new NettyClient(config,new InetSocketAddress(host, port),new HttpClientInitHandler(listener));
-				client.enableReconnect(false);
 				client.start();
 				response=listener.waitResponse();//阻塞等待结果
 				client.stop();
@@ -86,7 +85,6 @@ public class NettyHttpClient{
 			{
 				HttpListener listener=new HttpListener(request);
 				NettyClient client=new NettyClient(config,new InetSocketAddress(host, port),new HttpClientInitHandler(listener));
-				client.enableReconnect(false);
 				client.start();
 				response=listener.waitResponse(waiteTimeMills);//阻塞等待结果
 				client.stop();
@@ -113,7 +111,6 @@ public class NettyHttpClient{
 		synchronized (request) {
 			final HttpListener listener=new HttpListener(request);
 			final NettyClient client=new NettyClient(config,new InetSocketAddress(host, port),new HttpClientInitHandler(listener));
-			client.enableReconnect(false);
 			client.start();
 			if(callback!=null)
 			{

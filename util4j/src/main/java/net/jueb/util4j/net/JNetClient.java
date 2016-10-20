@@ -1,6 +1,7 @@
 package net.jueb.util4j.net;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * 网络客户端
@@ -18,18 +19,20 @@ public interface JNetClient {
 
 	/**
 	 * 开启断线重连
+	 * @param executor 断线重连调度服务器
+	 * @param timeMills 间隔
+	 */
+	public void enableReconnect(ScheduledExecutorService executor,long timeMills);
+	
+	/**
+	 * 禁用断线重连
 	 * @param reconnect
 	 */
-	public void enableReconnect(boolean reconnect);
+	public void disableReconnect();
 	
 	public boolean isReconnect();
-	/**
-	 * 设置重连超时秒
-	 * @param timeOut
-	 */
-	public void setReconnectSeconds(int timeOut);
 	
-	public int getReconnectSeconds();
+	public long getReconnectTimeMills();
 	
 	public String getName();
 	

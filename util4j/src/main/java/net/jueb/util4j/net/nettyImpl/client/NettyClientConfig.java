@@ -162,11 +162,11 @@ public class NettyClientConfig {
 			cf.addListener(new ChannelFutureListener() {
 				@Override
 				public void operationComplete(ChannelFuture future) throws Exception {
-//					System.err.println(future.isCancellable());
-//					System.err.println(future.isCancelled());
-//					System.err.println(future.isDone());
-//					System.err.println(future.isSuccess());
-					latch.countDown();//不管失败还是成功解除阻塞
+					log.trace("connect operationComplete:isDone="+future.isDone()+",isSuccess="+future.isSuccess());
+					if(future.isDone() && future.isSuccess())
+					{
+						latch.countDown();
+					}
 				}
 			});
 			try {

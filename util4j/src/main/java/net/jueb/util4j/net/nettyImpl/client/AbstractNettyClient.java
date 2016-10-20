@@ -30,8 +30,8 @@ public abstract class AbstractNettyClient implements JNetClient{
 	 * 子类屏蔽的线程池和起动器
 	 */
 	private String name="";
-	protected boolean reconect=true;
-	protected int reconectSeconds=10;
+	protected volatile boolean reconect;
+	protected long timeMills;
 	protected final InetSocketAddress target;
 	private Channel channel;
 	protected final ReconectListener reconectListener=new ReconectListener();
@@ -92,7 +92,7 @@ public abstract class AbstractNettyClient implements JNetClient{
 			ChannelFuture cf=doConnect(target);
 			if(cf==null)
 			{//如果阻塞则使用系统调度器执行
-				log.log(logLevel,getName()+"连接繁忙("+target+")!稍后重连:"+reconect);
+				log.log(logLevel,getName()+"连接繁忙("+target+")!稍后重连:"+isReconnect());
 				doReconect();//这里不能占用IO线程池
 			}else
 			{
@@ -135,16 +135,16 @@ public abstract class AbstractNettyClient implements JNetClient{
 	 */
 	protected final void doReconect()
 	{
-		if(reconect)
+		if(isReconnect())
 		{
-			getReconnectExecutor().schedule(new ReConnectTask(), reconectSeconds,TimeUnit.SECONDS);//这里不能占用IO线程池
+			getReconnectExecutor().schedule(new ReConnectTask(), getReconnectTimeMills(),TimeUnit.MILLISECONDS);//这里不能占用IO线程池
 		}
 	}
 	private class ReconectListener implements ChannelFutureListener
 	{
 		@Override
 		public void operationComplete(ChannelFuture future) throws Exception {
-			log.log(logLevel,getName()+"通道:"+future.channel()+"断开连接!,是否重连:"+reconect);
+			log.log(logLevel,getName()+"通道:"+future.channel()+"断开连接!,是否重连:"+isReconnect());
 			doReconect();//这里不能占用IO线程池
 		}
 	}
@@ -165,16 +165,6 @@ public abstract class AbstractNettyClient implements JNetClient{
 		}
 	}
 	
-	/**
-	 * 设置重连任务调度器
-	 * 如果设置为null,则默认使用IO调度器执行
-	 * @param ses
-	 */
-	public void setReconnectExecutor(ScheduledExecutorService ses)
-	{
-		reconnectExecutor=ses;
-	}
-	
 	@Override
 	public final  void start() {
 		if(isConnected())
@@ -188,7 +178,7 @@ public abstract class AbstractNettyClient implements JNetClient{
 	public final void stop() {
 		if(channel!=null && channel.isActive())
 		{
-			reconect=false;
+			disableReconnect();
 			channel.close();
 		}
 	}
@@ -197,22 +187,26 @@ public abstract class AbstractNettyClient implements JNetClient{
 	public boolean isConnected() {
 		return channel!=null && channel.isActive();
 	}
+	@Override
+	public void disableReconnect() {
+		this.reconect=false;
+	}
+	@Override
+	public final void enableReconnect(ScheduledExecutorService executor, long timeMills) {
+		if(executor==null || timeMills<=0)
+		{
+			throw new IllegalArgumentException();
+		}
+		this.reconect=true;
+		this.reconnectExecutor=executor;
+		this.timeMills=timeMills;
+	}
 	
 	@Override
-	public final void enableReconnect(boolean reconnect) {
-		this.reconect=reconnect;
+	public final long getReconnectTimeMills() {
+		return timeMills;
 	}
-	@Override
-	public final void setReconnectSeconds(int timeOut) {
-		if(timeOut>0)
-		{
-			this.reconectSeconds=timeOut;
-		}
-	}
-	@Override
-	public final int getReconnectSeconds() {
-		return this.reconectSeconds;
-	}
+	
 	@Override
 	public final boolean isReconnect() {
 		return this.reconect;
