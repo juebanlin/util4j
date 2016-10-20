@@ -96,7 +96,8 @@ public abstract class AbstractNettyClient implements JNetClient{
 				doReconect();//这里不能占用IO线程池
 			}else
 			{
-				isConnect=cf.channel()!=null && cf.channel().isActive();
+				isConnect=cf.isDone() && cf.isSuccess();
+//				isConnect=cf.isDone() && cf.isSuccess() && cf.channel().isActive();
 				if(isConnect)
 				{//连接成功
 					log.log(logLevel,getName()+"连接成功("+target+")!"+cf.channel());
@@ -159,7 +160,7 @@ public abstract class AbstractNettyClient implements JNetClient{
 			try {
 				connect(target);
 			} catch (Exception e) {
-				e.printStackTrace();
+				log.error(e.getMessage(),e);
 			}
 		}
 	}

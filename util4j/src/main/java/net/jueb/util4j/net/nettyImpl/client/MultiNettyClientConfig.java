@@ -124,7 +124,7 @@ public class MultiNettyClientConfig extends NettyClientConfig{
 //					System.err.println(future.isCancelled());
 //					System.err.println(future.isDone());
 //					System.err.println(future.isSuccess());
-					latch.countDown();//不管失败还是成功都接触阻塞
+					latch.countDown();//不管失败还是成功解除阻塞
 				}
 			});
 			try {

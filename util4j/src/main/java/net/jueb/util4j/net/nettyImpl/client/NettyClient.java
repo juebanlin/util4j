@@ -147,7 +147,7 @@ public class NettyClient extends AbstractNettyClient{
 			final CountDownLatch latch=new CountDownLatch(1);
 			cf.addListener(new ChannelFutureListener() {
 				@Override
-				public void operationComplete(ChannelFuture arg0) throws Exception {
+				public void operationComplete(ChannelFuture future) throws Exception {
 					latch.countDown();
 				}
 			});
