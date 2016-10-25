@@ -36,16 +36,21 @@ public class NettyServer extends AbstractNettyServer{
 	
 	protected final ChannelHandler handler;
 	
-	public NettyServer(NettyServerConfig config,InetSocketAddress local,ChannelHandler handler) {
-		super(local);
-		this.config=config;
-		this.handler=handler;
-		initBooter();
+	public NettyServer(String host,int port,ChannelHandler handler) {
+		this(new InetSocketAddress(host, port),handler);
 	}
 	
 	public NettyServer(InetSocketAddress local,ChannelHandler handler) {
+		this(new NettyServerConfig(), local, handler);
+	}
+	
+	public NettyServer(NettyServerConfig config,String host,int port,ChannelHandler handler) {
+		this(config, new InetSocketAddress(host, port),handler);
+	}
+	
+	public NettyServer(NettyServerConfig config,InetSocketAddress local,ChannelHandler handler) {
 		super(local);
-		this.config=new NettyServerConfig();
+		this.config=config;
 		this.handler=handler;
 		initBooter();
 	}
