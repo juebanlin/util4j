@@ -1,6 +1,8 @@
 package net.jueb.util4j.math;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * 排列组合
@@ -8,12 +10,36 @@ import java.util.Arrays;
  */
 public class Combination {
 	
-	public static interface LockMatch<T>{
+	public static interface forEachListener<T>{
 		
 		public boolean doLockMatch(T[] tmpBuff,T[] output,int outPutIndex);
 	}
 	
-	public static <T> void Unlock(T[] input,boolean[] inputSkip,T[] output ,int outPutIndex,T[] tmpBuff,LockMatch<T> match)
+	public static interface forEachIndexListener<T>{
+		
+		public boolean doLockMatch(T[] tmpBuff,int[] outputIndex,int outPutIndex);
+	}
+	
+	public static interface ShortForEachIndexListener{
+		
+		public boolean doLockMatch(short[] tmpBuff,int[] outputIndex,int outPutIndex);
+	}
+	
+	public static interface IntForEachIndexListener{
+		
+		public boolean doLockMatch(int[] tmpBuff,int[] outputIndex,int outPutIndex);
+	}
+	
+	/**
+	 * 遍历任意元素排列组合情况
+	 * @param input
+	 * @param inputSkip
+	 * @param output
+	 * @param outPutIndex
+	 * @param tmpBuff
+	 * @param match
+	 */
+	public static <T> void forEach(T[] input,boolean[] inputSkip,T[] output ,int outPutIndex,T[] tmpBuff,forEachListener<T> match)
 	{
 		for(int i=0;i<input.length;i++)
 		{
@@ -34,7 +60,115 @@ public class Combination {
 			}
 			//解锁下一个
 			inputSkip[i]=true;//锁定当前位占用索引,其它位不可使用该索引
-			Unlock(input, inputSkip, output, outPutIndex, tmpBuff, match);
+			forEach(input, inputSkip, output, outPutIndex, tmpBuff, match);
+			outPutIndex--;//回到当前
+			inputSkip[i]=false;//释放锁定
+		}
+	}
+	
+	/**
+	 * 遍历任意数组所有索引排列情况
+	 * @param input 输入数据
+	 * @param inputSkip
+	 * @param outputIndex
+	 * @param outPutIndex
+	 * @param tmpBuff
+	 * @param match
+	 */
+	public static <T> void forEachIndex(T[] input,boolean[] inputSkip,int[] outputIndex ,int outPutIndex,T[] tmpBuff,forEachIndexListener<T> match)
+	{
+		for(int i=0;i<input.length;i++)
+		{
+			if(inputSkip[i])
+			{
+				continue;
+			}
+			outputIndex[outPutIndex]=i;//输出当前位锁定值
+			if(!match.doLockMatch(tmpBuff,outputIndex,outPutIndex))
+			{
+				//不满足锁定,则跳过此索引
+				continue;
+			}
+			outPutIndex++;
+			if(outPutIndex>=input.length)
+			{//如果是最后一个则返回
+				break;
+			}
+			//解锁下一个
+			inputSkip[i]=true;//锁定当前位占用索引,其它位不可使用该索引
+			forEachIndex(input, inputSkip, outputIndex, outPutIndex, tmpBuff, match);
+			outPutIndex--;//回到当前
+			inputSkip[i]=false;//释放锁定
+		}
+	}
+	
+	/**
+	 * 遍历short数组所有索引排列情况
+	 * @param input 输入数据
+	 * @param inputSkip 输入跳过索引标记
+	 * @param outputIndex 输出索引数组
+	 * @param outPutIndex 输出索引数组长度
+	 * @param tmpBuff 临时缓冲区
+	 * @param listener 
+	 */
+	public static void forEachIndex(short[] input,boolean[] inputSkip,int[] outputIndex ,int outPutIndex,short[] tmpBuff,ShortForEachIndexListener listener)
+	{
+		for(int i=0;i<input.length;i++)
+		{
+			if(inputSkip[i])
+			{
+				continue;
+			}
+			outputIndex[outPutIndex]=i;//输出当前位锁定值
+			if(!listener.doLockMatch(tmpBuff,outputIndex,outPutIndex))
+			{
+				//不满足锁定,则跳过此索引
+				continue;
+			}
+			outPutIndex++;
+			if(outPutIndex>=input.length)
+			{//如果是最后一个则返回
+				break;
+			}
+			//解锁下一个
+			inputSkip[i]=true;//锁定当前位占用索引,其它位不可使用该索引
+			forEachIndex(input, inputSkip, outputIndex, outPutIndex, tmpBuff, listener);
+			outPutIndex--;//回到当前
+			inputSkip[i]=false;//释放锁定
+		}
+	}
+	
+	/**
+	 * 遍历int数组所有索引排列情况
+	 * @param input 输入数据
+	 * @param inputSkip 输入跳过索引标记
+	 * @param outputIndex 输出索引数组
+	 * @param outPutIndex 输出索引数组长度
+	 * @param tmpBuff 临时缓冲区
+	 * @param listener 
+	 */
+	public static void forEachIndex(int[] input,boolean[] inputSkip,int[] outputIndex ,int outPutIndex,int[] tmpBuff,IntForEachIndexListener listener)
+	{
+		for(int i=0;i<input.length;i++)
+		{
+			if(inputSkip[i])
+			{
+				continue;
+			}
+			outputIndex[outPutIndex]=i;//输出当前位锁定值
+			if(!listener.doLockMatch(tmpBuff,outputIndex,outPutIndex))
+			{
+				//不满足锁定,则跳过此索引
+				continue;
+			}
+			outPutIndex++;
+			if(outPutIndex>=input.length)
+			{//如果是最后一个则返回
+				break;
+			}
+			//解锁下一个
+			inputSkip[i]=true;//锁定当前位占用索引,其它位不可使用该索引
+			forEachIndex(input, inputSkip, outputIndex, outPutIndex, tmpBuff, listener);
 			outPutIndex--;//回到当前
 			inputSkip[i]=false;//释放锁定
 		}
@@ -50,12 +184,39 @@ public class Combination {
 		Integer[] output=new Integer[input.length];
 		Integer[] tmpBuff=new Integer[input.length];
 		boolean[] inputSkip=new boolean[input.length];
-		Combination.Unlock(input, inputSkip, output,0, tmpBuff, new LockMatch<Integer>() {
+		Combination.forEach(input, inputSkip, output,0, tmpBuff, new forEachListener<Integer>() {
 			@Override
 			public boolean doLockMatch(Integer[] tmpBuff, Integer[] output, int outPutIndex) {
 				if(outPutIndex+1>=output.length)
 				{//如果是最后一个
 					System.out.println(Arrays.toString(output));
+				}
+				return true;//每个元素都返回锁定
+			}
+		});
+	}
+	
+	public void test1_short()
+	{
+		/**
+		 * 测试排列组合
+		 * N个元素放在N个位置，有多少种放法
+		 */
+		final short[] input={1,2,3,3};
+		int[] outputIndex=new int[input.length];
+		short[] tmpBuff=new short[input.length];
+		boolean[] inputSkip=new boolean[input.length];
+		Combination.forEachIndex(input, inputSkip,outputIndex,0, tmpBuff, new ShortForEachIndexListener() {
+			@Override
+			public boolean doLockMatch(short[] tmpBuff,int[] outputIndex, int outPutIndex) {
+				if(outPutIndex+1>=outputIndex.length)
+				{//如果是最后一个
+					List<Short> list=new ArrayList<>();
+					for(int index:outputIndex)
+					{
+						list.add(input[index]);
+					}
+					System.out.println(list);
 				}
 				return true;//每个元素都返回锁定
 			}
@@ -73,7 +234,7 @@ public class Combination {
 		Integer[] output=new Integer[input.length];
 		Integer[] tmpBuff=new Integer[input.length];
 		boolean[] inputSkip=new boolean[input.length];
-		Combination.Unlock(input, inputSkip, output,0, tmpBuff, new LockMatch<Integer>() {
+		Combination.forEach(input, inputSkip, output,0, tmpBuff, new forEachListener<Integer>() {
 			@Override
 			public boolean doLockMatch(Integer[] tmpBuff, Integer[] output, int outPutIndex) {
 				if(outPutIndex==1)
@@ -127,7 +288,7 @@ public class Combination {
 		Integer[] output=new Integer[input.length];
 		Integer[] tmpBuff=new Integer[input.length];
 		boolean[] inputSkip=new boolean[input.length];
-		Combination.Unlock(input, inputSkip, output,0, tmpBuff, new LockMatch<Integer>() {
+		Combination.forEach(input, inputSkip, output,0, tmpBuff, new forEachListener<Integer>() {
 			@Override
 			public boolean doLockMatch(Integer[] tmpBuff, Integer[] output, int outPutIndex) {
 				if(outPutIndex==1)
@@ -195,7 +356,7 @@ public class Combination {
 		Integer[] output=new Integer[input.length];
 		Integer[] tmpBuff=new Integer[input.length];
 		boolean[] inputSkip=new boolean[input.length];
-		Combination.Unlock(input, inputSkip, output,0, tmpBuff, new LockMatch<Integer>() {
+		Combination.forEach(input, inputSkip, output,0, tmpBuff, new forEachListener<Integer>() {
 			@Override
 			public boolean doLockMatch(Integer[] tmpBuff, Integer[] output, int outPutIndex) {
 				if(outPutIndex==1)
@@ -255,6 +416,6 @@ public class Combination {
 	
 	public static void main(String[] args) {
 		Combination lock=new Combination();
-		lock.test4();
+		lock.test1_short();
 	}
 }
