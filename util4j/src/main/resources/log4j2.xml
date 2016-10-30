@@ -72,8 +72,6 @@
             <DynamicMdcFields regex="mdc.*" />
             <DynamicMdcFields regex="(mdc|MDC)fields" />
       </Gelf>
-      
-    </appenders>
     </appenders>  
     <loggers>
     	<!-- 同步日志
