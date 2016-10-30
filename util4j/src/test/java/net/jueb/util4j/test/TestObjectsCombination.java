@@ -18,7 +18,6 @@ public class TestObjectsCombination {
 		/**
 		 * 测试排列组合
 		 * N个元素放在N个位置，有多少种放法
-		 * 输出满足前2个是对子,后面全是顺子或者三同
 		 */
 		Integer[] input={1,2,3,4,5,6,2};
 		Integer[] output=new Integer[input.length];
@@ -40,8 +39,6 @@ public class TestObjectsCombination {
 			public void onOutEvent(Integer[] output, int outPutIndex) {
 				
 			}
-
-			
 		});
 		t=System.nanoTime()-t;
 		System.out.println("耗时："+t+"纳秒,"+TimeUnit.NANOSECONDS.toMillis(t)+"毫秒");
@@ -52,7 +49,6 @@ public class TestObjectsCombination {
 		/**
 		 * 测试排列组合
 		 * N个元素放在N个位置，有多少种放法
-		 * 输出满足前2个是对子,后面全是顺子或者三同
 		 */
 		final Integer[] input={1,2,3,4,5,6,2};
 		int[] output=new int[input.length];
@@ -84,7 +80,6 @@ public class TestObjectsCombination {
 		/**
 		 * 测试排列组合
 		 * N个元素放在N个位置，有多少种放法
-		 * 输出满足前2个是对子,后面全是顺子或者三同
 		 */
 		final byte[] input={1,2,3,4,5,6,2};
 		int[] output=new int[input.length];
@@ -116,7 +111,6 @@ public class TestObjectsCombination {
 		/**
 		 * 测试排列组合
 		 * N个元素放在N个位置，有多少种放法
-		 * 输出满足前2个是对子,后面全是顺子或者三同
 		 */
 		final byte[] input={1,1,1,2,2,2,4,4,4,13,13,13,19,19};
 		int[] output=new int[input.length];
@@ -149,7 +143,6 @@ public class TestObjectsCombination {
 		/**
 		 * 测试排列组合
 		 * N个元素放在N个位置，有多少种放法
-		 * 输出满足前2个是对子,后面全是顺子或者三同
 		 */
 		final byte[] input={1,1,1,2,2,2,4,4,4,13,13,13,19,19};
 		int[] output=new int[input.length];
@@ -199,7 +192,7 @@ public class TestObjectsCombination {
 					//前2个和当前是连续或者前1个相同与当前是相同数
 					entryNextLayout=(input[output[outPutIndex-2]]+1==input[output[outPutIndex-1]] && input[output[outPutIndex-1]]+1==input[output[outPutIndex]]) ||(input[output[outPutIndex-1]]==input[output[outPutIndex]] && output[outPutIndex-1]<output[outPutIndex]);
 					if(entryNextLayout)
-					{//如果是顺子或者对子
+					{
 						if(outPutIndex+1>=output.length)
 						{//如果是最后一个
 							Byte[] succeed=new Byte[output.length];
@@ -222,6 +215,7 @@ public class TestObjectsCombination {
 		{
 			System.out.println(Arrays.toString(succeed));
 		}
+		System.out.println("组合数量:"+result.size());
 	}
 	
 	public static void main(String[] args) {
