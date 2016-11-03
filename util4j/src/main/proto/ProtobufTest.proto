@@ -1,0 +1,12 @@
+//版本配置
+syntax = "proto3";
+//C++配置
+package proto;
+//java配置
+option java_package = "net.jueb.util4j.msg";
+option java_outer_classname = "ProtobufTest";
+
+message MessageArray
+{
+   map<string, string> msg_map = 1;
+}
