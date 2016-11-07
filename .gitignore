@@ -8,7 +8,6 @@ target/
 #/web-app/WEB-INF
 
 # IDE support files
-/.classpath
 /.launch
 /.project
 /.settings
@@ -72,7 +71,6 @@ tmp/**/*
 *.swp
 *~.nib
 local.properties
-.classpath
 .settings/
 .loadpath
 
