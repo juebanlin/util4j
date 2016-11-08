@@ -1,4 +1,4 @@
-package net.jueb.util4j.common.game.http;
+package net.jueb.util4j.net.http;
 
 import java.net.HttpURLConnection;
 import java.net.URL;

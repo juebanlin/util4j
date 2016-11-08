@@ -1,4 +1,4 @@
-package net.jueb.util4j.common.game.http;
+package net.jueb.util4j.net.http;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
