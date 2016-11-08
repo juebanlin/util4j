@@ -118,7 +118,11 @@ public class NettyServer extends AbstractNettyServer{
 			@Override
 			protected void initChannel(Channel ch) throws Exception {
 				channelGroup.add(ch);
-				ch.pipeline().addLast(new LoggerHandler(config.getLevel()));
+				LogLevel level=config.getLevel();
+				if(level!=null)
+				{
+					ch.pipeline().addLast(new LoggerHandler(config.getLevel()));
+				}
 				ch.pipeline().addLast(fixedHandler);
 			}
 			});

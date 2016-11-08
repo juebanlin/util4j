@@ -33,8 +33,9 @@ public class NettyClientConfig {
 	protected final EventLoopGroup ioWorkers;
 	/**
 	 * 设置日志记录的级别
+	 * 当日志级别不为空时,则设置日志记录器
 	 */
-	protected LogLevel level=LogLevel.TRACE;
+	protected LogLevel level;
 	
 	public NettyClientConfig(Class<? extends SocketChannel> channelClass,EventLoopGroup ioWorkers) {
 		this.channelClass = channelClass;
@@ -64,10 +65,7 @@ public class NettyClientConfig {
 	}
 	
 	public void setLevel(LogLevel level) {
-		if(level!=null)
-		{
-			this.level = level;
-		}
+		this.level = level;
 	}
 	public void destory()
 	{
@@ -139,10 +137,14 @@ public class NettyClientConfig {
 			ChannelHandler handler=new ChannelInitializer<Channel>() {
 				@Override
 				protected void initChannel(Channel ch) throws Exception {
-					ch.pipeline().addLast(new LoggerHandler(getLevel()));
+					LogLevel level=getLevel();
+					if(level!=null)
+					{
+						ch.pipeline().addLast(new LoggerHandler(level));
+					}
 					ch.pipeline().addLast(init);
 				}
-				};
+			};
 			/*
 			 * 如果init里面后续有ChannelInitializer则会触发2次channelRegistered
 			 * 导致LoggerHandler会打印2次channelRegistered无法避免,触发玩家自己的init不使用ChannelInitializer

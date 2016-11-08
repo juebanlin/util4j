@@ -16,7 +16,12 @@ public class NettyServerConfig {
 	protected final Class<? extends ServerChannel> channelClass;
 	protected final EventLoopGroup boss;
 	protected final EventLoopGroup ioWorkers;
-	protected LogLevel level=LogLevel.TRACE;
+	
+	/**
+	 * 设置日志记录的级别
+	 * 当日志级别不为空时,则设置日志记录器
+	 */
+	protected LogLevel level;
 	
 	public NettyServerConfig(Class<? extends ServerChannel> channelClass, EventLoopGroup boss,EventLoopGroup ioworkers) {
 		this.channelClass = channelClass;
@@ -47,10 +52,7 @@ public class NettyServerConfig {
 	}
 
 	public void setLevel(LogLevel level) {
-		if(level!=null)
-		{
-			this.level = level;
-		}
+		this.level = level;
 	}
 
 	public void destory()
