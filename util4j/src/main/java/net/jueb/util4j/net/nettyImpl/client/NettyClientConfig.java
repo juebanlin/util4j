@@ -37,6 +37,11 @@ public class NettyClientConfig {
 	 */
 	protected LogLevel level;
 	
+	/**
+	 * 连接超时毫秒
+	 */
+	protected long connectTimeOutMills=TimeUnit.SECONDS.toMillis(3);
+	
 	public NettyClientConfig(Class<? extends SocketChannel> channelClass,EventLoopGroup ioWorkers) {
 		this.channelClass = channelClass;
 		this.ioWorkers = ioWorkers;
@@ -67,6 +72,15 @@ public class NettyClientConfig {
 	public void setLevel(LogLevel level) {
 		this.level = level;
 	}
+	
+	public long getConnectTimeOutMills() {
+		return connectTimeOutMills;
+	}
+	
+	public void setConnectTimeOutMills(long connectTimeOutMills) {
+		this.connectTimeOutMills = connectTimeOutMills;
+	}
+	
 	public void destory()
 	{
 		if(ioWorkers!=null)
@@ -172,7 +186,7 @@ public class NettyClientConfig {
 				}
 			});
 			try {
-				latch.await(3, TimeUnit.SECONDS);
+				latch.await(getConnectTimeOutMills(),TimeUnit.MILLISECONDS);
 			} catch (Exception e) {
 				log.error(e.getMessage(),e);
 			}
