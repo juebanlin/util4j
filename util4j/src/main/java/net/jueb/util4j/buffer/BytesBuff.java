@@ -62,6 +62,12 @@ public interface BytesBuff {
     public abstract int readableBytes();
     
     /**
+     * 可写字节数
+     * @return
+     */
+    public int writableBytes();
+    
+    /**
      * 当前容量
      * @return
      */
