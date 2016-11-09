@@ -478,4 +478,9 @@ public class ArrayBytesBuff extends AbstractArrayBytesBuff {
         writerIndex += length;
         return this;
 	}
+	
+	@Override
+	protected Object clone() throws CloneNotSupportedException {
+		return new ArrayBytesBuff(readerIndex,writerIndex,getArray().clone());
+	}
 }
