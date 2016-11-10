@@ -14,12 +14,22 @@ public class ArrayBytesBuff extends AbstractArrayBytesBuff {
 		this(0, 0, DEFAULT_CAPACITY);
 	}
 
-	public ArrayBytesBuff(int readIndex, int writeIndex, int capacity) {
+	public ArrayBytesBuff(int capacity) {
+		super(capacity);
+		setIndex(readerIndex, writerIndex);
+	}
+	
+	public ArrayBytesBuff(byte[] data) {
+		super(data);
+		setIndex(readerIndex, data.length);
+	}
+	
+	private ArrayBytesBuff(int readerIndex, int writerIndex, int capacity) {
 		super(capacity);
 		setIndex(readerIndex, writerIndex);
 	}
 
-	public ArrayBytesBuff(int readerIndex, int writerIndex, byte[] initialArray) {
+	private ArrayBytesBuff(int readerIndex, int writerIndex, byte[] initialArray) {
 		super(initialArray);
 		setIndex(readerIndex, writerIndex);
 	}
