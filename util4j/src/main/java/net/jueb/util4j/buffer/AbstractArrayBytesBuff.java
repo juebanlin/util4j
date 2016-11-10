@@ -4,7 +4,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import org.apache.commons.codec.binary.Hex;
+
 import net.jueb.util4j.bytesStream.bytes.BytesUtil;
+import net.jueb.util4j.bytesStream.bytes.HexUtil;
 
 public abstract class AbstractArrayBytesBuff implements BytesBuff {
 
@@ -465,5 +468,10 @@ public abstract class AbstractArrayBytesBuff implements BytesBuff {
 			}
 		}
 		return this;
+	}
+	
+	@Override
+	public String toString() {
+		return HexUtil.prettyHexDump(array);
 	}
 }
