@@ -1,4 +1,4 @@
-package net.jueb.util4j.queue.taskQueue.test;
+package net.jueb.util4j.test;
 
 import java.util.HashMap;
 import java.util.Map;
