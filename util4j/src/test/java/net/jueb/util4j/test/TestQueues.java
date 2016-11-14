@@ -306,8 +306,8 @@ public class TestQueues{
     		/**
     		 * 多队列多线程测试
     		 */
-//    		TaskQueuesExecutor ft=new FixedThreadPoolQueuesExecutor(1,8);
-//			tq.test(qt*20,20, ft);
+    		TaskQueuesExecutor ft=new FixedThreadPoolQueuesExecutor(1,8);
+			tq.test(qt*20,20, ft);
 //			队列：1,最后一个任务完成,添加队列耗时:2710,队列总耗时:2976,当前线程ID:15
 //			 队列：3,最后一个任务完成,添加队列耗时:2710,队列总耗时:2976,当前线程ID:16
 //			 队列：5,最后一个任务完成,添加队列耗时:2710,队列总耗时:2976,当前线程ID:15
@@ -316,7 +316,7 @@ public class TestQueues{
 //			 队列：8,最后一个任务完成,添加队列耗时:2710,队列总耗时:2976,当前线程ID:17
 //			 队列：7,最后一个任务完成,添加队列耗时:2710,队列总耗时:2976,当前线程ID:15
 //			 队列：6,最后一个任务完成,添加队列耗时:2710,队列总耗时:2976,当前线程ID:16
-			 
+//			 
 //    		TaskQueuesExecutor ft=new FixedThreadPoolQueuesExecutor_mina_disruptor(4,8);
 //     		tq.test(qt*8,8, ft);
 //     		队列：4,最后一个任务完成,添加队列耗时:2031,队列总耗时:126,当前线程ID:22
@@ -328,7 +328,7 @@ public class TestQueues{
 //     		队列：1,最后一个任务完成,添加队列耗时:2031,队列总耗时:126,当前线程ID:21
 //     		队列：2,最后一个任务完成,添加队列耗时:2031,队列总耗时:131,当前线程ID:26
      		
-			ThreadPoolTaskQueuesExecutor ft=new ThreadPoolTaskQueuesExecutor(2,8);
+//			ThreadPoolTaskQueuesExecutor ft=new ThreadPoolTaskQueuesExecutor(2,8);
 //    		tq.test(qt*10,10, ft);
 //    		队列：5,最后一个任务完成,添加队列耗时:4137,队列总耗时:40659,当前线程ID:14
 //    		队列：7,最后一个任务完成,添加队列耗时:4137,队列总耗时:40919,当前线程ID:15
