@@ -294,9 +294,9 @@ public class ArrayBytesBuff extends AbstractArrayBytesBuff {
 	public BytesBuff readBytes(int length) {
 		checkReadableBytes(length);
 		if (length == 0) {
-			return new ArrayBytesBuff(0, 0, 0);
+			return new ArrayBytesBuff();
 		}
-		BytesBuff buf = new ArrayBytesBuff(0, 0, 0);
+		BytesBuff buf = new ArrayBytesBuff();
 		buf.writeBytes(this, readerIndex, length);
 		readerIndex += length;
 		return buf;
@@ -335,7 +335,9 @@ public class ArrayBytesBuff extends AbstractArrayBytesBuff {
 
 	@Override
 	public BytesBuff readBytes(byte[] dst, int dstIndex, int length) {
-		readBytes(dst, dstIndex, length);
+		checkReadableBytes(length);
+        getBytes(readerIndex, dst, dstIndex, length);
+        readerIndex += length;
 		return this;
 	}
 
