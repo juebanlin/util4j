@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Scanner;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
@@ -28,11 +29,15 @@ public class TestW {
 
 					@Override
 					protected void encode(ChannelHandlerContext ctx, ByteBuf msg, ByteBuf out) throws Exception {
-						
+						System.out.println(msg+",Thread:"+Thread.currentThread());
  					}
 
 					@Override
-					protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
+					protected void decode(final ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
+						int a=in.readByte();
+						int x=in.readIntLE();
+						short z=in.readShortLE();
+						
 						int size=in.readInt();
 						short code=in.readShort();
 						int len=size-2;
@@ -46,7 +51,25 @@ public class TestW {
 							int slen=buff.readInt();
 							token=new String(buff.readBytes(slen).getBytes());
 						}
-						System.out.println("code="+code+",type="+type+",token="+token);
+						System.out.println("code="+code+",type="+type+",token="+token+",Thread:"+Thread.currentThread());
+						Thread t=new Thread(new Runnable() {
+							
+							@Override
+							public void run() {
+								for(int i=0;i<100;i++)
+								{
+									ByteBuf buff=ByteBufAllocator.DEFAULT.buffer();
+									buff.writeBoolean(true);
+									ctx.channel().write(buff);
+									try {
+										Thread.sleep(3000);
+									} catch (InterruptedException e) {
+										e.printStackTrace();
+									}
+								}
+							}
+						});
+						t.start();
 					}
 				});
 			}
