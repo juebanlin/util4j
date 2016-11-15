@@ -379,6 +379,53 @@ public abstract class AbstractLibScriptFactory<T extends IScript> extends Abstra
 		}
 	}
 
+	private boolean hashChange()
+	{
+		rwLock.readLock().lock();
+		boolean trigLoad = false;
+		try {
+			Map<String, File> files = new HashMap<String, File>();
+			for (File file : findJarFile(scriptLibDir)) 
+			{
+				files.put(file.getPath(), file);
+			}
+			for (File file : files.values()) 
+			{
+				RecordFile rf = loadedRecord.get(file.getPath());
+				if (rf == null) 
+				{// 新增jar
+					trigLoad = true;
+					break;
+				} else 
+				{// 文件变动
+					if (file.lastModified() > rf.getLastModifyTime()) 
+					{
+						trigLoad = true;
+						break;
+					}
+				}
+			}
+			if (!trigLoad) 
+			{//判断是否减少了jar
+				for (String key : loadedRecord.keySet()) 
+				{
+					if (!files.containsKey(key)) 
+					{//减少jar
+						trigLoad = true;
+						break;
+					}
+				}
+			}
+		} catch(Exception e){
+			_log.error(e.getMessage(),e);
+		}
+		finally {
+			rwLock.readLock().unlock();
+		}
+		return trigLoad;
+	}
+	
+	
 	/**
 	 * jar目录监控任务,发生jar新增或者改变,则重置jarFiles并执行加载class
 	 * 
@@ -387,56 +434,17 @@ public abstract class AbstractLibScriptFactory<T extends IScript> extends Abstra
 	class ScriptMonitorTask implements Runnable {
 
 		public void run() {
-			rwLock.readLock().lock();
-			try {
-				boolean trigLoad = false;
-				if (!autoReload) {
-					return;
-				}
-				if (state == State.loading) 
-				{
-					return;
-				}
-				Map<String, File> files = new HashMap<String, File>();
-				for (File file : findJarFile(scriptLibDir)) 
-				{
-					files.put(file.getPath(), file);
-				}
-				for (File file : files.values()) 
-				{
-					RecordFile rf = loadedRecord.get(file.getPath());
-					if (rf == null) 
-					{// 新增jar
-						trigLoad = true;
-						break;
-					} else 
-					{// 文件变动
-						if (file.lastModified() > rf.getLastModifyTime()) 
-						{
-							trigLoad = true;
-							break;
-						}
-					}
-				}
-				if (!trigLoad) 
-				{//判断是否减少了jar
-					for (String key : loadedRecord.keySet()) 
-					{
-						if (!files.containsKey(key)) 
-						{//减少jar
-							trigLoad = true;
-							break;
-						}
-					}
-				}
-				if (trigLoad) {
-					_log.debug("trigger reload scriptLibs……");
-					reload();
-				}
-			}catch (Exception e) {
-				_log.error(e.getMessage(),e);
-			} finally {
-				rwLock.readLock().unlock();
+			if (!autoReload) {
+				return;
+			}
+			if (state == State.loading) 
+			{
+				return;
+			}
+			if(hashChange())
+			{
+				_log.debug("trigger reload scriptLibs……");
+				reload();
 			}
 		}
 	}
