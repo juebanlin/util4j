@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.apache.commons.codec.binary.Hex;
-
 import net.jueb.util4j.bytesStream.bytes.BytesUtil;
 import net.jueb.util4j.bytesStream.bytes.HexUtil;
 

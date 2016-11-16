@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -16,13 +18,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import net.jueb.util4j.file.FileUtil;
 import net.jueb.util4j.thread.NamedThreadFactory;
 
 /**
@@ -147,6 +150,55 @@ public abstract class AbstractLibScriptFactory<T extends IScript> extends Abstra
 		loadAllClass(jarFiles);
 	}
 
+	private final AtomicInteger ato=new AtomicInteger();
+	
+	private List<MirrorFile> copyToTmpDir(List<File> files) throws IOException
+	{
+		List<MirrorFile> tmpFiles=new ArrayList<>();
+		File tmpDir=null;
+		for(File f:files)
+		{
+			if(f.exists() && f.isFile())
+			{
+				if(tmpDir==null)
+				{
+					tmpDir=FileUtil.createTmpDir("scriptFactoryTmp_"+ato.getAndIncrement());
+					if(tmpDir.exists())
+					{
+						tmpDir.delete();
+						tmpDir.mkdir();
+					}
+				}
+				File newFile=new File(tmpDir,f.getName());
+				_log.debug("copyFile "+f.getPath()+" to:"+newFile.getPath());
+				Files.copy(f.toPath(), newFile.toPath(), StandardCopyOption.COPY_ATTRIBUTES,StandardCopyOption.REPLACE_EXISTING);
+				tmpFiles.add(new MirrorFile(f, newFile));
+			}
+		}
+		_log.debug("copyFiles to tmpDir:"+tmpDir);
+		return tmpFiles;
+	}
+	
+	private class MirrorFile{
+		private final File file;
+		private final File mirrorFile;
+		public MirrorFile(File file, File mirrorFile) {
+			super();
+			this.file = file;
+			this.mirrorFile = mirrorFile;
+		}
+		public File getFile() {
+			return file;
+		}
+		public File getMirrorFile() {
+			return mirrorFile;
+		}
+		@Override
+		public String toString() {
+			return "MirrorFile [file=" + file + ", mirrorFile=" + mirrorFile + "]";
+		}
+	}
+	
 	/**
 	 * 加载所有的类
 	 * @param jarFiles
@@ -164,15 +216,21 @@ public abstract class AbstractLibScriptFactory<T extends IScript> extends Abstra
 		rwLock.writeLock().lock();
 		try {
 			state = State.loading;
+			//复制文件到临时目录,因为urlClassLoader加载后会占用文件,导致后续无法删除scriptLibDir下的文件
+			List<MirrorFile> waiteLoad=copyToTmpDir(jarFiles);
 			ScriptClassLoader newClassLoader = new ScriptClassLoader();
 			Map<String, RecordFile> newLoadedRecord = new HashMap<String, RecordFile>();
 			Set<Class<?>> allClass = new HashSet<Class<?>>();
-			for (File jarFile : jarFiles) 
+			for (MirrorFile mf : waiteLoad) 
 			{
-				Set<Class<?>> jarClass = loadAllClass(jarFile, newClassLoader);
+				File file=mf.getFile();
+				File mirrorFile=mf.getMirrorFile();
+				//使用镜像文件加载进classLoader
+				Set<Class<?>> jarClass = loadAllClass(mirrorFile, newClassLoader);
 				allClass.addAll(jarClass);
-				RecordFile rf = new RecordFile(jarFile.getPath());
-				rf.setLastModifyTime(jarFile.lastModified());
+				//记录文件变化,使用源文件的修改时间
+				RecordFile rf = new RecordFile(file.getPath());
+				rf.setLastModifyTime(file.lastModified());
 				newLoadedRecord.put(rf.getFilePath(), rf);
 				_log.debug("加载jar文件" + rf.getFilePath() + ",class数量:" + jarClass.size() + ",class:" + jarClass.toString());
 			}
@@ -379,6 +437,53 @@ public abstract class AbstractLibScriptFactory<T extends IScript> extends Abstra
 		}
 	}
 
+	private boolean hashChange()
+	{
+		rwLock.readLock().lock();
+		boolean trigLoad = false;
+		try {
+			Map<String, File> files = new HashMap<String, File>();
+			for (File file : findJarFile(scriptLibDir)) 
+			{
+				files.put(file.getPath(), file);
+			}
+			for (File file : files.values()) 
+			{
+				RecordFile rf = loadedRecord.get(file.getPath());
+				if (rf == null) 
+				{// 新增jar
+					trigLoad = true;
+					break;
+				} else 
+				{// 文件变动
+					if (file.lastModified() > rf.getLastModifyTime()) 
+					{
+						trigLoad = true;
+						break;
+					}
+				}
+			}
+			if (!trigLoad) 
+			{//判断是否减少了jar
+				for (String key : loadedRecord.keySet()) 
+				{
+					if (!files.containsKey(key)) 
+					{//减少jar
+						trigLoad = true;
+						break;
+					}
+				}
+			}
+		} catch(Exception e){
+			_log.error(e.getMessage(),e);
+		}
+		finally {
+			rwLock.readLock().unlock();
+		}
+		return trigLoad;
+	}
+	
+	
 	/**
 	 * jar目录监控任务,发生jar新增或者改变,则重置jarFiles并执行加载class
 	 * 
@@ -387,56 +492,17 @@ public abstract class AbstractLibScriptFactory<T extends IScript> extends Abstra
 	class ScriptMonitorTask implements Runnable {
 
 		public void run() {
-			rwLock.readLock().lock();
-			try {
-				boolean trigLoad = false;
-				if (!autoReload) {
-					return;
-				}
-				if (state == State.loading) 
-				{
-					return;
-				}
-				Map<String, File> files = new HashMap<String, File>();
-				for (File file : findJarFile(scriptLibDir)) 
-				{
-					files.put(file.getPath(), file);
-				}
-				for (File file : files.values()) 
-				{
-					RecordFile rf = loadedRecord.get(file.getPath());
-					if (rf == null) 
-					{// 新增jar
-						trigLoad = true;
-						break;
-					} else 
-					{// 文件变动
-						if (file.lastModified() > rf.getLastModifyTime()) 
-						{
-							trigLoad = true;
-							break;
-						}
-					}
-				}
-				if (!trigLoad) 
-				{//判断是否减少了jar
-					for (String key : loadedRecord.keySet()) 
-					{
-						if (!files.containsKey(key)) 
-						{//减少jar
-							trigLoad = true;
-							break;
-						}
-					}
-				}
-				if (trigLoad) {
-					_log.debug("trigger reload scriptLibs……");
-					reload();
-				}
-			}catch (Exception e) {
-				_log.error(e.getMessage(),e);
-			} finally {
-				rwLock.readLock().unlock();
+			if (!autoReload) {
+				return;
+			}
+			if (state == State.loading) 
+			{
+				return;
+			}
+			if(hashChange())
+			{
+				_log.debug("trigger reload scriptLibs……");
+				reload();
 			}
 		}
 	}

@@ -1,6 +1,9 @@
 package net.jueb.util4j.file;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 
 public class FileUtil {
 	
@@ -17,5 +20,16 @@ public class FileUtil {
 			temp.deleteOnExit();
 		}
 		return temp;
+	}
+	
+	public static void copyTo(File file,File target) throws IOException
+	{
+		Files.copy(file.toPath(), target.toPath(), StandardCopyOption.COPY_ATTRIBUTES,StandardCopyOption.REPLACE_EXISTING);
+	}
+	
+	public static void copyTo(File file,String dir) throws IOException
+	{
+		File target=new File(dir,file.getName());
+		copyTo(file, target);
 	}
 }
