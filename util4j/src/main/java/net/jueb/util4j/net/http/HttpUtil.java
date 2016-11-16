@@ -128,14 +128,19 @@ public class HttpUtil {
 		}
 	}
 	
-	public void httpPostJson(String url,String json) throws Exception
+	public byte[] httpPostJson(String url,String json) throws Exception
 	{
 		HttpURLConnection conn=buildConn(url);
-		conn.setRequestMethod("POST");
-		conn.setDoOutput(true);
-		conn.setRequestProperty("Content-Type","application/json");
-		conn.getOutputStream().write(json.getBytes(CharsetUtil.UTF_8));
-		conn.getOutputStream().flush();
-		conn.getOutputStream().close();
+		try {
+			conn.setRequestMethod("POST");
+			conn.setDoOutput(true);
+			conn.setRequestProperty("Content-Type","application/json");
+			conn.getOutputStream().write(json.getBytes(CharsetUtil.UTF_8));
+			conn.getOutputStream().flush();
+			conn.getOutputStream().close();
+			return InputStreamUtils.getBytes(conn.getInputStream());
+		} finally {
+			conn.getInputStream().close();
+		}
 	}
 }
