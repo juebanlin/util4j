@@ -31,7 +31,7 @@ import net.jueb.util4j.thread.NamedThreadFactory;
 /**
  * 动态加载jar内的脚本,支持包含匿名内部类 T不能做为父类加载 T尽量为接口类型,因为只有接口类型的类才没有逻辑,才可以不热加载,并且子类可选择实现
  */
-public abstract class AbstractLibScriptFactory2<T extends IScript> extends AbstractStaticScriptFactory<T> {
+public abstract class AbstractLibScriptSpiFactory<T extends IScript> extends AbstractStaticScriptFactory<T> {
 	protected final Logger _log = LoggerFactory.getLogger(this.getClass());
 
 	/**
@@ -76,11 +76,11 @@ public abstract class AbstractLibScriptFactory2<T extends IScript> extends Abstr
 	protected static final ScheduledExecutorService schedule = Executors.newScheduledThreadPool(1,
 			new NamedThreadFactory("ScriptFactoryMonitor", true));
 
-	protected AbstractLibScriptFactory2(String scriptLibDir) {
+	protected AbstractLibScriptSpiFactory(String scriptLibDir) {
 		this(scriptLibDir, true);
 	}
 
-	protected AbstractLibScriptFactory2(String scriptLibDir, boolean autoReload) {
+	protected AbstractLibScriptSpiFactory(String scriptLibDir, boolean autoReload) {
 		this.scriptLibDir = scriptLibDir;
 		this.autoReload = autoReload;
 		init();
