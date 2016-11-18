@@ -6,7 +6,10 @@
         <!--文件日志级别 --> 
         <property name="LOG_LEVEL_FILE">info</property>
         <!-- 控制台日志级别 -->
-        <property name="LOG_LEVEL_CONSOLE">debug</property>      
+        <property name="LOG_LEVEL_CONSOLE">debug</property>  
+        <!-- logstash网络日志输出 -->
+        <property name="LOG_LEVEL_SOKCET_HOST">127.0.0.1</property>         
+        <property name="LOG_LEVEL_SOKCET_PORT">12201</property>    
     </properties>
 	<!--定义所有的appender-->  
     <appenders>  
@@ -56,7 +59,7 @@
 		  }
 		}
         -->
-      <Gelf name="Logstash" host="udp:123.207.110.46" port="12201" version="1.1" extractStackTrace="true"
+      <Gelf name="Logstash" host="udp:${LOG_LEVEL_SOKCET_HOST}" port="${LOG_LEVEL_SOKCET_PORT}" version="1.1" extractStackTrace="true"
               filterStackTrace="true" mdcProfiling="true" includeFullMdc="true" maximumMessageSize="8192"
               originHost="%host{fqdn}" additionalFieldTypes="fieldName1=String,fieldName2=Double,fieldName3=Long">
             <Field name="timestamp" pattern="%d{dd MMM yyyy HH:mm:ss,SSS}" />
@@ -86,14 +89,14 @@
         -->
     	<!--
     	异步日志,需要依赖Disruptor包
-    	com.mgame包范围的日志都以trace级别输出到appender
+    	net.jueb包范围的日志都以trace级别输出到appender
     	会覆盖root的包范围配置
     	additivity开启的话,logger的level如果也是满足root的,会被打印两遍
     	-->
     	<AsyncLogger name="net.jueb" level="trace" additivity="false">  
     		<appender-ref ref="Console" />
-    		<appender-ref ref="LogFile" /><!--com.mgame包的日志输出会到LogFile-->
-    		<appender-ref ref="ErrorLogFile" /><!--com.mgame包的日志输出会到ErrorLogFile-->
+    		<appender-ref ref="LogFile" />
+    		<appender-ref ref="ErrorLogFile" />
     	</AsyncLogger>
     	<!-- 所有包范围的日志都以trace级别输出控制台 -->
    	 	<AsyncRoot level="trace">  
