@@ -133,6 +133,13 @@ public interface BytesBuff {
 	 * @return
 	 */
 	public byte[] getBytes();
+	
+	/**
+	 * 获取可读取的字节数组
+	 * 
+	 * @return
+	 */
+	public byte[] getReadableBytes();
 
 	/**
 	 * 获取全部字节数组

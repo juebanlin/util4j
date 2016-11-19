@@ -131,7 +131,14 @@ public abstract class AbstractArrayBytesBuff implements BytesBuff {
 		System.arraycopy(array, 0, buf, 0, buf.length);
 		return buf;
 	}
-
+	
+	@Override
+	public byte[] getReadableBytes() {
+		byte[] buf = new byte[readableBytes()];
+		System.arraycopy(array,readerIndex(), buf, 0, buf.length);
+		return buf;
+	}
+	
 	@Override
 	public byte[] getRawBytes() {
 		byte[] bytes = new byte[capacity()];
