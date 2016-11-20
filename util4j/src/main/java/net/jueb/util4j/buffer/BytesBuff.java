@@ -128,15 +128,14 @@ public interface BytesBuff {
 	public abstract BytesBuff copy(int index, int length);
 
 	/**
-	 * 获取写入的字节数组
+	 * 获取写入的字节数组(0~writeIndex)
 	 * 
 	 * @return
 	 */
 	public byte[] getBytes();
 	
 	/**
-	 * 获取可读取的字节数组
-	 * 
+	 * 获取可读取的字节数组(readIndex~writeIndex)
 	 * @return
 	 */
 	public byte[] getReadableBytes();
