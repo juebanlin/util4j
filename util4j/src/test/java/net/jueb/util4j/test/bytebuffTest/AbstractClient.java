@@ -9,14 +9,14 @@ import java.util.Queue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class Client {
+public abstract class AbstractClient {
 
 	public static int DEFALUT_MAX_PACK_SIZE = 64 * 1024 * 1024;
 	private int maxPackSize = DEFALUT_MAX_PACK_SIZE;
 	String host="";
 	int port=0;
 	Socket socket=new Socket();
-	public Client(String host, int port) {
+	public AbstractClient(String host, int port) {
 		super();
 		this.host = host;
 		this.port = port;
@@ -52,15 +52,24 @@ public class Client {
 		writeMsgs.addFirst(msg);
 	}
 	
-	protected void onMessage(GameMessage msg)
-	{
-		
-	}
+	protected abstract void onMessage(GameMessage msg);
 	
-	protected void onConnected(){
-		
-	}
+	protected abstract void onConnected();
 	
+	/**
+	 * �Ƿ�����������
+	 * @param msg
+	 * @return
+	 */
+	protected abstract boolean isHeartReq(GameMessage msg);
+
+	/**
+	 * ���������ظ���Ϣ
+	 * @param msg
+	 * @return
+	 */
+	protected abstract GameMessage buildHeartRsp();
+
 	public void start() throws IOException
 	{
 		if(connect())
@@ -162,7 +171,13 @@ public class Client {
 		byte[] contentData=new byte[dataLen];//��Ϣ����
 		in.readBytes(contentData, 0, contentData.length);
 		GameMessage message = new GameMessage(code,new ByteBuffer(contentData));
-		out.add(message);
+		if(isHeartReq(message))
+		{//������뵽���������������ظ�
+			sendMsgNow(buildHeartRsp());
+		}else
+		{
+			out.add(message);
+		}
 		return true;
 	}
 	
