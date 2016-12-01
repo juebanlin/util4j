@@ -44,11 +44,20 @@ public class ArrayIndexQueueManager implements IndexQueueGroupManager{
 	 * @param solt
 	 * @return
 	 */
-	protected final int convertIndex(short solt) {
+	@Deprecated
+	protected final int convertIndex_old(short solt) {
 		byte a = (byte) (solt >> 8 & 0xFF);// 高8位
 		byte b = (byte) (solt & 0xFF);// 低8位
 		int value = ((int) (a)) << 8 | (int) (b);
 		return value & 0xffff;
+	}
+	/**
+	 * 转换为插槽索引
+	 * @param solt
+	 * @return
+	 */
+	protected final int convertIndex(short solt) {
+		return solt & 0xFFFF;
 	}
 
 	public Iterator<QueueExecutor> iterator() {
