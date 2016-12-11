@@ -7,6 +7,9 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
+import io.netty.handler.codec.http.cors.CorsConfig;
+import io.netty.handler.codec.http.cors.CorsConfigBuilder;
+import io.netty.handler.codec.http.cors.CorsHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.internal.logging.InternalLogger;
@@ -41,13 +44,15 @@ public class HttpServerInitHandler extends ChannelInitializer<SocketChannel> {
 		{
 			p.addLast(new SslHandler(sslCtx.newEngine(ch.alloc())));
 		}
+		p.addLast(new HttpResponseEncoder());//必须放在最前面,如果decoder途中需要回复消息,则decoder前面需要encoder
 		p.addLast(new HttpRequestDecoder());
-		//限制contentLength
-		p.addLast(new HttpObjectAggregator(65536));
-		p.addLast(new HttpResponseEncoder());
+		p.addLast(new HttpObjectAggregator(65536));//限制contentLength
 		//大文件传输处理
 //		p.addLast(new ChunkedWriteHandler());
 //		p.addLast(new HttpContentCompressor());
+		//跨域配置
+		CorsConfig corsConfig = CorsConfigBuilder.forAnyOrigin().allowNullOrigin().allowCredentials().build();
+		p.addLast(new CorsHandler(corsConfig));
 		p.addLast(new ListenerHandlerAdapter<HttpRequest>(listener));
 	}
 }
