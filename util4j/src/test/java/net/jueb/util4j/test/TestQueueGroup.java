@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Queue;
 import java.util.Scanner;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
@@ -105,6 +104,7 @@ public class TestQueueGroup {
 		final CountDownLatch latch=new CountDownLatch(queueCount);
 		final Long[] startTime=new Long[queueCount];
 		final AtomicLong totalTime =  new AtomicLong();
+		final AtomicLong addTime =  new AtomicLong();
 		final AtomicLong runTotalTime = new AtomicLong();//总共耗时
 		final Queue<Runnable>[] all=new Queue[queueCount];
 		//初始化线程需要执行的队列
@@ -181,30 +181,30 @@ public class TestQueueGroup {
 	}
 	
 	
-	public Runnable buildSortTask(final int[] array)
+	public Runnable buildSortTask()
 	{
 		return new Runnable() {
 			@Override
 			public void run() {
-				int[] tmp=Arrays.copyOf(array, array.length);
-				Arrays.sort(tmp);
 				String s="hellowolrd";
+				for(int i=0;i<10;i++)
+				{
+					s+=s;
+				}
 				byte[] data=s.getBytes();
 				Arrays.sort(data);
-				UUID.randomUUID().toString();
 			}
 		};
 	}
 
 	public void testSignleProducerTest() throws InterruptedException {
-		short queueCount=10;
-		int inputCount = 10000 * 10;//任务数量
-		int minThread = 2;
+		short queueCount=50;
+		int inputCount = 10000 * 100;//任务数量
+		int minThread = 1;
 		int maxThread = 8;
-		int[] array = { 13, 14, 1, 4, 3, 5, 7, 33, 45, 24, 56, 11, 9, 19 };
 		List<Runnable> tasks = new ArrayList<>();
 		for (int i=0;i<inputCount;i++) {
-			tasks.add(buildSortTask(array));
+			tasks.add(buildSortTask());
 		}
 		DefaultQueueGroupExecutor qe = new DefaultQueueGroupExecutor(minThread, maxThread);
 		SignleProducerTest(queueCount, tasks, qe);
@@ -213,13 +213,12 @@ public class TestQueueGroup {
 	public void testMultiProducerTest() throws InterruptedException {
 		short queueCount=50;
 		int inputCount = 10000 * 100;//任务数量
-		int minThread = 2;
+		int minThread = 1;
 		int maxThread = 8;
 		int producerThread=4;
-		int[] array = { 13, 14, 1, 4, 3, 5, 7, 33, 45, 24, 56, 11, 9, 19 };
 		List<Runnable> tasks = new ArrayList<>();
 		for (int i=0;i<inputCount;i++) {
-			tasks.add(buildSortTask(array));
+			tasks.add(buildSortTask());
 		}
 		DefaultQueueGroupExecutor qe = new DefaultQueueGroupExecutor(minThread, maxThread);
 		MultiProducerTest(producerThread,queueCount, tasks, qe);
@@ -229,10 +228,9 @@ public class TestQueueGroup {
 	{
 		long t=System.nanoTime();
 		int count=10000*10;
-		int[] array = { 13, 14, 1, 4, 3, 5, 7, 33, 45, 24, 56, 11, 9, 19 };
 		Queue<Runnable> tasks = new ConcurrentLinkedQueue<>();
 		for (int i=0;i<count;i++) {
-			tasks.add(buildSortTask(array));
+			tasks.add(buildSortTask());
 		}
 		System.out.println(System.nanoTime()-t);
 	}
@@ -241,10 +239,9 @@ public class TestQueueGroup {
 	{
 		long t=System.nanoTime();
 		int count=10000*10;
-		int[] array = { 13, 14, 1, 4, 3, 5, 7, 33, 45, 24, 56, 11, 9, 19 };
 		Queue<Runnable> tasks = new MpmcArrayQueue<>(count);
 		for (int i=0;i<count;i++) {
-			tasks.add(buildSortTask(array));
+			tasks.add(buildSortTask());
 		}
 		System.out.println(System.nanoTime()-t);
 	}
@@ -253,10 +250,9 @@ public class TestQueueGroup {
 	{
 		long t=System.nanoTime();
 		int count=10000*10;
-		int[] array = { 13, 14, 1, 4, 3, 5, 7, 33, 45, 24, 56, 11, 9, 19 };
 		Queue<Runnable> tasks = new MpmcAtomicArrayQueue<>(count);
 		for (int i=0;i<count;i++) {
-			tasks.add(buildSortTask(array));
+			tasks.add(buildSortTask());
 		}
 		System.out.println(System.nanoTime()-t);
 	}
