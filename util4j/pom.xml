@@ -4,7 +4,7 @@
 
 	<groupId>net.jueb</groupId>
 	<artifactId>util4j</artifactId>
-	<version>2.6.4</version>
+	<version>2.6.5</version>
 	<packaging>jar</packaging>
 
 	<name>util4j</name>
@@ -134,6 +134,12 @@
 			<version>19.0</version>
 			<optional>true</optional>
 		</dependency>
+		<!-- https://github.com/JCTools/JCTools -->
+		<dependency>
+            <groupId>org.jctools</groupId>
+            <artifactId>jctools-core</artifactId>
+            <version>2.0</version>
+        </dependency>
 	</dependencies>
 	<build>
 		<!-- 读取系统版本的扩展 -->
