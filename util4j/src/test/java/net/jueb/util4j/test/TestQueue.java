@@ -8,14 +8,15 @@ import net.jueb.util4j.queue.queueExecutor.queueGroup.impl.DefaultQueueGroupExec
 public class TestQueue {
 
 	public static void main(String[] args) {
-		QueueGroupExecutor qe=new DefaultQueueGroupExecutor(2,8);
+		QueueGroupExecutor qe=new DefaultQueueGroupExecutor(2,8);//线程池范围
 		qe.execute((short) 1,new Runnable() {
 			
 			@Override
 			public void run() {
+				//桌子1的逻辑
 				System.out.println("1");
 				try {
-					Thread.sleep(1000);
+					Thread.sleep(100000);
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -27,9 +28,10 @@ public class TestQueue {
 					
 					@Override
 					public void run() {
+						//桌子2的逻辑
 						System.out.println("3");
 						try {
-							Thread.sleep(1000);
+							Thread.sleep(100000);
 						} catch (InterruptedException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
