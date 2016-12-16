@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import net.jueb.util4j.queue.queueExecutor.QueueFactory;
 import net.jueb.util4j.queue.queueExecutor.queue.QueueExecutor;
-import net.jueb.util4j.queue.queueExecutor.queue.impl.RunnableQueueExecutorWrapper;
+import net.jueb.util4j.queue.queueExecutor.queue.impl.RunnableQueueExecutorEventWrapper;
 import net.jueb.util4j.queue.queueExecutor.queueGroup.KeyQueueGroupManager;
 
 public class StringQueueManager extends AbstractQueueMaganer implements KeyQueueGroupManager{
@@ -123,7 +123,7 @@ public class StringQueueManager extends AbstractQueueMaganer implements KeyQueue
 	 * 插槽队列
 	 * @author juebanlin
 	 */
-	private class TaskQueue extends RunnableQueueExecutorWrapper{
+	private class TaskQueue extends RunnableQueueExecutorEventWrapper{
 		/**
 		 *队列索引
 		 */
@@ -160,18 +160,6 @@ public class StringQueueManager extends AbstractQueueMaganer implements KeyQueue
 		
 		public AtomicLong getCompletedTaskCount() {
 			return completedTaskCount;
-		}
-		
-		@Override
-		protected void event_taskOfferAfter(boolean offeredSucceed) {
-			super.event_taskOfferAfter(offeredSucceed);
-			if(offeredSucceed)
-			{
-				if(isLock.compareAndSet(false, true))
-			 	{//一个处理任务产生
-					onQueueHandleTask(index,new QueueProcessTask(this));
-			 	}
-			}
 		}
 	
 		private class QueueProcessTask implements Runnable{
@@ -219,6 +207,22 @@ public class StringQueueManager extends AbstractQueueMaganer implements KeyQueue
 	        }
 	    }
 		
+		@Override
+		protected void onAddBefore() {
+			// TODO Auto-generated method stub
+		}
+
+		@Override
+		protected void onAddAfter(boolean offeredSucceed) {
+			if(offeredSucceed)
+			{
+				if(isLock.compareAndSet(false, true))
+			 	{//一个处理任务产生
+					onQueueHandleTask(index,new QueueProcessTask(this));
+			 	}
+			}
+		}
+
 		protected void beforeExecute(Thread thread, Runnable task) {
 			
 		}

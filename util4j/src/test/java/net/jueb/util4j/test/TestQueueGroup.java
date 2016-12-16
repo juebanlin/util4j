@@ -199,7 +199,7 @@ public class TestQueueGroup {
 
 	public void testSignleProducerTest() throws InterruptedException {
 		short queueCount=50;
-		int inputCount = 10000 * 100;//任务数量
+		int inputCount = 10000 * 50;//任务数量
 		int minThread = 1;
 		int maxThread = 8;
 		List<Runnable> tasks = new ArrayList<>();
@@ -283,8 +283,6 @@ public class TestQueueGroup {
 //		sc.nextLine();
 //		t.testSignleProducerTest();
 //		sc.nextLine();
-		t.testMultiProducerTest();
-		sc.nextLine();
 		t.testMultiProducerTest2();
 		sc.nextLine();
 	}

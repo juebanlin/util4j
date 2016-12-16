@@ -9,11 +9,8 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import net.jueb.util4j.queue.queueExecutor.RunnableQueue;
-
 /**
-* 基于事件的队列
-* 当有任务添加时,子类会收到回调
+ * 队列包装
 * @author juebanlin
 */
 public class RunnableQueueWrapper implements RunnableQueue{
@@ -131,33 +128,17 @@ public class RunnableQueueWrapper implements RunnableQueue{
 	}
 
 	@Override
-    public final boolean offer(Runnable e) {
-		event_taskOfferBefore();
-        boolean bool=queue.offer(e);
-        event_taskOfferAfter(bool);
-        return bool;
+    public boolean offer(Runnable e) {
+        return queue.offer(e);
     }
 		
 	@Override
-	public final boolean addAll(Collection<? extends Runnable> c) {
-		event_taskOfferBefore();
-        boolean bool=queue.addAll(c);
-        event_taskOfferAfter(bool);
-        return bool;
+	public boolean addAll(Collection<? extends Runnable> c) {
+        return queue.addAll(c);
 	}
-		
-	/**
-	* 任务添加之前
-	 */
-	protected void event_taskOfferBefore(){
-		
-	}
-		
-	/**
-	 * 任务添加之后
-	 * @param bool
-	 */
-	protected void event_taskOfferAfter(boolean offeredSucceed){
-		
+
+	@Override
+	public String toString() {
+		return "RunnableQueueWrapper [queue=" + queue + "]";
 	}
 }

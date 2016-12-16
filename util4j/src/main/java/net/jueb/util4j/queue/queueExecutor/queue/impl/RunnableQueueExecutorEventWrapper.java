@@ -3,18 +3,18 @@ package net.jueb.util4j.queue.queueExecutor.queue.impl;
 import java.util.List;
 import java.util.Queue;
 
-import net.jueb.util4j.queue.queueExecutor.RunnableQueueWrapper;
+import net.jueb.util4j.queue.queueExecutor.RunnableQueueEventWrapper;
 import net.jueb.util4j.queue.queueExecutor.queue.QueueExecutor;
 
 /**
- * 具有调度器功能的队列
+ * 具有事件和调度器功能的队列
  * @author juebanlin
  */
-public class RunnableQueueExecutorWrapper extends RunnableQueueWrapper implements QueueExecutor {
+public abstract class RunnableQueueExecutorEventWrapper extends RunnableQueueEventWrapper implements QueueExecutor {
 
 	private final String name;
 
-	public RunnableQueueExecutorWrapper(Queue<Runnable> queue,String name) {
+	public RunnableQueueExecutorEventWrapper(Queue<Runnable> queue,String name) {
 		super(queue);
 		this.name=name;
 	}

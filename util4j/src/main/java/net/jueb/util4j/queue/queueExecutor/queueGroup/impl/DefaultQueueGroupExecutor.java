@@ -17,8 +17,8 @@ import net.jueb.util4j.lock.waitCondition.SleepingWaitConditionStrategy;
 import net.jueb.util4j.lock.waitCondition.WaitCondition;
 import net.jueb.util4j.lock.waitCondition.WaitConditionStrategy;
 import net.jueb.util4j.queue.queueExecutor.DefaultRunnableQueue;
-import net.jueb.util4j.queue.queueExecutor.RunnableQueueWrapper;
 import net.jueb.util4j.queue.queueExecutor.queue.QueueExecutor;
+import net.jueb.util4j.queue.queueExecutor.queue.impl.RunnableQueueExecutorEventWrapper;
 import net.jueb.util4j.queue.queueExecutor.queueGroup.IndexQueueGroupManager;
 import net.jueb.util4j.queue.queueExecutor.queueGroup.IndexQueueGroupManager.IndexGroupEventListener;
 import net.jueb.util4j.queue.queueExecutor.queueGroup.KeyQueueGroupManager;
@@ -168,7 +168,7 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 				systemExecute(handleTask);
 			}
 		});
-        this.systemQueue=new SystemQueue(bossQueue);
+        this.systemQueue=new SystemQueue(bossQueue,"SystemQueue");
     }
     
     public final ThreadFactory getThreadFactory() {
@@ -539,19 +539,19 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
      * 基于事件的系统队列
      * @author juebanlin
      */
-    class SystemQueue extends RunnableQueueWrapper{
+    class SystemQueue extends RunnableQueueExecutorEventWrapper{
 		
-    	public SystemQueue(Queue<Runnable> queue) {
-			super(queue);
+		public SystemQueue(Queue<Runnable> queue, String name) {
+			super(queue, name);
 		}
-		
+
 		@Override
-		protected void event_taskOfferBefore() {
+		protected void onAddBefore() {
 			systemTaskOfferBefore(this);
 		}
-		
+
 		@Override
-		protected void event_taskOfferAfter(boolean offeredSucceed) {
+		protected void onAddAfter(boolean offeredSucceed) {
 			if(offeredSucceed)
 			{
 				systemTaskOfferAfter(this);
