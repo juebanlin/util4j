@@ -2,6 +2,7 @@ package net.jueb.util4j.test;
 
 import java.util.Scanner;
 
+import org.jctools.queues.MpscChunkedArrayQueue;
 import org.jctools.queues.MpscCompoundQueue;
 import org.jctools.queues.MpscGrowableArrayQueue;
 import org.jctools.queues.MpscLinkedQueue;
@@ -27,7 +28,7 @@ public class TestJctools {
 		Scanner sc = new Scanner(System.in);
 		sc.nextLine();
 		TestJctools t=new TestJctools();
-		t.teste4();
+		t.teste11();
 		sc.nextLine();
 	}
 	
@@ -40,6 +41,15 @@ public class TestJctools {
 		for(int i=0;i<qs.length;i++)
 		{
 			qs[i]=new MpscCompoundQueue<>(1024);
+		}
+	}
+	
+	public void teste11()
+	{
+		MpscChunkedArrayQueue[] qs=new MpscChunkedArrayQueue[65535];
+		for(int i=0;i<qs.length;i++)
+		{
+			qs[i]=new MpscChunkedArrayQueue<>(1048576);
 		}
 	}
 	
