@@ -220,7 +220,21 @@ public class TestQueueGroup {
 		for (int i=0;i<inputCount;i++) {
 			tasks.add(buildSortTask());
 		}
-		DefaultQueueGroupExecutor qe = new DefaultQueueGroupExecutor(minThread, maxThread);
+		QueueGroupExecutor qe = new TestQueueGroup2().buildByJdk(minThread,maxThread);
+		MultiProducerTest(producerThread,queueCount, tasks, qe);
+	}
+	
+	public void testMultiProducerTest2() throws InterruptedException {
+		short queueCount=50;
+		int inputCount = 10000 * 100;//任务数量
+		int minThread = 1;
+		int maxThread = 8;
+		int producerThread=4;
+		List<Runnable> tasks = new ArrayList<>();
+		for (int i=0;i<inputCount;i++) {
+			tasks.add(buildSortTask());
+		}
+		QueueGroupExecutor qe = new TestQueueGroup2().buildByMpMc(minThread,maxThread,queueCount);
 		MultiProducerTest(producerThread,queueCount, tasks, qe);
 	}
 	
@@ -261,15 +275,17 @@ public class TestQueueGroup {
 		Scanner sc = new Scanner(System.in);
 		TestQueueGroup t = new TestQueueGroup();
 		sc.nextLine();
-		t.t1();
-		sc.nextLine();
-		t.t2();
-		sc.nextLine();
-		t.t3();
-		sc.nextLine();
-		t.testSignleProducerTest();
-		sc.nextLine();
+//		t.t1();
+//		sc.nextLine();
+//		t.t2();
+//		sc.nextLine();
+//		t.t3();
+//		sc.nextLine();
+//		t.testSignleProducerTest();
+//		sc.nextLine();
 		t.testMultiProducerTest();
+		sc.nextLine();
+		t.testMultiProducerTest2();
 		sc.nextLine();
 	}
 }

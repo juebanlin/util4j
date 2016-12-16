@@ -21,7 +21,7 @@ public class TestQueueGroup2 {
 	public static void main(String[] args) {
 	}
 	
-	protected QueueGroupExecutor buildByJdk()
+	protected QueueGroupExecutor buildByJdk(int min,int max)
 	{
 		//多生产多消费者队列(线程竞争队列)
 		Queue<Runnable> bossQueue=new ConcurrentLinkedQueue<>();
@@ -34,12 +34,12 @@ public class TestQueueGroup2 {
 		};
 		IndexQueueGroupManager iqm=new ArrayIndexQueueManager(qf);
 		KeyQueueGroupManager kqm=new StringQueueManager(qf);
-		return new DefaultQueueGroupExecutor(2, 8,bossQueue, iqm, kqm);
+		return new DefaultQueueGroupExecutor(min, max,bossQueue, iqm, kqm);
 	}
 	
-	protected QueueGroupExecutor buildByMpMc()
+	protected QueueGroupExecutor buildByMpMc(int min,int max,int maxPendingTask)
 	{
-		int maxQueueCount=65536;
+		int maxQueueCount=maxPendingTask;
 		//多生产多消费者队列(线程竞争队列)
 		Queue<Runnable> bossQueue=new MpmcAtomicArrayQueue<>(maxQueueCount);
 		QueueFactory qf=new QueueFactory() {
@@ -52,6 +52,6 @@ public class TestQueueGroup2 {
 		};
 		IndexQueueGroupManager iqm=new ArrayIndexQueueManager(qf);
 		KeyQueueGroupManager kqm=new StringQueueManager(qf);
-		return new DefaultQueueGroupExecutor(2, 8,bossQueue, iqm, kqm);
+		return new DefaultQueueGroupExecutor(min, max,bossQueue, iqm, kqm);
 	}
 }
