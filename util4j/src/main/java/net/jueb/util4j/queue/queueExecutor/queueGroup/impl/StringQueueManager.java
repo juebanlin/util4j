@@ -4,24 +4,33 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
+import net.jueb.util4j.queue.queueExecutor.QueueFactory;
 import net.jueb.util4j.queue.queueExecutor.queue.QueueExecutor;
+import net.jueb.util4j.queue.queueExecutor.queue.impl.RunnableQueueExecutorWrapper;
 import net.jueb.util4j.queue.queueExecutor.queueGroup.KeyQueueGroupManager;
 
-public class StringQueueManager implements KeyQueueGroupManager{
+public class StringQueueManager extends AbstractQueueMaganer implements KeyQueueGroupManager{
 
 	private final Map<String,TaskQueue> queues=new HashMap<>();
 	private final Map<String,String> alias=new HashMap<>();
 	private final AtomicLong totalCompleteTask=new AtomicLong();
 	
+	private final Object addLock=new Object();
+
+	private volatile KeyGroupEventListener listener;
+
 	public StringQueueManager() {
 		
 	}
-
-	private final Object addLock=new Object();
 	
+	public StringQueueManager(QueueFactory queueFactory) {
+		super(queueFactory);
+	}
+
 	public void execute(String index, Runnable task) {
 		if (index==null || task == null) {
 			throw new IllegalArgumentException();
@@ -35,8 +44,6 @@ public class StringQueueManager implements KeyQueueGroupManager{
 		}
 		getQueueExecutor(index).execute(tasks);
 	}
-	
-	private volatile KeyGroupEventListener listener;
 	
 	public void setGroupEventListener(KeyGroupEventListener listener)
 	{
@@ -61,7 +68,7 @@ public class StringQueueManager implements KeyQueueGroupManager{
 			synchronized (addLock) {
 				if(qe==null)
 				{
-					TaskQueue tq=new TaskQueue(index);
+					TaskQueue tq=new TaskQueue(index,getQueueFactory_().buildQueue());
 					queues.put(index,tq);
 					return tq;
 				}
@@ -116,11 +123,10 @@ public class StringQueueManager implements KeyQueueGroupManager{
 	 * 插槽队列
 	 * @author juebanlin
 	 */
-	private class TaskQueue extends RunnableQueueExecutor{
+	private class TaskQueue extends RunnableQueueExecutorWrapper{
 		/**
-		 * 
+		 *队列索引
 		 */
-		private static final long serialVersionUID = 1711281918590904219L;
 		private final String index;
 		/**
 	     * 此队列是否锁定/是否被线程占用
@@ -132,8 +138,8 @@ public class StringQueueManager implements KeyQueueGroupManager{
 	     */
 		private final AtomicLong completedTaskCount = new AtomicLong(0);
 		
-		public TaskQueue(String index) {
-			super("TaskQueue-"+index);
+		public TaskQueue(String index,Queue<Runnable> queue) {
+			super(queue,"TaskQueue-"+index);
 			this.index=index;
 			init();
 		}

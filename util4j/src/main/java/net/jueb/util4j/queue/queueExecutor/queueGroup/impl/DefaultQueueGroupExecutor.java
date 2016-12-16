@@ -3,6 +3,7 @@ package net.jueb.util4j.queue.queueExecutor.queueGroup.impl;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -15,12 +16,14 @@ import org.slf4j.LoggerFactory;
 import net.jueb.util4j.lock.waitCondition.SleepingWaitConditionStrategy;
 import net.jueb.util4j.lock.waitCondition.WaitCondition;
 import net.jueb.util4j.lock.waitCondition.WaitConditionStrategy;
+import net.jueb.util4j.queue.queueExecutor.DefaultRunnableQueue;
+import net.jueb.util4j.queue.queueExecutor.RunnableQueueWrapper;
 import net.jueb.util4j.queue.queueExecutor.queue.QueueExecutor;
 import net.jueb.util4j.queue.queueExecutor.queueGroup.IndexQueueGroupManager;
-import net.jueb.util4j.queue.queueExecutor.queueGroup.KeyQueueGroupManager;
-import net.jueb.util4j.queue.queueExecutor.queueGroup.QueueGroupExecutor;
 import net.jueb.util4j.queue.queueExecutor.queueGroup.IndexQueueGroupManager.IndexGroupEventListener;
+import net.jueb.util4j.queue.queueExecutor.queueGroup.KeyQueueGroupManager;
 import net.jueb.util4j.queue.queueExecutor.queueGroup.KeyQueueGroupManager.KeyGroupEventListener;
+import net.jueb.util4j.queue.queueExecutor.queueGroup.QueueGroupExecutor;
 
 public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
     
@@ -31,6 +34,14 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
     private static final int DEFAULT_MAX_THREAD_POOL = 8;
 
     private static final int DEFAULT_KEEP_ALIVE_SEC = 30;
+    
+    private static final IndexQueueGroupManager DEFAULT_IndexQueueGroupManager = new ArrayIndexQueueManager();
+   
+    private static final KeyQueueGroupManager DEFAULT_KeyQueueGroupManager = new StringQueueManager();
+    
+    private static final Queue<Runnable> DEFAULT_BossQueue = new DefaultRunnableQueue();
+    
+    private static final WaitConditionStrategy DEFAULT_waitConditionStrategy=new SleepingWaitConditionStrategy();
     
 	private volatile ThreadFactory threadFactory;
     
@@ -61,7 +72,7 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
     /**
      * 系统队列
      */
-    private final SystemQueue systemQueue = new SystemQueue();
+    private final SystemQueue systemQueue;
     
     /**
      * 队列处理线程
@@ -76,7 +87,6 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
     private volatile boolean shutdown;
 
     private final WaitConditionStrategy waitConditionStrategy;
-    
     private final IndexQueueGroupManager iqm;
     private final KeyQueueGroupManager kqm;
     
@@ -85,20 +95,44 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
     }
 
     public DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize) {
-        this(corePoolSize, maximumPoolSize,new SleepingWaitConditionStrategy());
+        this(corePoolSize, maximumPoolSize,DEFAULT_BossQueue);
     }
+    
+    public DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize,Queue<Runnable> bossQueue) {
+            this(corePoolSize, maximumPoolSize, DEFAULT_KEEP_ALIVE_SEC, TimeUnit.SECONDS, 
+            		Executors.defaultThreadFactory(),DEFAULT_waitConditionStrategy,
+            		bossQueue,DEFAULT_IndexQueueGroupManager,DEFAULT_KeyQueueGroupManager);
+        }
     
     public DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize,
-    		WaitConditionStrategy waitConditionStrategy) {
+        	Queue<Runnable> bossQueue,IndexQueueGroupManager indexQM,KeyQueueGroupManager keyQM) {
+            this(corePoolSize, maximumPoolSize, DEFAULT_KEEP_ALIVE_SEC, TimeUnit.SECONDS, 
+            		Executors.defaultThreadFactory(),DEFAULT_waitConditionStrategy,
+            		bossQueue,indexQM,keyQM);
+        }
+    
+    public DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize,
+    	Queue<Runnable> bossQueue,IndexQueueGroupManager indexQM,KeyQueueGroupManager keyQM,WaitConditionStrategy waitConditionStrategy) {
         this(corePoolSize, maximumPoolSize, DEFAULT_KEEP_ALIVE_SEC, TimeUnit.SECONDS, 
         		Executors.defaultThreadFactory(),waitConditionStrategy,
-        		new ArrayIndexQueueManager(),new StringQueueManager());
+        		bossQueue,indexQM,keyQM);
     }
     
+    /**
+     * 
+     * @param corePoolSize 核心线程池数量
+     * @param maximumPoolSize 最大线程数量
+     * @param keepAliveTime 非核心线程活跃时长
+     * @param unit 单位
+     * @param threadFactory 线程工厂
+     * @param waitConditionStrategy 线程等待机制
+     * @param bossQueue 主队列
+     * @param iqm 索引队列管理器
+     * @param kqm 键值队列管理器
+     */
     public DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize, 
-    		long keepAliveTime, TimeUnit unit,
-            ThreadFactory threadFactory,
-            WaitConditionStrategy waitConditionStrategy,
+    		long keepAliveTime, TimeUnit unit,ThreadFactory threadFactory,
+            WaitConditionStrategy waitConditionStrategy,Queue<Runnable> bossQueue,
             IndexQueueGroupManager iqm,KeyQueueGroupManager kqm) {
 		if (corePoolSize < 0 
 				||maximumPoolSize <= 0 
@@ -107,7 +141,8 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 				||threadFactory==null  
 				||waitConditionStrategy==null
 				||iqm==null
-				||kqm==null)
+				||kqm==null
+				||bossQueue==null )
 		{
 			throw new IllegalArgumentException();
 		}
@@ -133,6 +168,7 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 				systemExecute(handleTask);
 			}
 		});
+        this.systemQueue=new SystemQueue(bossQueue);
     }
     
     public final ThreadFactory getThreadFactory() {
@@ -503,11 +539,11 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
      * 基于事件的系统队列
      * @author juebanlin
      */
-    class SystemQueue extends AbstractRunnableQueue{
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = -2961878968488809736L;
+    class SystemQueue extends RunnableQueueWrapper{
+		
+    	public SystemQueue(Queue<Runnable> queue) {
+			super(queue);
+		}
 		
 		@Override
 		protected void event_taskOfferBefore() {

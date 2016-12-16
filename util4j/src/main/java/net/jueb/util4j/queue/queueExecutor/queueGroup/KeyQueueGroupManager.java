@@ -2,6 +2,7 @@ package net.jueb.util4j.queue.queueExecutor.queueGroup;
 
 import java.util.Iterator;
 
+import net.jueb.util4j.queue.queueExecutor.QueueFactory;
 import net.jueb.util4j.queue.queueExecutor.queue.QueueExecutor;
 
 /**
@@ -41,6 +42,8 @@ public interface KeyQueueGroupManager extends Iterable<QueueExecutor>{
 	public long getToalCompletedTaskCount(String key);
 	
 	public void setGroupEventListener(KeyGroupEventListener listener);
+	
+	public QueueFactory getQueueFactory();
 	
 	public static interface KeyGroupEventListener{
 		/**

@@ -2,13 +2,16 @@ package net.jueb.util4j.queue.queueExecutor.queueGroup.impl;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
+import net.jueb.util4j.queue.queueExecutor.QueueFactory;
 import net.jueb.util4j.queue.queueExecutor.queue.QueueExecutor;
+import net.jueb.util4j.queue.queueExecutor.queue.impl.RunnableQueueExecutorWrapper;
 import net.jueb.util4j.queue.queueExecutor.queueGroup.IndexQueueGroupManager;
 
-public class ArrayIndexQueueManager implements IndexQueueGroupManager{
+public class ArrayIndexQueueManager extends AbstractQueueMaganer implements IndexQueueGroupManager{
 	/**
 	 * 最大队列插槽数
 	 */
@@ -26,7 +29,14 @@ public class ArrayIndexQueueManager implements IndexQueueGroupManager{
 	
 	private final AtomicLong totalCompleteTask=new AtomicLong();
 	
+	private volatile IndexGroupEventListener listener;
+
 	public ArrayIndexQueueManager() {
+		init();
+	}
+	
+	public ArrayIndexQueueManager(QueueFactory queueFactory) {
+		super(queueFactory);
 		init();
 	}
 	
@@ -34,7 +44,7 @@ public class ArrayIndexQueueManager implements IndexQueueGroupManager{
     {
 		for(int i=0;i<solts.length;i++)
     	{
-    		solts[i]=new SoltQueue(i);
+    		solts[i]=new SoltQueue(i,getQueueFactory_().buildQueue());
     	}
     }
 	
@@ -103,8 +113,6 @@ public class ArrayIndexQueueManager implements IndexQueueGroupManager{
 		return solts[index];
 	}
 	
-	private volatile IndexGroupEventListener listener;
-	
 	public void setGroupEventListener(IndexGroupEventListener listener)
 	{
 		this.listener=listener;
@@ -136,11 +144,10 @@ public class ArrayIndexQueueManager implements IndexQueueGroupManager{
 	 * 插槽队列
 	 * @author juebanlin
 	 */
-	private class SoltQueue extends RunnableQueueExecutor{
+	private class SoltQueue extends RunnableQueueExecutorWrapper{
 		/**
-		 * 
+		 * 队列索引
 		 */
-		private static final long serialVersionUID = 1711281918590904219L;
 		private final int soltIndex;
 		/**
 	     * 此队列是否锁定/是否被线程占用
@@ -152,8 +159,8 @@ public class ArrayIndexQueueManager implements IndexQueueGroupManager{
 	     */
 		private final AtomicLong completedTaskCount = new AtomicLong(0);
 		
-		public SoltQueue(int soltIndex) {
-			super("SoltQueue-"+soltIndex);
+		public SoltQueue(int soltIndex,Queue<Runnable> queue) {
+			super(queue,"SoltQueue-"+soltIndex);
 			this.soltIndex=soltIndex;
 			init();
 		}
