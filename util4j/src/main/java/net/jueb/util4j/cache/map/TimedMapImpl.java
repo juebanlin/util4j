@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.Executor;
@@ -40,6 +41,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 	 * @param lisenterExecutor
 	 */
 	public TimedMapImpl(Executor lisenterExecutor){
+		Objects.requireNonNull(lisenterExecutor);
 		this.lisenterExecutor=lisenterExecutor;
 	}
 	

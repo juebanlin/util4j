@@ -1,46 +1,46 @@
-package net.jueb.util4j.cache.callBack;
+package net.jueb.util4j.cache.callBack.impl;
 
 import java.lang.management.ManagementFactory;
 import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import net.jueb.util4j.cache.callBack.CallBack;
 import net.jueb.util4j.cache.map.TimedMap;
 import net.jueb.util4j.cache.map.TimedMap.EventListener;
 import net.jueb.util4j.cache.map.TimedMapImpl;
 
-public class CallBackCache<T> {
+public abstract class AbstractCallBackCache<KEY,TYPE> {
 	protected Logger _log = LoggerFactory.getLogger(this.getClass());
 	public volatile boolean clearing;
 	
-	private final TimedMap<String,CallBack<T>> callBacks;
+	private final TimedMap<KEY,CallBack<TYPE>> callBacks;
 	
 	/**
 	 * 超时执行器
 	 * @param timeOutExecutor
 	 */
-	public CallBackCache(Executor timeOutExecutor) {
-		 callBacks=new TimedMapImpl<String,CallBack<T>>(timeOutExecutor);
+	public AbstractCallBackCache(Executor timeOutExecutor) {
+		 callBacks=new TimedMapImpl<KEY,CallBack<TYPE>>(timeOutExecutor);
 	}
 	
-	public String put(CallBack<T> callBack)
+	public KEY put(CallBack<TYPE> callBack)
 	{
 		if(callBack==null)
 		{
 			return null;
 		}
-		String ck=nextCallKey();
+		KEY ck=nextCallKey();
 		long timeOut=callBack.getTimeOut();
 		if(timeOut==0)
 		{
 			timeOut=CallBack.DEFAULT_TIMEOUT;
 		}
 		callBacks.put(ck, callBack, timeOut);
-		callBacks.addEventListener(ck, new EventListener<String,CallBack<T>>(){
+		callBacks.addEventListener(ck, new EventListener<KEY,CallBack<TYPE>>(){
 			@Override
-			public void removed(String key, CallBack<T> value, boolean expire) {
+			public void removed(KEY key, CallBack<TYPE> value, boolean expire) {
 				if(expire)
 				{
 					value.timeOutCall();
@@ -56,22 +56,22 @@ public class CallBackCache<T> {
 	 * @param timeOutExecutor
 	 * @return
 	 */
-	public String put(CallBack<T> callBack,final Executor timeOutExecutor)
+	public KEY put(CallBack<TYPE> callBack,final Executor timeOutExecutor)
 	{
 		if(callBack==null)
 		{
 			return null;
 		}
-		String ck=nextCallKey();
+		KEY ck=nextCallKey();
 		long timeOut=callBack.getTimeOut();
 		if(timeOut==0)
 		{
 			timeOut=CallBack.DEFAULT_TIMEOUT;
 		}
 		callBacks.put(ck, callBack, timeOut);
-		callBacks.addEventListener(ck, new EventListener<String,CallBack<T>>(){
+		callBacks.addEventListener(ck, new EventListener<KEY,CallBack<TYPE>>(){
 			@Override
-			public void removed(String key, final CallBack<T> value, boolean expire) {
+			public void removed(KEY key, final CallBack<TYPE> value, boolean expire) {
 				if(expire)
 				{
 					timeOutExecutor.execute(new Runnable() {
@@ -86,7 +86,7 @@ public class CallBackCache<T> {
 		return ck;
 	}
 	
-	public CallBack<T> poll(String callKey)
+	public CallBack<TYPE> poll(KEY callKey)
 	{
 		return callBacks.remove(callKey);
 	}
@@ -110,7 +110,8 @@ public class CallBackCache<T> {
 		}
 	}
 	
-	protected static final AtomicLong seq=new AtomicLong();
+	public abstract KEY nextCallKey();
+
 	private  static String JVM_PID;
 	static{
 		String pid = ManagementFactory.getRuntimeMXBean().getName();  
@@ -121,8 +122,8 @@ public class CallBackCache<T> {
         }  
 	}
 	
-	public static final String nextCallKey()
+	public static String getJVM_PID()
 	{
-		return JVM_PID+"-"+seq.incrementAndGet();
+		return JVM_PID;
 	}
 }
