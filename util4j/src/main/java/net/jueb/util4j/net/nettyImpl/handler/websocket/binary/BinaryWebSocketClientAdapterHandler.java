@@ -1,17 +1,18 @@
-package net.jueb.util4j.net.nettyImpl.handler.websocket;
+package net.jueb.util4j.net.nettyImpl.handler.websocket.binary;
 
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
-import net.jueb.util4j.net.nettyImpl.handler.websocket.codec.BinaryWebSocketFrameByteBufAdapter;
+import net.jueb.util4j.net.nettyImpl.handler.websocket.WebSocketClientInitializer;
+import net.jueb.util4j.net.nettyImpl.handler.websocket.binary.codec.BinaryWebSocketFrameByteBufAdapter;
 
 /**
- * websocket服务端handler适配器
+ * websocket客户端handler适配器
  * @author Administrator
  */
-public  class BinaryWebSocketServerAdapterHandler extends WebSocketServerInitializer{
-
+public  class BinaryWebSocketClientAdapterHandler extends WebSocketClientInitializer{
+	
 	private ChannelHandler handler;
-	public BinaryWebSocketServerAdapterHandler(String uri,ChannelHandler handler) {
+	public BinaryWebSocketClientAdapterHandler(String uri,ChannelHandler handler) {
 		super(uri);
 		this.handler=handler;
 	}

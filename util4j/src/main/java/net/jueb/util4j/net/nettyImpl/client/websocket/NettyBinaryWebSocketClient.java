@@ -14,7 +14,7 @@ import io.netty.handler.codec.http.websocketx.WebSocketClientProtocolHandler;
 import io.netty.handler.codec.http.websocketx.WebSocketVersion;
 import net.jueb.util4j.net.nettyImpl.client.NettyClient;
 import net.jueb.util4j.net.nettyImpl.client.NettyClientConfig;
-import net.jueb.util4j.net.nettyImpl.handler.websocket.codec.BinaryWebSocketFrameByteBufAdapter;
+import net.jueb.util4j.net.nettyImpl.handler.websocket.binary.codec.BinaryWebSocketFrameByteBufAdapter;
 
 /**
  *适配了websocket的复合型客户端 

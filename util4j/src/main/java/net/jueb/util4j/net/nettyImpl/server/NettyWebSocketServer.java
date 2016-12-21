@@ -4,8 +4,12 @@ import java.net.InetSocketAddress;
 
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import net.jueb.util4j.net.nettyImpl.handler.websocket.BinaryWebSocketServerAdapterHandler;
+import net.jueb.util4j.net.nettyImpl.handler.websocket.binary.BinaryWebSocketServerAdapterHandler;
 
+/**
+ * 将WebSocket的Binary流转换为正常socket链路的服务器
+ * @author Administrator
+ */
 public class NettyWebSocketServer extends NettyServer{
 	private String uri;
 	
