@@ -14,28 +14,28 @@ public interface QueueGroupExecutor extends QueueGroupExecutorProto{
 	
 	/**
 	 * 执行队列任务
-	 * @param solt 队列号
+	 * @param index 队列号
 	 * @param task 任务
 	 */
 	public void execute(short index,Runnable task);
 	
 	/**
 	 * 批量执行队列任务
-	 * @param solt 队列号
+	 * @param index 队列号
 	 * @param tasks 批量任务
 	 */
 	public void execute(short index,List<Runnable> tasks);
 	
 	/**
 	 * 设置队列别名
-	 * @param solt
+	 * @param index
 	 * @param alias
 	 */
 	public void setAlias(short index,String alias);
 	
 	/**
 	 * 获取队列别名
-	 * @param solt
+	 * @param index
 	 */
 	public String getAlias(short index);
 	
