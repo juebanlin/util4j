@@ -65,75 +65,62 @@ public class ThreadPoolQueueGroupExecutor extends ThreadPoolExecutor implements 
 		init();
 	}
 
-	@Override
-	public void execute(short index, Runnable task) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void execute(short index, List<Runnable> tasks) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void setAlias(short index, String alias) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public String getAlias(short index) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public QueueExecutor getQueueExecutor(short index) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public Iterator<QueueExecutor> indexIterator() {
-		// TODO Auto-generated method stub
-		return null;
+		return iqm.iterator();
+	}
+
+	@Override
+	public void execute(short solt, Runnable task) {
+		iqm.getQueueExecutor(solt).execute(task);
+	}
+
+	@Override
+	public void execute(short solt, List<Runnable> tasks) {
+		iqm.getQueueExecutor(solt).execute(tasks);
+	}
+
+	@Override
+	public void setAlias(short solt, String alias) {
+		iqm.setAlias(solt, alias);
+	}
+
+	@Override
+	public String getAlias(short solt) {
+		return iqm.getAlias(solt);
+	}
+
+	@Override
+	public QueueExecutor getQueueExecutor(short solt) {
+		return iqm.getQueueExecutor(solt);
 	}
 
 	@Override
 	public void execute(String key, Runnable task) {
-		// TODO Auto-generated method stub
-		
+		kqm.getQueueExecutor(key).execute(task);
 	}
 
 	@Override
 	public void execute(String key, List<Runnable> tasks) {
-		// TODO Auto-generated method stub
-		
+		kqm.getQueueExecutor(key).execute(tasks);
 	}
 
 	@Override
 	public void setAlias(String key, String alias) {
-		// TODO Auto-generated method stub
-		
+		kqm.setAlias(key, alias);
 	}
 
 	@Override
 	public String getAlias(String key) {
-		// TODO Auto-generated method stub
-		return null;
+		return kqm.getAlias(key);
 	}
 
 	@Override
 	public QueueExecutor getQueueExecutor(String key) {
-		// TODO Auto-generated method stub
-		return null;
+		return kqm.getQueueExecutor(key);
 	}
 
 	@Override
 	public Iterator<QueueExecutor> keyIterator() {
-		// TODO Auto-generated method stub
-		return null;
+		return kqm.iterator();
 	}
 }
