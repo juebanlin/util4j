@@ -1,5 +1,6 @@
 //版本配置
-syntax = "proto3";
+syntax = "proto2";
+//syntax = "proto3";
 //C++配置
 package proto;
 //java配置
@@ -9,4 +10,11 @@ option java_outer_classname = "ProtobufTest";
 message MessageArray
 {
    map<string, string> msg_map = 1;
+}
+
+message CreateRoleRequest
+{
+	required string name =1;
+	required uint32 ballerCode =2;
+	optional string inviteCode = 3;
 }
