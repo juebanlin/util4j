@@ -11,6 +11,7 @@
 	<url>http://jueb.net</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<JDK.VERSION>1.7</JDK.VERSION>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -164,10 +165,10 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.2</version>
 				<configuration>
-					<source>1.7</source>
-					<target>1.7</target>
+					<source>${JDK.VERSION}</source>
+					<target>${JDK.VERSION}</target>
 					<!-- 编译插件jdk版本 -->
-					<compilerVersion>1.7</compilerVersion>
+					<compilerVersion>${JDK.VERSION}</compilerVersion>
 					<encoding>${project.build.sourceEncoding}</encoding>
 				</configuration>
 			</plugin>

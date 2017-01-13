@@ -6,35 +6,35 @@ import java.util.List;
 import net.jueb.util4j.queue.queueExecutor.queue.QueueExecutor;
 
 /**
- * 任务队列组执行器
+ * 任务队列组执行器设计原型
  * @author juebanlin
  */
-public interface QueueGroupExecutor extends QueueGroupExecutorBase{
+public interface QueueGroupExecutorBase{
 	
 	/**
 	 * 执行队列任务
-	 * @param index 队列号
+	 * @param solt 队列号
 	 * @param task 任务
 	 */
 	public void execute(short index,Runnable task);
 	
 	/**
 	 * 批量执行队列任务
-	 * @param index 队列号
+	 * @param solt 队列号
 	 * @param tasks 批量任务
 	 */
 	public void execute(short index,List<Runnable> tasks);
 	
 	/**
 	 * 设置队列别名
-	 * @param index
+	 * @param solt
 	 * @param alias
 	 */
 	public void setAlias(short index,String alias);
 	
 	/**
 	 * 获取队列别名
-	 * @param index
+	 * @param solt
 	 */
 	public String getAlias(short index);
 	
@@ -45,16 +45,8 @@ public interface QueueGroupExecutor extends QueueGroupExecutorBase{
 	 */
 	public QueueExecutor getQueueExecutor(short index);
 	
-	
 	/**
 	 * 迭代执行器
 	 */
 	Iterator<QueueExecutor> indexIterator();
-	
-	public void execute(String key,Runnable task);
-	public void execute(String key,List<Runnable> tasks);
-	public void setAlias(String key,String alias);
-	public String getAlias(String key);
-	public QueueExecutor getQueueExecutor(String key);
-	Iterator<QueueExecutor> keyIterator();
 }
