@@ -4,14 +4,14 @@
 
 	<groupId>net.jueb</groupId>
 	<artifactId>util4j</artifactId>
-	<version>2.7.6</version>
+	<version>3.7.6_beta</version>
 	<packaging>jar</packaging>
 
 	<name>util4j</name>
 	<url>http://jueb.net</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<JDK.VERSION>1.7</JDK.VERSION>
+		<JDK.VERSION>1.8</JDK.VERSION>
 	</properties>
 	<dependencies>
 		<dependency>
