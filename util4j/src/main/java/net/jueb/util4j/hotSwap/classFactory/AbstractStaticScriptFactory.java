@@ -24,11 +24,10 @@ public abstract class AbstractStaticScriptFactory<T extends IScript> implements 
 			super();
 			this.factory = factory;
 		}
+		
 		/**
-		 * 根据类名注册类
-		 * 注意:脚本类不能包含匿名类
-		 * @param script 脚本类
-		 * @param depends 依赖类
+		 * 注册静态脚本,此脚本不会被动态加载类覆盖
+		 * @param scriptClass
 		 */
 		public final void registStaticScript(Class<? extends T> scriptClass) {
 			factory.registStaticScript(scriptClass);
@@ -61,7 +60,7 @@ public abstract class AbstractStaticScriptFactory<T extends IScript> implements 
 					|| Modifier.isInterface(scriptClass.getModifiers());// 是否是抽象类
 			if(isAbstractOrInterface)
 			{
-				throw new UnsupportedOperationException(scriptClass+"can not newInstance");
+				throw new UnsupportedOperationException(scriptClass +"can not newInstance");
 			}
 			T script = scriptClass.newInstance();
 			int code=script.getMessageCode();
