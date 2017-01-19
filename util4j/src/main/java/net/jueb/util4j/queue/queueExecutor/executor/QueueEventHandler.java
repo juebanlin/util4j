@@ -1,4 +1,4 @@
-package net.jueb.util4j.queue.queueExecutor.queue;
+package net.jueb.util4j.queue.queueExecutor.executor;
 
 public interface QueueEventHandler {
 

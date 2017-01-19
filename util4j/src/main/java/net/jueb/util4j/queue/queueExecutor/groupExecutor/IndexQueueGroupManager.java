@@ -1,9 +1,9 @@
-package net.jueb.util4j.queue.queueExecutor.queueGroup;
+package net.jueb.util4j.queue.queueExecutor.groupExecutor;
 
 import java.util.Iterator;
 
 import net.jueb.util4j.queue.queueExecutor.QueueFactory;
-import net.jueb.util4j.queue.queueExecutor.queue.QueueExecutor;
+import net.jueb.util4j.queue.queueExecutor.executor.QueueExecutor;
 
 /**
  * 队列组

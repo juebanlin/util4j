@@ -1,10 +1,10 @@
-package net.jueb.util4j.queue.queueExecutor.queue.impl;
+package net.jueb.util4j.queue.queueExecutor.executor.impl;
 
 import java.util.List;
 import java.util.Queue;
 
-import net.jueb.util4j.queue.queueExecutor.RunnableQueueWrapper;
-import net.jueb.util4j.queue.queueExecutor.queue.QueueExecutor;
+import net.jueb.util4j.queue.queueExecutor.executor.QueueExecutor;
+import net.jueb.util4j.queue.queueExecutor.queue.RunnableQueueWrapper;
 
 /**
  * 具有调度器功能的队列

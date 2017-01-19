@@ -1,6 +1,6 @@
 package net.jueb.util4j.queue.queueExecutor;
 
-import net.jueb.util4j.queue.queueExecutor.queue.QueueExecutor;
+import net.jueb.util4j.queue.queueExecutor.executor.QueueExecutor;
 
 public interface QueueContext {
 

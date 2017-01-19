@@ -1,17 +1,15 @@
-package net.jueb.util4j.queue.queueExecutor.queueGroup.impl.prototype;
+package net.jueb.util4j.queue.queueExecutor.groupExecutor.impl;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,15 +17,15 @@ import org.slf4j.LoggerFactory;
 import net.jueb.util4j.lock.waitCondition.SleepingWaitConditionStrategy;
 import net.jueb.util4j.lock.waitCondition.WaitCondition;
 import net.jueb.util4j.lock.waitCondition.WaitConditionStrategy;
-import net.jueb.util4j.queue.queueExecutor.RunnableQueue;
-import net.jueb.util4j.queue.queueExecutor.queue.QueueExecutor;
-import net.jueb.util4j.queue.queueExecutor.queueGroup.QueueGroupExecutorBase;
+import net.jueb.util4j.queue.queueExecutor.executor.QueueExecutor;
+import net.jueb.util4j.queue.queueExecutor.executor.impl.RunnableQueueExecutorEventWrapper;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.IndexQueueGroupManager;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.IndexQueueGroupManager.IndexGroupEventListener;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.KeyQueueGroupManager;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.KeyQueueGroupManager.KeyGroupEventListener;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupExecutor;
 
-/**
- * 队列组执行器设计原型 2016.10.14
- * @author juebanlin
- */
-public final class QueueGroupExecutorPrototype implements QueueGroupExecutorBase{
+public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
     
 	protected Logger log=LoggerFactory.getLogger(getClass());
 	
@@ -36,6 +34,14 @@ public final class QueueGroupExecutorPrototype implements QueueGroupExecutorBase
     private static final int DEFAULT_MAX_THREAD_POOL = 8;
 
     private static final int DEFAULT_KEEP_ALIVE_SEC = 30;
+    
+    private static final IndexQueueGroupManager DEFAULT_IndexQueueGroupManager = new ArrayIndexQueueManager();
+   
+    private static final KeyQueueGroupManager DEFAULT_KeyQueueGroupManager = new StringQueueManager();
+    
+    private static final Queue<Runnable> DEFAULT_BossQueue = new ConcurrentLinkedQueue<Runnable>();
+    
+    private static final WaitConditionStrategy DEFAULT_waitConditionStrategy=new SleepingWaitConditionStrategy();
     
 	private volatile ThreadFactory threadFactory;
     
@@ -64,24 +70,9 @@ public final class QueueGroupExecutorPrototype implements QueueGroupExecutorBase
     private volatile int largestPoolSize;
     
     /**
-     * 最大队列插槽数
-     */
-    public static final int MAX_SOLT_COUNT = 0xFFFF;
-    
-    /**
-     * 队列插槽
-     */
-    private final SoltQueue[] solts=new SoltQueue[MAX_SOLT_COUNT+1];
-    
-    /**
-     * 队列别名
-     */
-    private final String[] soltAlias=new String[solts.length];
-    
-    /**
      * 系统队列
      */
-    private final EventQueue systemQueue = new EventQueue("systemQueue");
+    private final SystemQueue systemQueue;
     
     /**
      * 队列处理线程
@@ -96,39 +87,62 @@ public final class QueueGroupExecutorPrototype implements QueueGroupExecutorBase
     private volatile boolean shutdown;
 
     private final WaitConditionStrategy waitConditionStrategy;
+    private final IndexQueueGroupManager iqm;
+    private final KeyQueueGroupManager kqm;
     
-    
-    protected void init()
-    {
-    	for(int i=0;i<solts.length;i++)
-    	{
-    		solts[i]=new SoltQueue(i);
-    	}
-    }
-    
-    public QueueGroupExecutorPrototype() {
+    public DefaultQueueGroupExecutor() {
         this(DEFAULT_INITIAL_THREAD_POOL_SIZE, DEFAULT_MAX_THREAD_POOL);
     }
 
-    public QueueGroupExecutorPrototype(int corePoolSize, int maximumPoolSize) {
-        this(corePoolSize, maximumPoolSize,new SleepingWaitConditionStrategy());
+    public DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize) {
+        this(corePoolSize, maximumPoolSize,DEFAULT_BossQueue);
     }
     
-    public QueueGroupExecutorPrototype(int corePoolSize, int maximumPoolSize,
-    		WaitConditionStrategy waitConditionStrategy) {
-        this(corePoolSize, maximumPoolSize, DEFAULT_KEEP_ALIVE_SEC, TimeUnit.SECONDS, Executors.defaultThreadFactory(),waitConditionStrategy);
+    protected DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize,Queue<Runnable> bossQueue) {
+            this(corePoolSize, maximumPoolSize, DEFAULT_KEEP_ALIVE_SEC, TimeUnit.SECONDS, 
+            		Executors.defaultThreadFactory(),DEFAULT_waitConditionStrategy,
+            		bossQueue,DEFAULT_IndexQueueGroupManager,DEFAULT_KeyQueueGroupManager);
+        }
+    
+    protected DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize,
+        	Queue<Runnable> bossQueue,IndexQueueGroupManager indexQM,KeyQueueGroupManager keyQM) {
+            this(corePoolSize, maximumPoolSize, DEFAULT_KEEP_ALIVE_SEC, TimeUnit.SECONDS, 
+            		Executors.defaultThreadFactory(),DEFAULT_waitConditionStrategy,
+            		bossQueue,indexQM,keyQM);
+        }
+    
+    protected DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize,
+    	Queue<Runnable> bossQueue,IndexQueueGroupManager indexQM,KeyQueueGroupManager keyQM,WaitConditionStrategy waitConditionStrategy) {
+        this(corePoolSize, maximumPoolSize, DEFAULT_KEEP_ALIVE_SEC, TimeUnit.SECONDS, 
+        		Executors.defaultThreadFactory(),waitConditionStrategy,
+        		bossQueue,indexQM,keyQM);
     }
     
-    public QueueGroupExecutorPrototype(int corePoolSize, int maximumPoolSize, 
-    		long keepAliveTime, TimeUnit unit,
-            ThreadFactory threadFactory,
-            WaitConditionStrategy waitConditionStrategy) {
+    /**
+     * 
+     * @param corePoolSize 核心线程池数量
+     * @param maximumPoolSize 最大线程数量
+     * @param keepAliveTime 非核心线程活跃时长
+     * @param unit 单位
+     * @param threadFactory 线程工厂
+     * @param waitConditionStrategy 线程等待机制
+     * @param bossQueue 主队列
+     * @param iqm 索引队列管理器
+     * @param kqm 键值队列管理器
+     */
+    public DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize, 
+    		long keepAliveTime, TimeUnit unit,ThreadFactory threadFactory,
+            WaitConditionStrategy waitConditionStrategy,Queue<Runnable> bossQueue,
+            IndexQueueGroupManager iqm,KeyQueueGroupManager kqm) {
 		if (corePoolSize < 0 
 				||maximumPoolSize <= 0 
 				||maximumPoolSize < corePoolSize 
 				||keepAliveTime < 0
 				||threadFactory==null  
-				||waitConditionStrategy==null)
+				||waitConditionStrategy==null
+				||iqm==null
+				||kqm==null
+				||bossQueue==null )
 		{
 			throw new IllegalArgumentException();
 		}
@@ -137,10 +151,27 @@ public final class QueueGroupExecutorPrototype implements QueueGroupExecutorBase
 		this.keepAliveNanoTime = unit.toNanos(keepAliveTime);
 		this.threadFactory=threadFactory;
         this.waitConditionStrategy=waitConditionStrategy;
-        init();
+        this.iqm=iqm;
+        this.iqm.setGroupEventListener(new IndexGroupEventListener() {
+			@Override
+			public void onQueueHandleTask(short solt, Runnable handleTask) {
+				//当sqm有可以处理某队列的任务产生时,丢到系统队列,当系统队列
+				systemExecute(handleTask);
+			}
+		});
+        this.kqm=kqm;
+        this.kqm.setGroupEventListener(new KeyGroupEventListener() {
+			
+			@Override
+			public void onQueueHandleTask(String key, Runnable handleTask) {
+				//当sqm有可以处理某队列的任务产生时,丢到系统队列,当系统队列
+				systemExecute(handleTask);
+			}
+		});
+        this.systemQueue=new SystemQueue(bossQueue,"SystemQueue");
     }
-	
-	public final ThreadFactory getThreadFactory() {
+    
+    public final ThreadFactory getThreadFactory() {
 		return threadFactory;
 	}
 
@@ -232,7 +263,7 @@ public final class QueueGroupExecutorPrototype implements QueueGroupExecutorBase
 		this.largestPoolSize=size;
 	}
 
-	public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+    public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
 	    long deadline = System.currentTimeMillis() + unit.toMillis(timeout);
 	    synchronized (workers) {
 	        while (!isTerminated()) {
@@ -314,7 +345,7 @@ public final class QueueGroupExecutorPrototype implements QueueGroupExecutorBase
     private void addWorkerIfNecessary() {
         if (idleWorkers.get() == 0) {
             synchronized (workers) {
-            	if (workers.size() >=getMaximumPoolSize()) {
+            	if (workers.size() >= getMaximumPoolSize()) {
                     return;
                 }
                 if (workers.isEmpty() || (idleWorkers.get() == 0)) {
@@ -352,7 +383,7 @@ public final class QueueGroupExecutorPrototype implements QueueGroupExecutorBase
      * 线程处理逻辑
      * @author juebanlin
      */
-    private class Worker implements Runnable {
+    class Worker implements Runnable {
 		public void run() {
             long lastRunTaskTime=System.currentTimeMillis();
             try {
@@ -377,7 +408,7 @@ public final class QueueGroupExecutorPrototype implements QueueGroupExecutorBase
                 		}
                 		continue;//继续寻找任务
                 	}
-					idleWorkers.decrementAndGet();//活动线程-1
+                	idleWorkers.decrementAndGet();//活动线程-1
 					try {
 						addWorkerIfNecessary();//预备一个线程,如果有新任务则可立马执行
 						lastRunTaskTime=System.currentTimeMillis();
@@ -464,8 +495,7 @@ public final class QueueGroupExecutorPrototype implements QueueGroupExecutorBase
          */
         private Runnable waitingTask(long waiteTime,TimeUnit unit) throws InterruptedException
         {
-        	workerWaitCondition.init(waiteTime, unit);//初始化条件参数
-        	//等待一个条件通过
+        	workerWaitCondition.init(waiteTime, unit);
         	return waitConditionStrategy.waitFor(workerWaitCondition,waiteTime,unit);
         }
         
@@ -491,12 +521,12 @@ public final class QueueGroupExecutorPrototype implements QueueGroupExecutorBase
 			}
 
 			@Override
-			public boolean isComplete() {//验证条件是否通过
-				return task!=null || System.nanoTime()>=endTime;
+			public boolean isComplete() {
+				return task!=null ||System.nanoTime()>=endTime;
 			}
 
 			@Override
-			public void doComplete() {//输出条件结果
+			public void doComplete() {
 				if(task==null)
 				{
 		        	task= findTask();
@@ -506,171 +536,34 @@ public final class QueueGroupExecutorPrototype implements QueueGroupExecutorBase
     }
     
     /**
-     * 基于事件的队列
+     * 基于事件的系统队列
      * @author juebanlin
      */
-    private class EventQueue extends ConcurrentLinkedQueue<Runnable> implements RunnableQueue,QueueExecutor{
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = -2961878968488809736L;
-
-		private final String name;
-		public EventQueue() {
-			this.name="EventQueue";
-		}
-		public EventQueue(String name) {
-			this.name=name;
-		}
+    class SystemQueue extends RunnableQueueExecutorEventWrapper{
 		
-		@Override
-		public String getQueueName() {
-			return name;
+		public SystemQueue(Queue<Runnable> queue, String name) {
+			super(queue, name);
 		}
 
-		/**
-		 * 有任务进入
-		 */
-		protected void onOfferd()
-		{
-			
-		}
-		
 		@Override
-        public final boolean offer(Runnable e) {
-			event_taskOfferBefore(this);
-        	boolean bool=super.offer(e);
-        	onOfferd();
-        	event_taskOfferAfter(this,bool);
-        	return bool;
-        }
+		protected void onAddBefore() {
+			systemTaskOfferBefore(this);
+		}
 
 		@Override
-		public final boolean addAll(Collection<? extends Runnable> c) {
-			event_taskOfferBefore(this);
-        	boolean bool=super.addAll(c);
-        	onOfferd();
-        	event_taskOfferAfter(this,bool);
-        	return bool;
-		}
-		
-		@Override
-		public final void execute(Runnable task) {
-			offer(task);
-		}
-		
-		@Override
-		public final void execute(List<Runnable> tasks) {
-			addAll(tasks);
+		protected void onAddAfter(boolean offeredSucceed) {
+			if(offeredSucceed)
+			{
+				systemTaskOfferAfter(this);
+			}
 		}
     }
     
     /**
-     * 插槽队列
-     * @author juebanlin
-     */
-    private class SoltQueue extends EventQueue{
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 1711281918590904219L;
-		private final int soltIndex;
-		/**
-         * 此队列是否锁定/是否被线程占用
-         * 次属性仅供本类持有
-         */
-        private final AtomicBoolean isLock = new AtomicBoolean(false);
-        /**
-         * 此队列完成的任务数量
-         */
-		private final AtomicLong completedTaskCount = new AtomicLong(0);
-		
-		
-		@Override
-		public String getQueueName() {
-			return getAlias((short) soltIndex);
-		}
-		
-		public SoltQueue(int soltIndex) {
-			this.soltIndex=soltIndex;
-			init();
-		}
-		
-		/**
-		 * 初始化状态
-		 */
-		public void init(){
-			isLock.set(false);
-			completedTaskCount.set(0);
-			super.clear();
-		}
-		
-		public AtomicLong getCompletedTaskCount() {
-			return completedTaskCount;
-		}
-		
-		/**
-		 * 当有任务添加时,将这些任务处理逻辑交给系统
-		 */
-		@Override
-		protected void onOfferd() {
-			super.onOfferd();
-			if(isLock.compareAndSet(false, true))
-   		 	{
-				systemExecute(new SoltQueueProcessTask(this));
-   		 	}
-		}
-		
-		private class SoltQueueProcessTask implements Runnable{
-	    	SoltQueue queue;
-	    	public SoltQueueProcessTask(SoltQueue queue) {
-	    		this.queue=queue;
-			}
-			@Override
-			public void run() {
-				try {
-					handleQueueTask(queue);
-				} finally {
-					queue.isLock.set(false);
-				}
-			}
-			
-			 /**
-	         * 处理队列任务
-	         * @param queue
-	         */
-	        private void handleQueueTask(SoltQueue queue) {
-	        	Thread thread=Thread.currentThread();
-	        	for (;;) 
-	            {
-	        		Runnable task = queue.poll();
-	            	if(task == null)
-	                {//停止处理队列
-	            		break;
-	                }
-	            	beforeExecute(thread, task);
-	                boolean succeed = false;
-	                try {
-	                    task.run();
-	                    queue.getCompletedTaskCount().incrementAndGet();
-	                    succeed = true;
-	                    afterExecute(task, null);
-	                } catch (RuntimeException e) {
-	                    if (!succeed) {
-	                        afterExecute(task, e);
-	                    }
-	                    throw e;
-	                }
-	            }
-	        }
-	    }
-    }
-    
-	/**
      * 队列添加事件执行之前
      * @param queue
      */
-    protected void event_taskOfferBefore(EventQueue queue)
+    protected void systemTaskOfferBefore(SystemQueue queue)
     {//如果关机则可以抛出异常
     	
     }
@@ -680,18 +573,12 @@ public final class QueueGroupExecutorPrototype implements QueueGroupExecutorBase
      * @param queue
      * @param offered
      */
-    protected void event_taskOfferAfter(EventQueue queue,boolean offered)
+    protected void systemTaskOfferAfter(SystemQueue queue)
     {
 	    addWorkerIfNecessary();
-	    waitConditionStrategy.signalAllWhenBlocking();//如果有线程阻塞等待,则释放阻塞去处理任务
+	    //如果有线程阻塞等待,则释放阻塞去处理任务
+	    waitConditionStrategy.signalAllWhenBlocking();
     }
-    
-    protected void afterExecute(Runnable task,Exception object) {
-		
-	}
-    protected void beforeExecute(Thread thread, Runnable task) {
-		
-	}
     
     /**
      * 转换为插槽索引
@@ -707,61 +594,11 @@ public final class QueueGroupExecutorPrototype implements QueueGroupExecutorBase
 	}
     
 	public long getCompletedTaskCount() {
-		long v=0;
-	    for(SoltQueue sq:solts)
-	    {
-	    	v+=sq.getCompletedTaskCount().get();
-	    }
-	    return v;
+	    return iqm.getToalCompletedTaskCount();
 	}
 
-	public Iterator<QueueExecutor> iterator() {
-		return new Iterator<QueueExecutor>() {
-			int i=0;
-			@Override
-			public boolean hasNext() {
-				return i<solts.length;
-			}
-
-			@Override
-			public QueueExecutor next() {
-				return solts[i++];
-			}
-		};
-	}
-	
-	@Override
-	public void execute(short solt, Runnable task) {
-		if(task ==null)
-    	{
-    		throw new RuntimeException("task is null");
-    	}
-		getQueueExecutor(solt).execute(task);
-	}
-
-	@Override
-	public void execute(short solt, List<Runnable> tasks) {
-		if(tasks ==null)
-    	{
-    		throw new RuntimeException("tasks is null");
-    	}
-		getQueueExecutor(solt).execute(tasks);
-	}
-
-	@Override
-	public void setAlias(short solt, String alias) {
-		soltAlias[convertIndex(solt)]=alias;
-	}
-
-	@Override
-	public String getAlias(short solt) {
-		return soltAlias[convertIndex(solt)];
-	}
-
-	@Override
-	public QueueExecutor getQueueExecutor(short solt) {
-		int index=convertIndex(solt);
-		return solts[index];
+	public void shutdownGracefully() {
+		
 	}
 	
 	protected void systemExecute(Runnable task)
@@ -770,7 +607,7 @@ public final class QueueGroupExecutorPrototype implements QueueGroupExecutorBase
     	{
     		throw new RuntimeException("task is null");
     	}
-		systemQueue.execute(task);
+		systemQueue.add(task);
 	}
 	
 	protected void systemExecute(List<Runnable> tasks)
@@ -779,11 +616,140 @@ public final class QueueGroupExecutorPrototype implements QueueGroupExecutorBase
     	{
     		throw new RuntimeException("tasks is null");
     	}
-		systemQueue.execute(tasks);
+		systemQueue.addAll(tasks);
+	}
+
+	public Iterator<QueueExecutor> indexIterator() {
+		return iqm.iterator();
 	}
 
 	@Override
-	public Iterator<QueueExecutor> indexIterator() {
-		return iterator();
+	public void execute(short solt, Runnable task) {
+		iqm.getQueueExecutor(solt).execute(task);
+	}
+
+	@Override
+	public void execute(short solt, List<Runnable> tasks) {
+		iqm.getQueueExecutor(solt).execute(tasks);
+	}
+
+	@Override
+	public void setAlias(short solt, String alias) {
+		iqm.setAlias(solt, alias);
+	}
+
+	@Override
+	public String getAlias(short solt) {
+		return iqm.getAlias(solt);
+	}
+
+	@Override
+	public QueueExecutor getQueueExecutor(short solt) {
+		return iqm.getQueueExecutor(solt);
+	}
+
+	@Override
+	public void execute(String key, Runnable task) {
+		kqm.getQueueExecutor(key).execute(task);
+	}
+
+	@Override
+	public void execute(String key, List<Runnable> tasks) {
+		kqm.getQueueExecutor(key).execute(tasks);
+	}
+
+	@Override
+	public void setAlias(String key, String alias) {
+		kqm.setAlias(key, alias);
+	}
+
+	@Override
+	public String getAlias(String key) {
+		return kqm.getAlias(key);
+	}
+
+	@Override
+	public QueueExecutor getQueueExecutor(String key) {
+		return kqm.getQueueExecutor(key);
+	}
+
+	@Override
+	public Iterator<QueueExecutor> keyIterator() {
+		return kqm.iterator();
+	}
+	
+	public static class Builder{
+		int corePoolSize=DEFAULT_INITIAL_THREAD_POOL_SIZE;
+		int maximumPoolSize=DEFAULT_MAX_THREAD_POOL;
+		long keepAliveTime=DEFAULT_KEEP_ALIVE_SEC;
+		TimeUnit unit=TimeUnit.SECONDS;
+		ThreadFactory threadFactory=Executors.defaultThreadFactory();
+        WaitConditionStrategy waitConditionStrategy=DEFAULT_waitConditionStrategy;
+        Queue<Runnable> bossQueue=DEFAULT_BossQueue;
+        IndexQueueGroupManager iqm=DEFAULT_IndexQueueGroupManager;
+        KeyQueueGroupManager kqm=DEFAULT_KeyQueueGroupManager;
+		
+        public Builder setCorePoolSize(int corePoolSize)
+        {
+        	this.corePoolSize=corePoolSize;
+        	return this;
+        }
+        
+        public Builder setMaxPoolSize(int maximumPoolSize)
+        {
+        	this.maximumPoolSize=maximumPoolSize;
+        	return this;
+        }
+        
+        public Builder setKeepAliveTime(long keepAliveTime,TimeUnit unit)
+        {
+        	this.keepAliveTime=keepAliveTime;
+        	this.unit=unit;
+        	return this;
+        }
+        
+        public Builder setThreadFactory(ThreadFactory threadFactory)
+        {
+        	this.threadFactory=threadFactory;
+        	return this;
+        }
+        
+        public Builder setWaitConditionStrategy(WaitConditionStrategy waitConditionStrategy)
+        {
+        	this.waitConditionStrategy=waitConditionStrategy;
+        	return this;
+        }
+        
+        public Builder setBossQueue(Queue<Runnable> bossQueue)
+        {
+        	this.bossQueue=bossQueue;
+        	return this;
+        }
+        
+        public Builder setIndexQueueGroupManager(IndexQueueGroupManager iqm)
+        {
+        	this.iqm=iqm;
+        	return this;
+        }
+        
+        public Builder setKeyQueueGroupManagerr(KeyQueueGroupManager kqm)
+        {
+        	this.kqm=kqm;
+        	return this;
+        }
+        
+        public QueueGroupExecutor build()
+		{
+			QueueGroupExecutor qe=new DefaultQueueGroupExecutor(corePoolSize, 
+					maximumPoolSize, 
+					keepAliveTime, 
+					unit, 
+					threadFactory, 
+					waitConditionStrategy, 
+					bossQueue, 
+					iqm, 
+					kqm);
+			return qe;
+		}
 	}
 }

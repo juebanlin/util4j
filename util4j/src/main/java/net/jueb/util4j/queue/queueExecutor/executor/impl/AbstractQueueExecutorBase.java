@@ -1,23 +1,17 @@
-package net.jueb.util4j.queue.queueExecutor.queue.impl;
+package net.jueb.util4j.queue.queueExecutor.executor.impl;
 
-import net.jueb.util4j.queue.queueExecutor.DefaultRunnableQueue;
 import net.jueb.util4j.queue.queueExecutor.RunnableQueue;
-import net.jueb.util4j.queue.queueExecutor.queue.QueueExecutor;
+import net.jueb.util4j.queue.queueExecutor.executor.QueueExecutor;
 
 public abstract class AbstractQueueExecutorBase extends AbstractQueueExecutor implements QueueExecutor{
 
 	private final RunnableQueue queue;
 	private final String queueName;
 	
-	public AbstractQueueExecutorBase(String queueName) {
-		this.queue=new DefaultRunnableQueue();
-		this.queueName=queueName;
-	}
-	
 	public AbstractQueueExecutorBase(RunnableQueue queue,String queueName) {
 		if (queue == null || queueName==null)
             throw new NullPointerException();
-		this.queue=new DefaultRunnableQueue();
+		this.queue=queue;
 		this.queueName=queueName;
 	}
 	

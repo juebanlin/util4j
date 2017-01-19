@@ -12,8 +12,8 @@ import net.jueb.util4j.net.nettyImpl.handler.listenerHandler.adapter.IdleListene
 import net.jueb.util4j.net.nettyImpl.listener.HeartAbleConnectionListener;
 import net.jueb.util4j.net.nettyImpl.server.NettyServer;
 import net.jueb.util4j.net.nettyImpl.server.NettyServerConfig;
-import net.jueb.util4j.queue.queueExecutor.queueGroup.QueueGroupExecutor;
-import net.jueb.util4j.queue.queueExecutor.queueGroup.impl.DefaultQueueGroupExecutor;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupExecutor;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.DefaultQueueGroupExecutor;
 
 public class TestServer {
 	public class GameMsg{

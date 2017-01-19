@@ -8,13 +8,13 @@ import org.jctools.queues.atomic.MpmcAtomicArrayQueue;
 
 import net.jueb.util4j.queue.queueExecutor.QueueFactory;
 import net.jueb.util4j.queue.queueExecutor.RunnableQueue;
-import net.jueb.util4j.queue.queueExecutor.RunnableQueueWrapper;
-import net.jueb.util4j.queue.queueExecutor.queueGroup.IndexQueueGroupManager;
-import net.jueb.util4j.queue.queueExecutor.queueGroup.KeyQueueGroupManager;
-import net.jueb.util4j.queue.queueExecutor.queueGroup.QueueGroupExecutor;
-import net.jueb.util4j.queue.queueExecutor.queueGroup.impl.ArrayIndexQueueManager;
-import net.jueb.util4j.queue.queueExecutor.queueGroup.impl.DefaultQueueGroupExecutor;
-import net.jueb.util4j.queue.queueExecutor.queueGroup.impl.StringQueueManager;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.IndexQueueGroupManager;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.KeyQueueGroupManager;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupExecutor;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.ArrayIndexQueueManager;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.DefaultQueueGroupExecutor;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.StringQueueManager;
+import net.jueb.util4j.queue.queueExecutor.queue.RunnableQueueWrapper;
 
 public class TestQueueGroup2 {
 
@@ -34,7 +34,8 @@ public class TestQueueGroup2 {
 		};
 		IndexQueueGroupManager iqm=new ArrayIndexQueueManager(qf);
 		KeyQueueGroupManager kqm=new StringQueueManager(qf);
-		return new DefaultQueueGroupExecutor(min, max,bossQueue, iqm, kqm);
+		DefaultQueueGroupExecutor.Builder b=new DefaultQueueGroupExecutor.Builder();
+		return b.setMaxPoolSize(max).setCorePoolSize(min).setBossQueue(bossQueue).setIndexQueueGroupManager(iqm).setKeyQueueGroupManagerr(kqm).build();
 	}
 	
 	protected QueueGroupExecutor buildByMpMc(int min,int max,int maxPendingTask)
@@ -52,6 +53,7 @@ public class TestQueueGroup2 {
 		};
 		IndexQueueGroupManager iqm=new ArrayIndexQueueManager(qf);
 		KeyQueueGroupManager kqm=new StringQueueManager(qf);
-		return new DefaultQueueGroupExecutor(min, max,bossQueue, iqm, kqm);
+		DefaultQueueGroupExecutor.Builder b=new DefaultQueueGroupExecutor.Builder();
+		return b.setMaxPoolSize(max).setCorePoolSize(min).setBossQueue(bossQueue).setIndexQueueGroupManager(iqm).setKeyQueueGroupManagerr(kqm).build();
 	}
 }

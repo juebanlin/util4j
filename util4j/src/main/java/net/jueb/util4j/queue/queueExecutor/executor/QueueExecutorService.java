@@ -1,4 +1,4 @@
-package net.jueb.util4j.queue.queueExecutor.queueGroup;
+package net.jueb.util4j.queue.queueExecutor.executor;
 
 import java.util.Collection;
 import java.util.List;
@@ -9,16 +9,18 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * 任务队列组执行器服务
- * QueueGroupExecutor中空闲的线程将用来作为ExecutorService
- * 当所有的线程都在执行ExecutorService提交的任务时,如果有队列任务添加,要么触发新线程启动,要么等待
- * 注意:此服务提交的任务可能会因为最大线程数量限制和任务阻塞影响队列任务的执行
+ * 任务队列执行器服务
+ * 同时具备ExecutorService的特性
  * @author juebanlin
  */
-public interface QueueGroupExecutorService extends QueueGroupExecutor{
+public interface QueueExecutorService extends QueueExecutor{
 	
-	void execute(Runnable task);
-	
+	/**
+	 * 设置事件处理器
+	 * @param handler
+	 */
+	void setEventHandler(QueueEventHandler handler);
+
 	<T> Future<T> submit(Callable<T> task);
 
 	<T> Future<T> submit(Runnable task, T result);

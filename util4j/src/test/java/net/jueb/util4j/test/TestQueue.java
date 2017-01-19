@@ -2,8 +2,8 @@ package net.jueb.util4j.test;
 
 import java.util.Scanner;
 
-import net.jueb.util4j.queue.queueExecutor.queueGroup.QueueGroupExecutor;
-import net.jueb.util4j.queue.queueExecutor.queueGroup.impl.DefaultQueueGroupExecutor;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupExecutor;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.DefaultQueueGroupExecutor;
 
 public class TestQueue {
 

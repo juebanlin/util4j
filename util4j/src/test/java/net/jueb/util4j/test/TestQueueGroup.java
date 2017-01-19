@@ -14,8 +14,8 @@ import org.jctools.queues.atomic.MpmcAtomicArrayQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.jueb.util4j.queue.queueExecutor.queueGroup.QueueGroupExecutor;
-import net.jueb.util4j.queue.queueExecutor.queueGroup.impl.DefaultQueueGroupExecutor;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupExecutor;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.DefaultQueueGroupExecutor;
 
 public class TestQueueGroup {
 	

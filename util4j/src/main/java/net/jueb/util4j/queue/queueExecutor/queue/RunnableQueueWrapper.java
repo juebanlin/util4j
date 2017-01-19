@@ -1,4 +1,4 @@
-package net.jueb.util4j.queue.queueExecutor;
+package net.jueb.util4j.queue.queueExecutor.queue;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -8,6 +8,8 @@ import java.util.Spliterator;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+
+import net.jueb.util4j.queue.queueExecutor.RunnableQueue;
 
 /**
  * 队列包装

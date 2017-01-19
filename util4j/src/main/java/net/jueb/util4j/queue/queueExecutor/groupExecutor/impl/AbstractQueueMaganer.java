@@ -1,8 +1,7 @@
-package net.jueb.util4j.queue.queueExecutor.queueGroup.impl;
+package net.jueb.util4j.queue.queueExecutor.groupExecutor.impl;
 
-import net.jueb.util4j.queue.queueExecutor.DefaultRunnableQueue;
 import net.jueb.util4j.queue.queueExecutor.QueueFactory;
-import net.jueb.util4j.queue.queueExecutor.RunnableQueue;
+import net.jueb.util4j.queue.queueExecutor.queue.DefaultQueueFactory;
 
 public abstract class AbstractQueueMaganer {
 
@@ -46,13 +45,5 @@ public abstract class AbstractQueueMaganer {
 	 */
 	public final QueueFactory getDefaultQueueFactory() {
 		return DefaultQueueFactory;
-	}
-	
-	private static class DefaultQueueFactory implements QueueFactory
-	{
-		@Override
-		public RunnableQueue buildQueue() {
-			return new DefaultRunnableQueue();
-		}
 	}
 }

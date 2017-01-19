@@ -1,4 +1,4 @@
-package net.jueb.util4j.queue.queueExecutor;
+package net.jueb.util4j.queue.queueExecutor.queue;
 
 import java.util.Collection;
 import java.util.Queue;

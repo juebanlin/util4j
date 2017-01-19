@@ -1,4 +1,4 @@
-package net.jueb.util4j.queue.queueExecutor.queueGroup.impl;
+package net.jueb.util4j.queue.queueExecutor.groupExecutor.impl;
 
 import java.util.Iterator;
 import java.util.List;
@@ -7,9 +7,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import net.jueb.util4j.queue.queueExecutor.QueueFactory;
-import net.jueb.util4j.queue.queueExecutor.queue.QueueExecutor;
-import net.jueb.util4j.queue.queueExecutor.queue.impl.RunnableQueueExecutorEventWrapper;
-import net.jueb.util4j.queue.queueExecutor.queueGroup.IndexQueueGroupManager;
+import net.jueb.util4j.queue.queueExecutor.executor.QueueExecutor;
+import net.jueb.util4j.queue.queueExecutor.executor.impl.RunnableQueueExecutorEventWrapper;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.IndexQueueGroupManager;
 
 public class ArrayIndexQueueManager extends AbstractQueueMaganer implements IndexQueueGroupManager{
 	/**
@@ -250,6 +250,14 @@ public class ArrayIndexQueueManager extends AbstractQueueMaganer implements Inde
 
 		protected void afterExecute(Runnable task,RuntimeException object) {
 			
+		}
+	}
+	
+	public static class Builder{
+		public ArrayIndexQueueManager build()
+		{
+			//TODO
+			return null;
 		}
 	}
 }

@@ -1,4 +1,4 @@
-package net.jueb.util4j.queue.queueExecutor.queueGroup.impl.adapter;
+package net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.adapter;
 
 import java.util.Iterator;
 import java.util.List;
@@ -8,12 +8,12 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import net.jueb.util4j.queue.queueExecutor.queue.QueueExecutor;
-import net.jueb.util4j.queue.queueExecutor.queueGroup.IndexQueueGroupManager;
-import net.jueb.util4j.queue.queueExecutor.queueGroup.KeyQueueGroupManager;
-import net.jueb.util4j.queue.queueExecutor.queueGroup.QueueGroupExecutorService;
-import net.jueb.util4j.queue.queueExecutor.queueGroup.IndexQueueGroupManager.IndexGroupEventListener;
-import net.jueb.util4j.queue.queueExecutor.queueGroup.KeyQueueGroupManager.KeyGroupEventListener;
+import net.jueb.util4j.queue.queueExecutor.executor.QueueExecutor;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.IndexQueueGroupManager;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.KeyQueueGroupManager;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupExecutorService;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.IndexQueueGroupManager.IndexGroupEventListener;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.KeyQueueGroupManager.KeyGroupEventListener;
 
 public class ThreadPoolQueueGroupExecutor extends ThreadPoolExecutor implements QueueGroupExecutorService{
     
