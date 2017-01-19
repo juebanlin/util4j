@@ -29,7 +29,7 @@ public class CallBackCache {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public final <TYPE> Long put(CallBack<TYPE> callBack)
+	public final <TYPE> long put(CallBack<TYPE> callBack)
 	{
 		Objects.requireNonNull(callBack);
 		return caches.put((CallBack<Object>) callBack);
