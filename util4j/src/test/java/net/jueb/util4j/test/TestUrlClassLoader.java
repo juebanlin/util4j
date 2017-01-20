@@ -8,7 +8,11 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Map;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
+import net.jueb.util4j.beta.classLoader.util.ClassUtil;
 import net.jueb.util4j.math.CombinationUtil;
 
 /**
@@ -59,6 +63,25 @@ public class TestUrlClassLoader {
     	listFiles(f, fileList);
     	System.out.println(fileList);
     }
+    
+    /**
+     * 测试资源释放
+     * @throws IOException
+     */
+    public static void testRelase() throws Exception
+    {
+    	File f=new File("C:/Users/Administrator/git/util4j/util4j/target/util4j-3.7.6_beta.jar");
+    	JarFile jf=new JarFile(f);
+    	Map<String, JarEntry> classs=ClassUtil.findClassByJar(jf);//文件被占用,不可删除修改
+    	System.out.println(classs.size()+":"+classs.toString());
+    	jf.close();//释放文件占用
+    	URL url=f.toURI().toURL();
+		URL[] urls=new URL[]{url};
+		URLClassLoader loader=new URLClassLoader(urls);
+		Class c1=loader.loadClass("net.jueb.util4j.math.CombinationUtil");
+		System.out.println(c1);
+		loader.close();
+    }
 	
 	public static void testDir()throws Exception
 	{
@@ -82,7 +105,7 @@ public class TestUrlClassLoader {
 		System.out.println(c1);
 	}
 	
-	public static void main(String[] args) throws ClassNotFoundException, InstantiationException, IllegalAccessException, IOException {
-		testFiles();
+	public static void main(String[] args) throws Exception {
+		testRelase();
 	}
 }
