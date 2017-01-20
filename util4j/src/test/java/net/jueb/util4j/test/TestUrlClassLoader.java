@@ -11,6 +11,18 @@ import net.jueb.util4j.math.CombinationUtil;
 
 /**
  * URLClassLoader 支持jar的url以及包含class文件的目录,匿名类需要添加$才可加载
+ * 在Java7的URLClassLoader中提供了释放资源的close方法
+ * Java应用，特别是大型的Java应用，往往都需要动态的加载类或Jar，
+ * URLClassLoader提供了这个功能，它让我们可以通过以下几种方式进行加载：
+ * 文件: (从文件系统目录加载)
+ * jar包: (从Jar包进行加载)
+ * Http: (从远程的Http服务进行加载)
+ * 常见的问题是，当class文件或者resources资源文件更新后，我们需要重新加载这些类或者Jar。
+ * 从理论上来说，当应用清理了对所加载的对象的引用，那么垃圾收集器就会将这些对象给收集掉，
+ * 然后我们再重新加载新的JAR文件，并创建一个新的URLClassLoader来加载。
+ * 可是这里有一个问题，就是我们不知道垃圾收集器什么时候将那些未被引用的对象给收集掉，
+ * 特别是在Windows中，因为在Windows中打开的文件是不可以被删除或被替换的。
+ * 官方说明:https://blogs.oracle.com/CoreJavaTechTips/entry/closing_a_urlclassloader
  * @author Administrator
  */
 public class TestUrlClassLoader {
@@ -20,15 +32,18 @@ public class TestUrlClassLoader {
 		URL url=f.toURI().toURL();
 		URL[] urls=new URL[]{url};
 		URLClassLoader loader=new URLClassLoader(urls);
-		Class c=loader.loadClass("net.jueb.util4j.math.CombinationUtil");
-		System.out.println(c);
-		CombinationUtil c22=(CombinationUtil) c.newInstance();
-		System.out.println(c22);
+		Class c1=loader.loadClass("net.jueb.util4j.math.CombinationUtil");
+		System.out.println(c1);
 		Class c2=loader.loadClass("net.jueb.util4j.math.CombinationUtil$CombinationController");
 		System.out.println(c2);
 		Class c3=loader.loadClass("net.jueb.util4j.math.CombinationUtil$ForEachByteIndexController");
 		System.out.println(c3);
 		Enumeration<URL> ss=loader.findResources("*.class");
 		System.out.println(ss.hasMoreElements());
+		CombinationUtil c22=(CombinationUtil) c1.newInstance();
+		System.out.println(c22);
+		loader.close();
+		c1=loader.loadClass("net.jueb.util4j.math.CombinationUtil");
+		System.out.println(c1);
 	}
 }
