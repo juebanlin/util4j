@@ -9,16 +9,17 @@ import org.apache.commons.io.monitor.FileAlterationObserver;
 
 public class FileMonitor {
 	public static void main(String[] args) throws Exception{
-		String dir="C:/Users/juebanlin/git/juebCore/juebCore/target";
+		String dir="C:/Users/juebanlin/git/util4j/util4j/target";
 		File directory = new File(dir);
         // 轮询间隔 5 秒
         long interval = TimeUnit.SECONDS.toMillis(5);
         // 创建一个文件观察器用于处理文件的格式
         FileAlterationObserver observer = new FileAlterationObserver(directory, FileFilterUtils.and(
-                FileFilterUtils.fileFileFilter(),FileFilterUtils.suffixFileFilter(".txt")));
+                FileFilterUtils.fileFileFilter(),FileFilterUtils.suffixFileFilter(".java")));
         //设置文件变化监听器
         observer.addListener(new MyFileListener());
-        FileAlterationMonitor monitor = new FileAlterationMonitor(interval,observer);
+        FileAlterationMonitor monitor = new FileAlterationMonitor(interval);
+        monitor.addObserver(observer);//文件观察
         monitor.start();
         //Thread.sleep(30000);
         //monitor.stop();
