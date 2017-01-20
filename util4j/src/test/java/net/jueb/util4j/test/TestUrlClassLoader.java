@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 
 import net.jueb.util4j.math.CombinationUtil;
 
@@ -29,7 +31,36 @@ import net.jueb.util4j.math.CombinationUtil;
 public class TestUrlClassLoader {
 
 	
-	public void testDir()throws Exception
+	/** 
+     * 获取所有文件列表 
+     * @param rootFile 
+     * @param fileList 
+     * @throws IOException 
+     */  
+    public static List<String> listFiles(File rootFile,List<String> fileList) throws IOException{  
+        File[] allFiles = rootFile.listFiles();  
+        for(File file : allFiles){  
+            if(file.isDirectory()){  
+                listFiles(file, fileList);  
+            }else{  
+                String path = file.getCanonicalPath(); 
+                String apath=file.getAbsolutePath();
+                String clazz = path.substring(path.indexOf("classes")+8);  
+                fileList.add(clazz.replace("//", ".").substring(0,clazz.lastIndexOf(".")));  
+            }  
+        }  
+        return fileList;  
+    } 
+    
+    public static void testFiles() throws IOException
+    {
+    	File f=new File("C:/Users/Administrator/git/util4j/util4j/target/123");
+    	List<String> fileList=new ArrayList<>();
+    	listFiles(f, fileList);
+    	System.out.println(fileList);
+    }
+	
+	public static void testDir()throws Exception
 	{
 		File f=new File("C:/Users/Administrator/git/util4j/util4j/target/classes");
 		URL url=f.toURI().toURL();
@@ -52,6 +83,6 @@ public class TestUrlClassLoader {
 	}
 	
 	public static void main(String[] args) throws ClassNotFoundException, InstantiationException, IllegalAccessException, IOException {
-		
+		testFiles();
 	}
 }
