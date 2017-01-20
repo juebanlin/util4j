@@ -23,15 +23,19 @@ import net.jueb.util4j.math.CombinationUtil;
  * 可是这里有一个问题，就是我们不知道垃圾收集器什么时候将那些未被引用的对象给收集掉，
  * 特别是在Windows中，因为在Windows中打开的文件是不可以被删除或被替换的。
  * 官方说明:https://blogs.oracle.com/CoreJavaTechTips/entry/closing_a_urlclassloader
+ * 1.已经load的class,删除文件后,仍然存在loader中
  * @author Administrator
  */
 public class TestUrlClassLoader {
 
-	public static void main(String[] args) throws ClassNotFoundException, InstantiationException, IllegalAccessException, IOException {
+	
+	public void testDir()throws Exception
+	{
 		File f=new File("C:/Users/Administrator/git/util4j/util4j/target/classes");
 		URL url=f.toURI().toURL();
 		URL[] urls=new URL[]{url};
 		URLClassLoader loader=new URLClassLoader(urls);
+//		loader.close();
 		Class c1=loader.loadClass("net.jueb.util4j.math.CombinationUtil");
 		System.out.println(c1);
 		Class c2=loader.loadClass("net.jueb.util4j.math.CombinationUtil$CombinationController");
@@ -45,5 +49,9 @@ public class TestUrlClassLoader {
 		loader.close();
 		c1=loader.loadClass("net.jueb.util4j.math.CombinationUtil");
 		System.out.println(c1);
+	}
+	
+	public static void main(String[] args) throws ClassNotFoundException, InstantiationException, IllegalAccessException, IOException {
+		
 	}
 }
