@@ -1,30 +1,74 @@
 package net.jueb.util4j.beta.tools.file;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.io.filefilter.FileFilterUtils;
+import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.monitor.FileAlterationListener;
 import org.apache.commons.io.monitor.FileAlterationMonitor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
 
 public class FileMonitor {
 	public static void main(String[] args) throws Exception{
-		String dir="C:/Users/juebanlin/git/util4j/util4j/target";
-		File directory = new File(dir);
-        // 轮询间隔 5 秒
-        long interval = TimeUnit.SECONDS.toMillis(5);
-        // 创建一个文件观察器用于处理文件的格式
-        FileAlterationObserver observer = new FileAlterationObserver(directory, FileFilterUtils.and(
-                FileFilterUtils.fileFileFilter(),FileFilterUtils.suffixFileFilter(".java")));
-        //设置文件变化监听器
-        observer.addListener(new MyFileListener());
-        FileAlterationMonitor monitor = new FileAlterationMonitor(interval);
-        monitor.addObserver(observer);//文件观察
-        monitor.start();
+		String dir="C:/Users/Administrator/git/util4j/util4j/target";
+		new FileMonitor().check2(dir);
         //Thread.sleep(30000);
         //monitor.stop();
     }
+
+	/**
+	 * 只监控文件发送变化,如果是子目录的文件改变,则目录会变,由于没有过滤目录发生变化,则目录下的文件改变不会监控到
+	 * @param dir
+	 * @throws Exception 
+	 */
+	public void check1(String dir) throws Exception
+	{
+		File directory = new File(dir);
+	    // 轮询间隔 5 秒
+	    long interval = TimeUnit.SECONDS.toMillis(5);
+	    // 创建一个文件观察器用于处理文件的格式
+	    IOFileFilter filter=FileFilterUtils.or(FileFilterUtils.suffixFileFilter(".class"),
+	    		FileFilterUtils.suffixFileFilter(".jar"));
+	    FileAlterationObserver observer = new FileAlterationObserver(directory,filter);
+	    //设置文件变化监听器
+	    observer.addListener(new MyFileListener());
+	    FileAlterationMonitor monitor = new FileAlterationMonitor(interval);
+	    monitor.addObserver(observer);//文件观察
+	    monitor.start();
+	}
+	
+	public void check2(String dir) throws Exception
+	{
+		File directory = new File(dir);
+	    // 轮询间隔 5 秒
+	    long interval = TimeUnit.SECONDS.toMillis(5);
+	    //后缀过滤器
+	    IOFileFilter filefilter=FileFilterUtils.or(FileFilterUtils.suffixFileFilter(".class"),
+	    		FileFilterUtils.suffixFileFilter(".jar"));
+	    //子目录的后缀
+	    IOFileFilter subFilefilter=FileFilterUtils.or(FileFilterUtils.directoryFileFilter(),filefilter);
+	    //根目录和子目录变化
+	    IOFileFilter filter = FileFilterUtils.or(filefilter,subFilefilter);
+	    FileAlterationObserver observer = new FileAlterationObserver(directory,filter);
+	    //设置文件变化监听器
+	    observer.addListener(new MyFileListener());
+	    FileAlterationMonitor monitor = new FileAlterationMonitor(interval);
+	    monitor.addObserver(observer);//文件观察
+	    monitor.start();
+	}
+	
 }
+
+final class MyFileFilter implements FileFilter{
+
+	@Override
+	public boolean accept(File pathname) {
+		return true;
+	}
+	
+}
+
 final class MyFileListener implements FileAlterationListener{
     @Override
     public void onStart(FileAlterationObserver fileAlterationObserver) {
