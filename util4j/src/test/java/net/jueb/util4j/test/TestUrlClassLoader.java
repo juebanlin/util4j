@@ -71,11 +71,11 @@ public class TestUrlClassLoader {
     public static void testRelase() throws Exception
     {
     	File f=new File("C:/Users/Administrator/git/util4j/util4j/target/util4j-3.7.6_beta.jar");
-    	JarFile jf=new JarFile(f);
-    	Map<String, JarEntry> classs=ClassUtil.findClassByJar(jf);//文件被占用,不可删除修改
+    	URL url=f.toURI().toURL();
+    	JarFile jf=new JarFile(f);//文件被占用,不可删除修改
+    	Map<String, JarEntry> classs=ClassUtil.findClassByJar(jf);
     	System.out.println(classs.size()+":"+classs.toString());
     	jf.close();//释放文件占用
-    	URL url=f.toURI().toURL();
 		URL[] urls=new URL[]{url};
 		URLClassLoader loader=new URLClassLoader(urls);
 		Class c1=loader.loadClass("net.jueb.util4j.math.CombinationUtil");
