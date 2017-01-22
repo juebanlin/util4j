@@ -66,13 +66,24 @@ public abstract class AbstractScriptProvider<T extends IScript> extends Abstract
 		this.autoReload = autoReload;
 		init();
 	}
-
+	
+	private boolean disableReload;
+	
 	private void init() {
 		try {
 			scriptSource.addEventListener((event->{
-				if(autoReload)
-				{
-					reload();
+				switch (event) {
+				case Change:
+					if(autoReload)
+					{
+						reload();
+					}
+					break;
+				case Delete:
+					disableReload=true;
+					break;
+				default:
+					break;
 				}
 			}));
 			loadAllClass();
@@ -356,6 +367,10 @@ public abstract class AbstractScriptProvider<T extends IScript> extends Abstract
 	}
 
 	public final void reload() {
+		if(disableReload)
+		{
+			_log.error("disableReload="+disableReload);
+		}
 		try {
 			loadAllClass();
 		} catch (Throwable e) {
