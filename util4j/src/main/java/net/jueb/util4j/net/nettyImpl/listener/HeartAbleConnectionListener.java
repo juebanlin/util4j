@@ -164,7 +164,7 @@ public abstract class HeartAbleConnectionListener<T> implements JConnectionIdleL
 	 * 重置心跳发送序号
 	 * @param conn
 	 */
-	protected void resetHeartSeq(JConnection conn)
+	protected final void resetHeartSeq(JConnection conn)
 	{
 		if(conn.hasAttribute(IdleConnectionKey.HeartConfig))
 		{//重置心跳序号
