@@ -137,17 +137,26 @@ public abstract class AbstractScriptProvider<T extends IScript> extends Abstract
 			Set<Class<?>> jarClass=new HashSet<>();
 			for(URL jar:scriptSource.getJars())
 			{
-				Map<String, JarEntry>  map=FileUtil.findClassByJar(new JarFile(jar.getFile()));
-				if(!map.isEmpty())
-				{
-					newClassLoader.addURL(jar);
-					for(String className:map.keySet())
+				JarFile jarFile=null;
+				try {
+					jarFile=new JarFile(jar.getFile());
+					Map<String, JarEntry>  map=FileUtil.findClassByJar(jarFile);
+					if(!map.isEmpty())
 					{
-						Class<?> clazz=newClassLoader.loadClass(className);
-						if(clazz!=null)
+						newClassLoader.addURL(jar);
+						for(String className:map.keySet())
 						{
-							jarClass.add(clazz);
+							Class<?> clazz=newClassLoader.loadClass(className);
+							if(clazz!=null)
+							{
+								jarClass.add(clazz);
+							}
 						}
+					}
+				} finally {
+					if(jarFile!=null)
+					{
+						jarFile.close();
 					}
 				}
 			}
