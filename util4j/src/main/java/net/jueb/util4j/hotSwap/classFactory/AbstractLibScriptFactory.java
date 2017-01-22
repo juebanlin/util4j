@@ -87,8 +87,7 @@ public abstract class AbstractLibScriptFactory<T extends IScript> extends Abstra
 	}
 
 	/**
-	 * 寻找jar文件
-	 * 
+	 * 寻找目录下的jar文件
 	 * @param scriptLibDir
 	 * @return
 	 */
@@ -237,6 +236,7 @@ public abstract class AbstractLibScriptFactory<T extends IScript> extends Abstra
 			Map<Integer, Class<? extends T>> newCodeMap = findScriptCodeMap(findScriptClass(allClass));
 			this.codeMap.clear();
 			this.loadedRecord.clear();
+			this.classLoader.close();
 			this.codeMap.putAll(newCodeMap);
 			this.loadedRecord.putAll(newLoadedRecord);
 			this.classLoader = newClassLoader;

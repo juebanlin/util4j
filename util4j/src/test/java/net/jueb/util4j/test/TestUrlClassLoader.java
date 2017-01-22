@@ -11,8 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-
 import net.jueb.util4j.beta.classLoader.util.ClassUtil;
+import net.jueb.util4j.file.FileUtil;
 import net.jueb.util4j.math.CombinationUtil;
 
 /**
@@ -30,6 +30,7 @@ import net.jueb.util4j.math.CombinationUtil;
  * 特别是在Windows中，因为在Windows中打开的文件是不可以被删除或被替换的。
  * 官方说明:https://blogs.oracle.com/CoreJavaTechTips/entry/closing_a_urlclassloader
  * 1.已经load的class,删除文件后,仍然存在loader中
+ * 2.URLClassLoader的url只支持目录的class搜寻,如果目录下面有jar,则搜索不到jar的class
  * @author Administrator
  */
 public class TestUrlClassLoader {
@@ -73,7 +74,7 @@ public class TestUrlClassLoader {
     	File f=new File("C:/Users/Administrator/git/util4j/util4j/target/util4j-3.7.6_beta.jar");
     	URL url=f.toURI().toURL();
     	JarFile jf=new JarFile(f);//文件被占用,不可删除修改
-    	Map<String, JarEntry> classs=ClassUtil.findClassByJar(jf);
+    	Map<String, JarEntry> classs=FileUtil.findClassByJar(jf);
     	System.out.println(classs.size()+":"+classs.toString());
     	jf.close();//释放文件占用
 		URL[] urls=new URL[]{url};
@@ -105,7 +106,26 @@ public class TestUrlClassLoader {
 		System.out.println(c1);
 	}
 	
+	/**
+	 * dir包含jar和子目录的class
+	 * @throws Exception
+	 */
+	public static void testDir2()throws Exception
+	{
+		String dir="C:/Users/jaci/git/util4j/util4j/target/classes";
+		File f=new File(dir);
+		URL url=f.toURI().toURL();
+		URL[] urls=new URL[]{url};
+		URLClassLoader loader=new URLClassLoader(urls);
+//		loader.close();
+		Class dirClass=loader.loadClass("net.jueb.util4j.math.CombinationUtil");//寻找到
+		System.out.println(dirClass);
+		Class JarClass=loader.loadClass("net.xzmj.core.common.ServerInfo");//不能寻找到
+		System.out.println(JarClass);
+		
+	}
+	
 	public static void main(String[] args) throws Exception {
-		testRelase();
+		testDir2();
 	}
 }

@@ -1,7 +1,6 @@
 package net.jueb.util4j.beta.classLoader.util;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -23,30 +22,6 @@ public class UrlClassLoaderUtil extends ClassLoaderUtil{
 		return (URLClassLoader) super.getLoader();
 	}
 	
-	/**
-	 * 从一个目录加载所有jar到classPath
-	 * @param dir
-	 * @return
-	 */
-	public final int addJarsByDir(File dir)
-	{
-		int count=0;
-		Set<File> files=findJarFileByDir(dir);
-		Iterator<File> it=files.iterator();
-		while(it.hasNext())
-		{
-			File file=it.next();
-			try {
-				if(file.exists() && addJar(new JarFile(file)))
-				{
-					count++;
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-		return count;
-	}
 	
 	/**
 	 * 添加jar文件到当前加载器classPath
