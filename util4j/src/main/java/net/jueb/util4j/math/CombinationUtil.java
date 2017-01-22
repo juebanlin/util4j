@@ -17,14 +17,19 @@ public class CombinationUtil {
 		 * 调用该方法后记得重置状态
 		 * @return
 		 */
-		public boolean entryNextLayout();
+		default boolean entryNextLayout(){
+			return true;
+		}
 		/**
 		 * 终止循环
 		 * @return
 		 */
-		public boolean stopForEach();
+		default boolean stopForEach(){
+			return false;
+		}
 	}
 	
+	@FunctionalInterface
 	public static interface ForEachController<T> extends CombinationController{
 		
 		/**
@@ -36,40 +41,8 @@ public class CombinationUtil {
 		public void onOutEvent(T[] output,int outPutIndex);
 	}
 	
-	public static interface ForEachIndexController<T> extends CombinationController{
-		
-		/**
-		 * 输出事件
-		 * @param tmpBuff
-		 * @param output
-		 * @param outPutIndex
-		 */
-		public void onOutEvent(int[] output,int outPutIndex);
-	}
-	
-	public static interface ForEachIntIndexController extends CombinationController{
-		
-		/**
-		 * 输出事件
-		 * @param tmpBuff
-		 * @param output
-		 * @param outPutIndex
-		 */
-		public void onOutEvent(int[] output,int outPutIndex);
-	}
-	
-	public static interface ForEachShortIndexController extends CombinationController{
-		
-		/**
-		 * 输出事件
-		 * @param tmpBuff
-		 * @param output
-		 * @param outPutIndex
-		 */
-		public void onOutEvent(int[] output,int outPutIndex);
-	}
-
-	public static interface ForEachByteIndexController extends CombinationController{
+	@FunctionalInterface
+	public static interface ForEachIndexController extends CombinationController{
 		
 		/**
 		 * 输出事件
@@ -127,7 +100,7 @@ public class CombinationUtil {
 	 * @param outPutIndex
 	 * @param controller
 	 */
-	public static <T> void forEachIndex(T[] input,boolean[] inputSkip,int[] output,int outPutIndex,ForEachIndexController<T> controller)
+	public static <T> void forEachIndex(T[] input,boolean[] inputSkip,int[] output,int outPutIndex,ForEachIndexController controller)
 	{
 		for(int i=0;i<input.length;i++)
 		{
@@ -166,7 +139,7 @@ public class CombinationUtil {
 	 * @param outPutIndex
 	 * @param controller
 	 */
-	public static void forEachIndex(int[] input,boolean[] inputSkip,int[] output ,int outPutIndex,ForEachIntIndexController controller)
+	public static void forEachIndex(int[] input,boolean[] inputSkip,int[] output ,int outPutIndex,ForEachIndexController controller)
 	{
 		for(int i=0;i<input.length;i++)
 		{
@@ -205,7 +178,7 @@ public class CombinationUtil {
 	 * @param outPutIndex
 	 * @param controller
 	 */
-	public static void forEachIndex(short[] input,boolean[] inputSkip,int[] output ,int outPutIndex,ForEachShortIndexController controller)
+	public static void forEachIndex(short[] input,boolean[] inputSkip,int[] output ,int outPutIndex,ForEachIndexController controller)
 	{
 		for(int i=0;i<input.length;i++)
 		{
@@ -244,7 +217,7 @@ public class CombinationUtil {
 	 * @param outPutIndex
 	 * @param controller
 	 */
-	public static void forEachIndex(byte[] input,boolean[] inputSkip,int[] output ,int outPutIndex,ForEachByteIndexController controller)
+	public static void forEachIndex(byte[] input,boolean[] inputSkip,int[] output ,int outPutIndex,ForEachIndexController controller)
 	{
 		for(int i=0;i<input.length;i++)
 		{
@@ -285,7 +258,7 @@ public class CombinationUtil {
 		boolean[] inputSkip=new boolean[input.length];
 		final List<Byte[]> result=new ArrayList<>();
 		long t=System.nanoTime();
-		CombinationUtil.forEachIndex(input, inputSkip, output,0,new ForEachByteIndexController() 
+		CombinationUtil.forEachIndex(input, inputSkip, output,0,new ForEachIndexController() 
 		{
 			private boolean entryNextLayout=true;
 			private boolean stop=false;
