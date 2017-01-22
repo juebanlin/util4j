@@ -14,7 +14,7 @@ import io.netty.handler.codec.http.websocketx.WebSocketClientProtocolHandler;
 import io.netty.handler.codec.http.websocketx.WebSocketVersion;
 import net.jueb.util4j.net.nettyImpl.client.NettyClient;
 import net.jueb.util4j.net.nettyImpl.client.NettyClientConfig;
-import net.jueb.util4j.net.nettyImpl.handler.websocket.binary.codec.BinaryWebSocketFrameByteBufAdapter;
+import net.jueb.util4j.net.nettyImpl.handler.websocket.binary.codec.WebSocketBinaryFrameByteBufAdapter;
 
 /**
  *适配了websocket的复合型客户端 
@@ -70,7 +70,7 @@ public class NettyBinaryWebSocketClient extends NettyClient {
 				throws Exception {
 			if (evt == WebSocketClientProtocolHandler.ClientHandshakeStateEvent.HANDSHAKE_COMPLETE) {
 				log.log(logLevel,"WebSocket:HANDSHAKE_COMPLETE,pipeline:"+ctx.channel().pipeline().toMap().toString());
-				ctx.pipeline().addLast(new BinaryWebSocketFrameByteBufAdapter());//适配器
+				ctx.pipeline().addLast(new WebSocketBinaryFrameByteBufAdapter());//适配器
 				ctx.pipeline().addLast(this.handler);//业务层handler
 				//为新加的handler手动触发必要事件
 				ctx.fireChannelRegistered();

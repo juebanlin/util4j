@@ -4,7 +4,7 @@ import java.net.InetSocketAddress;
 
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import net.jueb.util4j.net.nettyImpl.handler.websocket.binary.BinaryWebSocketServerAdapterHandler;
+import net.jueb.util4j.net.nettyImpl.handler.websocket.binary.WebSocketServerBinaryAdapterHandler;
 
 /**
  * 将WebSocket的Binary流转换为正常socket链路的服务器
@@ -36,6 +36,6 @@ public class NettyWebSocketServer extends NettyServer{
 
 	@Override
 	protected ChannelInboundHandlerAdapter fixHandlerBeforeDoBooterBind(ChannelHandler handler) {
-		return new BinaryWebSocketServerAdapterHandler(uri, handler);
+		return new WebSocketServerBinaryAdapterHandler(uri, handler);
 	}
 }

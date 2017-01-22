@@ -35,7 +35,7 @@ public interface ScriptSource {
 	 * 脚本源事件
 	 * @author jaci
 	 */
-	public enum ScriptSourceEvent{
+	public static enum ScriptSourceEvent{
 		/**
 		 * 脚本源删除
 		 */
@@ -86,6 +86,7 @@ public interface ScriptSource {
 	
 	/**
 	 * 添加脚本源监听器
+	 * for jdk8 ==> addEventListener(event->{});
 	 * @param listener
 	 */
 	public void addEventListener(ScriptSourceEventListener listener);

@@ -5,50 +5,38 @@ import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.jueb.util4j.file.FileUtil;
-import net.jueb.util4j.thread.NamedThreadFactory;
+import net.jueb.util4j.hotSwap.classFactory.ScriptSource.DirClassFile;
+import net.jueb.util4j.hotSwap.classFactory.ScriptSource.URLClassFile;
 
 /**
  * 动态加载jar内的脚本,支持包含匿名内部类 T不能做为父类加载 T尽量为接口类型,因为只有接口类型的类才没有逻辑,才可以不热加载,并且子类可选择实现
  */
-public abstract class AbstractLibScriptProvider<T extends IScript> extends AbstractStaticScriptFactory<T> {
+public abstract class AbstractScriptProvider<T extends IScript> extends AbstractStaticScriptFactory<T> {
 	protected final Logger _log = LoggerFactory.getLogger(this.getClass());
 
 	/**
 	 * 脚本库目录
 	 */
-	protected final String scriptLibDir;
+	protected final ScriptSource scriptSource;
 	protected ScriptClassLoader classLoader;
 
 	/**
 	 * 是否自动重载变更代码
 	 */
 	protected volatile boolean autoReload;
-
-	/**
-	 * 记录加载的jar文件和时间
-	 */
-	protected final Map<String, RecordFile> loadedRecord = new ConcurrentHashMap<String, RecordFile>();
 	protected final Map<Integer, Class<? extends T>> codeMap = new ConcurrentHashMap<Integer, Class<? extends T>>();
 	private final ReentrantReadWriteLock rwLock=new ReentrantReadWriteLock();
 	
@@ -69,135 +57,30 @@ public abstract class AbstractLibScriptProvider<T extends IScript> extends Abstr
 	
 	protected volatile State state = State.ready;
 
-	/**
-	 * 文件监测间隔时间
-	 */
-	protected long intervalMillis = TimeUnit.SECONDS.toMillis(10);
-	protected static final ScheduledExecutorService schedule = Executors.newScheduledThreadPool(1,
-			new NamedThreadFactory("ScriptFactoryMonitor", true));
-
-	protected AbstractLibScriptProvider(String scriptLibDir) {
-		this(scriptLibDir, true);
+	protected AbstractScriptProvider(ScriptSource scriptSource) {
+		this(scriptSource, true);
 	}
 
-	protected AbstractLibScriptProvider(String scriptLibDir, boolean autoReload) {
-		this.scriptLibDir = scriptLibDir;
+	protected AbstractScriptProvider(ScriptSource scriptSource, boolean autoReload) {
+		this.scriptSource = scriptSource;
 		this.autoReload = autoReload;
 		init();
 	}
 
-	/**
-	 * 寻找目录下的jar文件
-	 * @param scriptLibDir
-	 * @return
-	 */
-	protected List<File> findJarFile(String scriptLibDir) {
-		List<File> files = new ArrayList<File>();
-		try {
-			File file = new File(scriptLibDir);
-			if (file.isDirectory()) {
-				for (File f : file.listFiles()) {
-					if (f.isFile() && f.getName().endsWith(".jar")) {
-						files.add(f);
-					}
-				}
-			}
-		} catch (Exception e) {
-			_log.error(e.getMessage(), e);
-		}
-		return files;
-	}
-
 	private void init() {
 		try {
+			scriptSource.addEventListener((event->{
+				if(autoReload)
+				{
+					reload();
+				}
+			}));
 			loadAllClass();
-			schedule.scheduleWithFixedDelay(new ScriptMonitorTask(), 0, intervalMillis, TimeUnit.MILLISECONDS);
 		} catch (Exception e) {
 			_log.error(e.getMessage(), e);
 		}
 	}
 
-	/**
-	 * 获取class文件根目录
-	 * 
-	 * @return
-	 */
-	protected final String getClassRootDir() {
-		return scriptLibDir;
-	}
-
-	/**
-	 * 遍历配置的目录的jar文件并加载class
-	 * 
-	 * @throws IOException
-	 * @throws ClassNotFoundException
-	 */
-	public final void loadAllClass() throws Exception {
-		loadAllClassByDir(scriptLibDir);
-	}
-
-	/**
-	 * 遍历目录所有jar并加载class
-	 * 
-	 * @throws IOException
-	 * @throws ClassNotFoundException
-	 * @throws IllegalAccessException
-	 * @throws InstantiationException
-	 */
-	protected final void loadAllClassByDir(String scriptLibDir) throws Exception {
-		List<File> jarFiles = findJarFile(scriptLibDir);
-		loadAllClass(jarFiles);
-	}
-
-	private final AtomicInteger ato=new AtomicInteger();
-	
-	private List<MirrorFile> copyToTmpDir(List<File> files) throws IOException
-	{
-		List<MirrorFile> tmpFiles=new ArrayList<>();
-		File tmpDir=null;
-		for(File f:files)
-		{
-			if(f.exists() && f.isFile())
-			{
-				if(tmpDir==null)
-				{
-					tmpDir=FileUtil.createTmpDir("scriptFactoryTmp_"+ato.getAndIncrement());
-					if(tmpDir.exists())
-					{
-						tmpDir.delete();
-						tmpDir.mkdir();
-					}
-				}
-				File newFile=new File(tmpDir,f.getName());
-				_log.debug("copyFile "+f.getPath()+" to:"+newFile.getPath());
-				Files.copy(f.toPath(), newFile.toPath(), StandardCopyOption.COPY_ATTRIBUTES,StandardCopyOption.REPLACE_EXISTING);
-				tmpFiles.add(new MirrorFile(f, newFile));
-			}
-		}
-		_log.debug("copyFiles to tmpDir:"+tmpDir);
-		return tmpFiles;
-	}
-	
-	private class MirrorFile{
-		private final File file;
-		private final File mirrorFile;
-		public MirrorFile(File file, File mirrorFile) {
-			super();
-			this.file = file;
-			this.mirrorFile = mirrorFile;
-		}
-		public File getFile() {
-			return file;
-		}
-		public File getMirrorFile() {
-			return mirrorFile;
-		}
-		@Override
-		public String toString() {
-			return "MirrorFile [file=" + file + ", mirrorFile=" + mirrorFile + "]";
-		}
-	}
-	
 	/**
 	 * 加载所有的类
 	 * @param jarFiles
@@ -206,7 +89,7 @@ public abstract class AbstractLibScriptProvider<T extends IScript> extends Abstr
 	 * @throws IllegalAccessException
 	 * @throws InstantiationException
 	 */
-	protected final void loadAllClass(List<File> jarFiles) throws Exception 
+	protected final void loadAllClass() throws Exception 
 	{
 		if (state == State.loading) 
 		{
@@ -215,31 +98,52 @@ public abstract class AbstractLibScriptProvider<T extends IScript> extends Abstr
 		rwLock.writeLock().lock();
 		try {
 			state = State.loading;
-			//复制文件到临时目录,因为urlClassLoader加载后会占用文件,导致后续无法删除scriptLibDir下的文件
-			List<MirrorFile> waiteLoad=copyToTmpDir(jarFiles);
-			ScriptClassLoader newClassLoader = new ScriptClassLoader();
-			Map<String, RecordFile> newLoadedRecord = new HashMap<String, RecordFile>();
 			Set<Class<?>> allClass = new HashSet<Class<?>>();
-			for (MirrorFile mf : waiteLoad) 
+			ScriptClassLoader newClassLoader = new ScriptClassLoader();
+			Set<Class<?>> fileClass=new HashSet<>();
+			for(DirClassFile dcf:scriptSource.getDirClassFiles())
 			{
-				File file=mf.getFile();
-				File mirrorFile=mf.getMirrorFile();
-				//使用镜像文件加载进classLoader
-				Set<Class<?>> jarClass = loadAllClass(mirrorFile, newClassLoader);
-				allClass.addAll(jarClass);
-				//记录文件变化,使用源文件的修改时间
-				RecordFile rf = new RecordFile(file.getPath());
-				rf.setLastModifyTime(file.lastModified());
-				newLoadedRecord.put(rf.getFilePath(), rf);
-				_log.debug("加载jar文件" + rf.getFilePath() + ",class数量:" + jarClass.size() + ",class:" + jarClass.toString());
+				newClassLoader.addURL(dcf.getRootDir());
+				for(String className:dcf.getClassNames())
+				{
+					Class<?> clazz=newClassLoader.loadClass(className);
+					fileClass.add(clazz);
+				}
 			}
+			Set<Class<?>> urlClass=new HashSet<>();
+			for(URLClassFile ucf:scriptSource.getUrlClassFiles())
+			{
+				newClassLoader.addURL(ucf.getURL());
+				Class<?> clazz=newClassLoader.loadClass(ucf.getClassName());
+				urlClass.add(clazz);
+			}
+			Set<Class<?>> jarClass=new HashSet<>();
+			for(URL jar:scriptSource.getJars())
+			{
+				Map<String, JarEntry>  map=FileUtil.findClassByJar(new JarFile(jar.getFile()));
+				if(!map.isEmpty())
+				{
+					newClassLoader.addURL(jar);
+					for(String className:map.keySet())
+					{
+						Class<?> clazz=newClassLoader.loadClass(className);
+						jarClass.add(clazz);
+					}
+				}
+			}
+			allClass.addAll(fileClass);
+			allClass.addAll(urlClass);
+			allClass.addAll(jarClass);
+			_log.debug("load class complete,allClass:"+allClass.size()+",fileClass:" + fileClass.size() + ",urlClass:" + urlClass.size() + ",jarClass:" + jarClass.size());
 			Map<Integer, Class<? extends T>> newCodeMap = findScriptCodeMap(findScriptClass(allClass));
 			this.codeMap.clear();
-			this.loadedRecord.clear();
-			this.classLoader.close();
 			this.codeMap.putAll(newCodeMap);
-			this.loadedRecord.putAll(newLoadedRecord);
+			URLClassLoader oldLoader=this.classLoader;
 			this.classLoader = newClassLoader;
+			if(oldLoader!=null)
+			{
+				oldLoader.close();
+			}
 		} finally {
 			state = State.loaded;
 			rwLock.writeLock().unlock();
@@ -248,7 +152,6 @@ public abstract class AbstractLibScriptProvider<T extends IScript> extends Abstr
 
 	/**
 	 * 加载jar的所有类
-	 * 
 	 * @param jarFiles
 	 * @param loader
 	 * @return
@@ -392,118 +295,6 @@ public abstract class AbstractLibScriptProvider<T extends IScript> extends Abstr
 		@Override
 		protected void addURL(URL url) {
 			super.addURL(url);
-		}
-	}
-
-	/**
-	 * jar记录
-	 * 
-	 * @author juebanlin
-	 */
-	class RecordFile {
-
-		private final String filePath;
-		private long lastModifyTime;
-
-		public RecordFile(String path) {
-			this.filePath = path;
-		}
-
-		public String getFilePath() {
-			return filePath;
-		}
-
-		public long getLastModifyTime() {
-			return lastModifyTime;
-		}
-
-		public void setLastModifyTime(long lastModifyTime) {
-			this.lastModifyTime = lastModifyTime;
-		}
-
-		/**
-		 * 是否存在
-		 * 
-		 * @return
-		 */
-		public boolean isExist() {
-			File f = new File(filePath);
-			return f.exists();
-		}
-
-		@Override
-		public String toString() {
-			return "JarFile [filePath=" + filePath + ", lastModifyTime=" + lastModifyTime + "]";
-		}
-	}
-
-	private boolean hashChange()
-	{
-		rwLock.readLock().lock();
-		boolean trigLoad = false;
-		try {
-			Map<String, File> files = new HashMap<String, File>();
-			for (File file : findJarFile(scriptLibDir)) 
-			{
-				files.put(file.getPath(), file);
-			}
-			for (File file : files.values()) 
-			{
-				RecordFile rf = loadedRecord.get(file.getPath());
-				if (rf == null) 
-				{// 新增jar
-					trigLoad = true;
-					break;
-				} else 
-				{// 文件变动
-					if (file.lastModified() > rf.getLastModifyTime()) 
-					{
-						trigLoad = true;
-						break;
-					}
-				}
-			}
-			if (!trigLoad) 
-			{//判断是否减少了jar
-				for (String key : loadedRecord.keySet()) 
-				{
-					if (!files.containsKey(key)) 
-					{//减少jar
-						trigLoad = true;
-						break;
-					}
-				}
-			}
-		} catch(Exception e){
-			_log.error(e.getMessage(),e);
-		}
-		finally {
-			rwLock.readLock().unlock();
-		}
-		return trigLoad;
-	}
-	
-	
-	/**
-	 * jar目录监控任务,发生jar新增或者改变,则重置jarFiles并执行加载class
-	 * 
-	 * @author Administrator
-	 */
-	class ScriptMonitorTask implements Runnable {
-
-		public void run() {
-			if (!autoReload) {
-				return;
-			}
-			if (state == State.loading) 
-			{
-				return;
-			}
-			if(hashChange())
-			{
-				_log.debug("trigger reload scriptLibs……");
-				reload();
-			}
 		}
 	}
 

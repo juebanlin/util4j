@@ -11,7 +11,7 @@ import org.apache.commons.io.monitor.FileAlterationObserver;
 
 public class FileMonitor {
 	public static void main(String[] args) throws Exception{
-		String dir="C:/Users/Administrator/git/util4j/util4j/target";
+		String dir="C:/Users/jaci/git/util4j/util4j/target";
 		new FileMonitor().check2(dir);
         //Thread.sleep(30000);
         //monitor.stop();
@@ -56,8 +56,8 @@ public class FileMonitor {
 	    FileAlterationMonitor monitor = new FileAlterationMonitor(interval);
 	    monitor.addObserver(observer);//文件观察
 	    monitor.start();
+//	    monitor.addObserver(observer);//文件观察,如果在start后面加,则会触发所有文件创建
 	}
-	
 }
 
 final class MyFileFilter implements FileFilter{

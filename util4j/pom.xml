@@ -4,7 +4,7 @@
 
 	<groupId>net.jueb</groupId>
 	<artifactId>util4j</artifactId>
-	<version>3.7.6_beta</version>
+	<version>3.7.7</version>
 	<packaging>jar</packaging>
 
 	<name>util4j</name>
