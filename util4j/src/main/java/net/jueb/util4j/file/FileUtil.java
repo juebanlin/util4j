@@ -162,17 +162,20 @@ public class FileUtil {
 		{
 			throw new RuntimeException("jarFile is Null");
 		}
+		String Suffix=".class";
 		Enumeration<JarEntry> jarEntries = jarFile.entries();
 		while (jarEntries.hasMoreElements()) 
 		{//遍历jar的实体对象
 			JarEntry jarEntry = jarEntries.nextElement();
-			if(jarEntry.isDirectory() || !jarEntry.getName().endsWith(".class"))
+			if(jarEntry.isDirectory() || !jarEntry.getName().endsWith(Suffix))
 			{
 				continue;
 			}
 			String jarEntryName = jarEntry.getName(); // 类似：sun/security/internal/interfaces/TlsMasterSecret.class
-			String clazzName = jarEntryName.replace("/", ".");
-			map.put(clazzName,jarEntry);
+			String className = jarEntryName.substring(0, jarEntryName.length() - Suffix.length());//sun/security/internal/interfaces/TlsMasterSecret
+			//注意,jar文件里面的只能是/不能是\
+			className = className.replace("/", ".");//sun.security.internal.interfaces.TlsMasterSecret
+			map.put(className,jarEntry);
 		}
 		return map;
 	}

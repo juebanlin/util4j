@@ -29,8 +29,16 @@ public class DefaultScriptSource implements ScriptSource{
 	private final String scriptDir;
 	public static final long DEFAULT_UPDATE_INTERVAL=TimeUnit.SECONDS.toMillis(10);
 	private final long updateInterval;
+	private ScanFilter scanFilter;
 	
+	public DefaultScriptSource(String scriptDir) throws Exception {
+		this(scriptDir, DEFAULT_UPDATE_INTERVAL, null);
+	}
 	public DefaultScriptSource(String scriptDir,long updateInterval) throws Exception {
+		this(scriptDir, updateInterval, null);
+	}
+	
+	public DefaultScriptSource(String scriptDir,long updateInterval,ScanFilter scanFilter) throws Exception {
 		Objects.requireNonNull(scriptDir);
 		File file=new File(scriptDir);
 		if(!file.exists() || !file.isDirectory())
@@ -43,6 +51,7 @@ public class DefaultScriptSource implements ScriptSource{
 			throw new IllegalArgumentException("updateInterval low 1000,updateInterval="+updateInterval);
 		}
 		this.updateInterval=updateInterval;
+		this.scanFilter=scanFilter;
 		init();
 	}
 	
@@ -127,16 +136,22 @@ public class DefaultScriptSource implements ScriptSource{
 			File scriptDirFile=new File(scriptDir);
 			if(scriptDirFile.exists() && scriptDirFile.isDirectory())
 			{
-				for(File file:FileUtil.findJarFileByDir(scriptDirFile))
+				if(scanFilter!=null && scanFilter.accpetJars())
 				{
-					cacheJars.add(file.toURI().toURL());
+					for(File file:FileUtil.findJarFileByDir(scriptDirFile))
+					{//扫描jar
+						cacheJars.add(file.toURI().toURL());
+					}
 				}
-				HashMap<String, File> map=FileUtil.findClassByDirAndSub(scriptDirFile);
-				if(!map.isEmpty())
+				if(scanFilter!=null && scanFilter.accpetDirClass())
 				{
-					DefaultDirClassFile df=new DefaultDirClassFile(new ArrayList<>(map.keySet()),
-							scriptDirFile.toURI().toURL());
-					cacheDirClassFile.add(df);
+					HashMap<String, File> map=FileUtil.findClassByDirAndSub(scriptDirFile);
+					if(!map.isEmpty())
+					{//扫描class文件
+						DefaultDirClassFile df=new DefaultDirClassFile(new ArrayList<>(map.keySet()),
+								scriptDirFile.toURI().toURL());
+						cacheDirClassFile.add(df);
+					}
 				}
 			}
 		} catch (Exception e) {
@@ -182,5 +197,10 @@ public class DefaultScriptSource implements ScriptSource{
 	@Override
 	public List<DirClassFile> getDirClassFiles() {
 		return Collections.unmodifiableList(cacheDirClassFile);
+	}
+	
+	public static interface ScanFilter{
+		public boolean accpetJars();
+		public boolean accpetDirClass();
 	}
 }

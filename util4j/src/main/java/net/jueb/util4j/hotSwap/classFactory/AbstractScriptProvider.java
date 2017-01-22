@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -114,6 +113,11 @@ public abstract class AbstractScriptProvider<T extends IScript> extends Abstract
 			Set<Class<?>> fileClass=new HashSet<>();
 			for(DirClassFile dcf:scriptSource.getDirClassFiles())
 			{
+				File file=new File(dcf.getRootDir().getFile());
+				if(!file.exists())
+				{
+					continue;
+				}
 				newClassLoader.addURL(dcf.getRootDir());
 				for(String className:dcf.getClassNames())
 				{
@@ -139,6 +143,11 @@ public abstract class AbstractScriptProvider<T extends IScript> extends Abstract
 			{
 				JarFile jarFile=null;
 				try {
+					File file=new File(jar.getFile());
+					if(!file.exists())
+					{
+						continue;
+					}
 					jarFile=new JarFile(jar.getFile());
 					Map<String, JarEntry>  map=FileUtil.findClassByJar(jarFile);
 					if(!map.isEmpty())
@@ -167,43 +176,12 @@ public abstract class AbstractScriptProvider<T extends IScript> extends Abstract
 			Map<Integer, Class<? extends T>> newCodeMap = findScriptCodeMap(findScriptClass(allClass));
 			this.codeMap.clear();
 			this.codeMap.putAll(newCodeMap);
-			URLClassLoader oldLoader=this.classLoader;
 			this.classLoader = newClassLoader;
-			if(oldLoader!=null)
-			{
-				oldLoader.close();
-			}
+			this.classLoader.close();//关闭资源文件引用
 		} finally {
 			state = State.loaded;
 			rwLock.writeLock().unlock();
 		}
-	}
-
-	/**
-	 * 加载jar的所有类
-	 * @param jarFiles
-	 * @param loader
-	 * @return
-	 * @throws ClassNotFoundException
-	 * @throws IOException
-	 */
-	protected Set<Class<?>> loadAllClass(File jarFile, ScriptClassLoader loader) throws Exception {
-		Set<Class<?>> clzzs = new HashSet<Class<?>>();
-		JarFile jf = new JarFile(jarFile);
-		try {
-			loader.addURL(jarFile.toURI().toURL());// 添加文件到加载器
-			Enumeration<JarEntry> it = jf.entries();
-			while (it.hasMoreElements()) {
-				JarEntry jarEntry = it.nextElement();
-				if (jarEntry.getName().endsWith(".class")) {
-					String className = jarEntry.getName().replace("/", ".").replaceAll(".class", "");
-					clzzs.add(loader.findClass(className));
-				}
-			}
-		} finally {
-			jf.close();
-		}
-		return clzzs;
 	}
 
 	/**
@@ -303,7 +281,7 @@ public abstract class AbstractScriptProvider<T extends IScript> extends Abstract
 					resolveClass(clazz);
 				}
 			}
-			log.debug("loadClass:" + className + ",resolve=" + resolve + ",Clazz=" + clazz + ",ClassLoader="+ ClassLoader);
+			log.debug("loadClass "+(clazz==null)+":" + className + ",resolve=" + resolve + ",Clazz=" + clazz + ",ClassLoader="+ ClassLoader);
 			return clazz;
 		}
 
