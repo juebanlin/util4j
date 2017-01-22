@@ -11,9 +11,9 @@ import net.jueb.util4j.queue.queueExecutor.RunnableQueue;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.IndexQueueGroupManager;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.KeyQueueGroupManager;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupExecutor;
-import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.ArrayIndexQueueManager;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.DefaultIndexQueueManager;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.DefaultQueueGroupExecutor;
-import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.StringQueueManager;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.DefaultKeyQueueManager;
 import net.jueb.util4j.queue.queueExecutor.queue.RunnableQueueWrapper;
 
 public class TestQueueGroup2 {
@@ -32,8 +32,8 @@ public class TestQueueGroup2 {
 				return new RunnableQueueWrapper(queue);
 			}
 		};
-		IndexQueueGroupManager iqm=new ArrayIndexQueueManager(qf);
-		KeyQueueGroupManager kqm=new StringQueueManager(qf);
+		IndexQueueGroupManager iqm=new DefaultIndexQueueManager(qf);
+		KeyQueueGroupManager kqm=new DefaultKeyQueueManager(qf);
 		DefaultQueueGroupExecutor.Builder b=new DefaultQueueGroupExecutor.Builder();
 		return b.setMaxPoolSize(max).setCorePoolSize(min).setBossQueue(bossQueue).setIndexQueueGroupManager(iqm).setKeyQueueGroupManagerr(kqm).build();
 	}
@@ -51,8 +51,8 @@ public class TestQueueGroup2 {
 				return new RunnableQueueWrapper(queue);
 			}
 		};
-		IndexQueueGroupManager iqm=new ArrayIndexQueueManager(qf);
-		KeyQueueGroupManager kqm=new StringQueueManager(qf);
+		IndexQueueGroupManager iqm=new DefaultIndexQueueManager(qf);
+		KeyQueueGroupManager kqm=new DefaultKeyQueueManager(qf);
 		DefaultQueueGroupExecutor.Builder b=new DefaultQueueGroupExecutor.Builder();
 		return b.setMaxPoolSize(max).setCorePoolSize(min).setBossQueue(bossQueue).setIndexQueueGroupManager(iqm).setKeyQueueGroupManagerr(kqm).build();
 	}

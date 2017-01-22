@@ -2,16 +2,20 @@ package net.jueb.util4j.queue.queueExecutor.groupExecutor.impl;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+
+import org.jctools.queues.MpscLinkedQueue;
 
 import net.jueb.util4j.queue.queueExecutor.QueueFactory;
 import net.jueb.util4j.queue.queueExecutor.executor.QueueExecutor;
 import net.jueb.util4j.queue.queueExecutor.executor.impl.RunnableQueueExecutorEventWrapper;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.IndexQueueGroupManager;
+import net.jueb.util4j.queue.queueExecutor.queue.RunnableQueueWrapper;
 
-public class ArrayIndexQueueManager extends AbstractQueueMaganer implements IndexQueueGroupManager{
+public class DefaultIndexQueueManager extends AbstractQueueMaganer implements IndexQueueGroupManager{
 	/**
 	 * 最大队列插槽数
 	 */
@@ -31,11 +35,11 @@ public class ArrayIndexQueueManager extends AbstractQueueMaganer implements Inde
 	
 	private volatile IndexGroupEventListener listener;
 
-	public ArrayIndexQueueManager() {
+	public DefaultIndexQueueManager() {
 		init();
 	}
 	
-	public ArrayIndexQueueManager(QueueFactory queueFactory) {
+	public DefaultIndexQueueManager(QueueFactory queueFactory) {
 		super(queueFactory);
 		init();
 	}
@@ -141,7 +145,7 @@ public class ArrayIndexQueueManager extends AbstractQueueMaganer implements Inde
     }
 	
 	/**
-	 * 插槽队列
+	 * 插槽队列,具有增删事件包装于queueFactory生产的queue
 	 * @author juebanlin
 	 */
 	private class SoltQueue extends RunnableQueueExecutorEventWrapper{
@@ -254,10 +258,23 @@ public class ArrayIndexQueueManager extends AbstractQueueMaganer implements Inde
 	}
 	
 	public static class Builder{
-		public ArrayIndexQueueManager build()
+		QueueFactory queueFactory=DefaultQueueFactory;
+		public Builder setQueueFactory(QueueFactory queueFactory) {
+			Objects.requireNonNull(queueFactory);
+			this.queueFactory = queueFactory;
+			return this;
+		}
+		/**
+		 * 设置多生产者单消费者队列工厂
+		 */
+		public Builder setMpScQueueFactory() {
+			this.queueFactory=()->{return new RunnableQueueWrapper(MpscLinkedQueue.newMpscLinkedQueue());};
+			return this;
+		}
+
+		public DefaultIndexQueueManager build()
 		{
-			//TODO
-			return null;
+			return new DefaultIndexQueueManager(queueFactory);
 		}
 	}
 }

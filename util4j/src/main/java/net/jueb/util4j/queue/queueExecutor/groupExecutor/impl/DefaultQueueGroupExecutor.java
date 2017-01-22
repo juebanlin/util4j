@@ -35,9 +35,9 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 
     private static final int DEFAULT_KEEP_ALIVE_SEC = 30;
     
-    private static final IndexQueueGroupManager DEFAULT_IndexQueueGroupManager = new ArrayIndexQueueManager();
+    private static final IndexQueueGroupManager DEFAULT_IndexQueueGroupManager = new DefaultIndexQueueManager();
    
-    private static final KeyQueueGroupManager DEFAULT_KeyQueueGroupManager = new StringQueueManager();
+    private static final KeyQueueGroupManager DEFAULT_KeyQueueGroupManager = new DefaultKeyQueueManager();
     
     private static final Queue<Runnable> DEFAULT_BossQueue = new ConcurrentLinkedQueue<Runnable>();
     

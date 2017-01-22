@@ -4,16 +4,20 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+
+import org.jctools.queues.MpscLinkedQueue;
 
 import net.jueb.util4j.queue.queueExecutor.QueueFactory;
 import net.jueb.util4j.queue.queueExecutor.executor.QueueExecutor;
 import net.jueb.util4j.queue.queueExecutor.executor.impl.RunnableQueueExecutorEventWrapper;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.KeyQueueGroupManager;
+import net.jueb.util4j.queue.queueExecutor.queue.RunnableQueueWrapper;
 
-public class StringQueueManager extends AbstractQueueMaganer implements KeyQueueGroupManager{
+public class DefaultKeyQueueManager extends AbstractQueueMaganer implements KeyQueueGroupManager{
 
 	private final Map<String,TaskQueue> queues=new HashMap<>();
 	private final Map<String,String> alias=new HashMap<>();
@@ -23,11 +27,11 @@ public class StringQueueManager extends AbstractQueueMaganer implements KeyQueue
 
 	private volatile KeyGroupEventListener listener;
 
-	public StringQueueManager() {
+	public DefaultKeyQueueManager() {
 		
 	}
 	
-	public StringQueueManager(QueueFactory queueFactory) {
+	public DefaultKeyQueueManager(QueueFactory queueFactory) {
 		super(queueFactory);
 	}
 
@@ -233,10 +237,25 @@ public class StringQueueManager extends AbstractQueueMaganer implements KeyQueue
 	}
 	
 	public static class Builder{
-		public StringQueueManager build()
+		QueueFactory queueFactory=DefaultQueueFactory;
+		
+		public Builder setQueueFactory(QueueFactory queueFactory) {
+			Objects.requireNonNull(queueFactory);
+			this.queueFactory = queueFactory;
+			return this;
+		}
+		/**
+		 * 设置多生产者单消费者队列工厂
+		 * @return 
+		 */
+		public Builder setMpScQueueFactory() {
+			this.queueFactory=()->{return new RunnableQueueWrapper(MpscLinkedQueue.newMpscLinkedQueue());};
+			return this;
+		}
+
+		public DefaultKeyQueueManager build()
 		{
-			//TODO
-			return null;
+			return new DefaultKeyQueueManager(queueFactory);
 		}
 	}
 }
