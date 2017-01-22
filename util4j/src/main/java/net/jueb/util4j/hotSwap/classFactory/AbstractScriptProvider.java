@@ -118,7 +118,10 @@ public abstract class AbstractScriptProvider<T extends IScript> extends Abstract
 				for(String className:dcf.getClassNames())
 				{
 					Class<?> clazz=newClassLoader.loadClass(className);
-					fileClass.add(clazz);
+					if(clazz!=null)
+					{
+						fileClass.add(clazz);
+					}
 				}
 			}
 			Set<Class<?>> urlClass=new HashSet<>();
@@ -126,7 +129,10 @@ public abstract class AbstractScriptProvider<T extends IScript> extends Abstract
 			{
 				newClassLoader.addURL(ucf.getURL());
 				Class<?> clazz=newClassLoader.loadClass(ucf.getClassName());
-				urlClass.add(clazz);
+				if(clazz!=null)
+				{
+					urlClass.add(clazz);
+				}
 			}
 			Set<Class<?>> jarClass=new HashSet<>();
 			for(URL jar:scriptSource.getJars())
@@ -138,7 +144,10 @@ public abstract class AbstractScriptProvider<T extends IScript> extends Abstract
 					for(String className:map.keySet())
 					{
 						Class<?> clazz=newClassLoader.loadClass(className);
-						jarClass.add(clazz);
+						if(clazz!=null)
+						{
+							jarClass.add(clazz);
+						}
 					}
 				}
 			}
