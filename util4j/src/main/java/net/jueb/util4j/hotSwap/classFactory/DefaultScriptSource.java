@@ -136,14 +136,14 @@ public class DefaultScriptSource implements ScriptSource{
 			File scriptDirFile=new File(scriptDir);
 			if(scriptDirFile.exists() && scriptDirFile.isDirectory())
 			{
-				if(scanFilter!=null && scanFilter.accpetJars())
+				if(scanFilter==null || (scanFilter!=null && scanFilter.accpetJars()))
 				{
 					for(File file:FileUtil.findJarFileByDir(scriptDirFile))
 					{//扫描jar
 						cacheJars.add(file.toURI().toURL());
 					}
 				}
-				if(scanFilter!=null && scanFilter.accpetDirClass())
+				if(scanFilter==null || (scanFilter!=null && scanFilter.accpetDirClass()))
 				{
 					HashMap<String, File> map=FileUtil.findClassByDirAndSub(scriptDirFile);
 					if(!map.isEmpty())
