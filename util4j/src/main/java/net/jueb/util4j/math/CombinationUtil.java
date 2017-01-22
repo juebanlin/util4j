@@ -10,27 +10,25 @@ import java.util.concurrent.TimeUnit;
  * @author jaci
  */
 public class CombinationUtil {
-	
-	public interface CombinationController{
-		/**
-		 * 进入下一层循环
-		 * 调用该方法后记得重置状态
-		 * @return
-		 */
-		default boolean entryNextLayout(){
-			return true;
+	public static class ComputeStatus{
+		private boolean stop;//停止循环
+		private boolean skip;//跳过下层循环
+		public boolean isStop() {
+			return stop;
 		}
-		/**
-		 * 终止循环
-		 * @return
-		 */
-		default boolean stopForEach(){
-			return false;
+		public void setStop(boolean stop) {
+			this.stop = stop;
+		}
+		public boolean isSkip() {
+			return skip;
+		}
+		public void setSkip(boolean skip) {
+			this.skip = skip;
 		}
 	}
 	
 	@FunctionalInterface
-	public static interface ForEachController<T> extends CombinationController{
+	public static interface ForEachController<T>{
 		
 		/**
 		 * 输出事件
@@ -38,11 +36,11 @@ public class CombinationUtil {
 		 * @param output
 		 * @param outPutIndex
 		 */
-		public void onOutEvent(T[] output,int outPutIndex);
+		public ComputeStatus onOutEvent(T[] output,int outPutIndex);
 	}
 	
 	@FunctionalInterface
-	public static interface ForEachIndexController extends CombinationController{
+	public static interface ForEachIndexController{
 		
 		/**
 		 * 输出事件
@@ -50,7 +48,7 @@ public class CombinationUtil {
 		 * @param output
 		 * @param outPutIndex
 		 */
-		public void onOutEvent(int[] output,int outPutIndex);
+		public ComputeStatus onOutEvent(int[] output,int outPutIndex);
 	}
 	
 	/**
@@ -70,12 +68,12 @@ public class CombinationUtil {
 				continue;
 			}
 			output[outPutIndex]=input[i];//输出当前位锁定值
-			controller.onOutEvent(output, outPutIndex);
-			if(controller.stopForEach())
+			ComputeStatus status=controller.onOutEvent(output, outPutIndex);
+			if(status.isStop())
 			{
 				return;
 			}
-			if(!controller.entryNextLayout())
+			if(status.isSkip())
 			{//跳过下层循环
 				continue;
 			}
@@ -109,12 +107,12 @@ public class CombinationUtil {
 				continue;
 			}
 			output[outPutIndex]=i;//输出当前位锁定值
-			controller.onOutEvent(output, outPutIndex);
-			if(controller.stopForEach())
+			ComputeStatus status=controller.onOutEvent(output, outPutIndex);
+			if(status.isStop())
 			{
 				return;
 			}
-			if(!controller.entryNextLayout())
+			if(status.isSkip())
 			{//跳过下层循环
 				continue;
 			}
@@ -148,12 +146,12 @@ public class CombinationUtil {
 				continue;
 			}
 			output[outPutIndex]=i;//输出当前位锁定值
-			controller.onOutEvent(output, outPutIndex);
-			if(controller.stopForEach())
+			ComputeStatus status=controller.onOutEvent(output, outPutIndex);
+			if(status.isStop())
 			{
 				return;
 			}
-			if(!controller.entryNextLayout())
+			if(status.isSkip())
 			{//跳过下层循环
 				continue;
 			}
@@ -187,12 +185,12 @@ public class CombinationUtil {
 				continue;
 			}
 			output[outPutIndex]=i;//输出当前位锁定值
-			controller.onOutEvent(output, outPutIndex);
-			if(controller.stopForEach())
+			ComputeStatus status=controller.onOutEvent(output, outPutIndex);
+			if(status.isStop())
 			{
 				return;
 			}
-			if(!controller.entryNextLayout())
+			if(status.isSkip())
 			{//跳过下层循环
 				continue;
 			}
@@ -226,12 +224,12 @@ public class CombinationUtil {
 				continue;
 			}
 			output[outPutIndex]=i;//输出当前位锁定值
-			controller.onOutEvent(output, outPutIndex);
-			if(controller.stopForEach())
+			ComputeStatus status=controller.onOutEvent(output, outPutIndex);
+			if(status.isStop())
 			{
 				return;
 			}
-			if(!controller.entryNextLayout())
+			if(status.isSkip())
 			{//跳过下层循环
 				continue;
 			}
@@ -248,31 +246,56 @@ public class CombinationUtil {
 		}
 	}
 	
-	public static void main(String[] args) {
+	public void test1(){
 		/**
 		 * 测试排列组合
 		 * N个元素放在N个位置，有多少种放法
 		 */
-		final byte[] input={1,2,3,4,5};
+		final byte[] input={1,2,3};
 		int[] output=new int[input.length];
 		boolean[] inputSkip=new boolean[input.length];
 		final List<Byte[]> result=new ArrayList<>();
 		long t=System.nanoTime();
+		final ComputeStatus status=new ComputeStatus();
+		CombinationUtil.forEachIndex(input, inputSkip, output,0,(outPut,outPutIndex)->{
+			if(outPutIndex+1>=output.length)
+			{//如果是最后一个
+				Byte[] succeed=new Byte[output.length];
+				for(int i=0;i<succeed.length;i++)
+				{
+					succeed[i]=input[output[i]];
+				}
+				result.add(succeed);
+				System.out.println(Arrays.toString(output));
+			}
+			return status;
+		});
+		t=System.nanoTime()-t;
+		System.out.println("耗时："+t+"纳秒,"+TimeUnit.NANOSECONDS.toMillis(t)+"毫秒");
+		for(Byte[] succeed:result)
+		{
+			System.out.println(Arrays.toString(succeed));
+		}
+		System.out.println("排列组合数量:"+result.size());
+	
+	}
+	
+	public void test2()
+	{
+		/**
+		 * 测试排列组合
+		 * N个元素放在N个位置，有多少种放法
+		 */
+		final byte[] input={1,2,3};
+		int[] output=new int[input.length];
+		boolean[] inputSkip=new boolean[input.length];
+		final List<Byte[]> result=new ArrayList<>();
+		long t=System.nanoTime();
+		final ComputeStatus status=new ComputeStatus();
 		CombinationUtil.forEachIndex(input, inputSkip, output,0,new ForEachIndexController() 
 		{
-			private boolean entryNextLayout=true;
-			private boolean stop=false;
 			@Override
-			public boolean entryNextLayout() {
-				return entryNextLayout;
-			}
-			@Override
-			public boolean stopForEach() {
-				return stop;
-			}
-
-			@Override
-			public void onOutEvent(int[] output, int outPutIndex) {
+			public ComputeStatus onOutEvent(int[] output, int outPutIndex) {
 				if(outPutIndex+1>=output.length)
 				{//如果是最后一个
 					Byte[] succeed=new Byte[output.length];
@@ -283,6 +306,7 @@ public class CombinationUtil {
 					result.add(succeed);
 //					System.out.println(Arrays.toString(output));
 				}
+				return status;
 			}
 		});
 		t=System.nanoTime()-t;
@@ -292,5 +316,11 @@ public class CombinationUtil {
 			System.out.println(Arrays.toString(succeed));
 		}
 		System.out.println("排列组合数量:"+result.size());
+	}
+
+	public static void main(String[] args) {
+		new CombinationUtil().test1();
+		new CombinationUtil().test1();
+		new CombinationUtil().test2();
 	}
 }
