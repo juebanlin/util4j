@@ -1,5 +1,6 @@
 package net.jueb.util4j.net.nettyImpl.listener;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -10,6 +11,13 @@ import net.jueb.util4j.net.JConnectionIdleListener;
 
 /**
  * 具有心跳监测机制的链路监听器
+ * 如果你想使用心跳:
+ * {@code public void connectionOpened(NetConnection connection) {
+		//设置心跳配置
+		HeartConfig heart=new HeartConfig();
+		connection.setAttribute(IdleConnectionKey.HeartConfig, heart);
+		setHeartEnable(true);
+ * }
  * @author Administrator
  */
 public abstract class HeartAbleConnectionListener<T> implements JConnectionIdleListener<T>{
@@ -32,6 +40,17 @@ public abstract class HeartAbleConnectionListener<T> implements JConnectionIdleL
 
 	public void setHeartEnable(boolean heartEnable) {
 		this.heartEnable = heartEnable;
+	}
+	
+	/**
+	 * 启用链路心跳配置
+	 * @param connection
+	 * @param config
+	 */
+	public void configHeart(JConnection connection,HeartConfig config)
+	{
+		Objects.requireNonNull(config);
+		connection.setAttribute(IdleConnectionKey.HeartConfig, config);
 	}
 
 	/**
