@@ -43,11 +43,11 @@ public abstract class HeartAbleConnectionListener<T> implements JConnectionIdleL
 	}
 	
 	/**
-	 * 启用链路心跳配置
+	 * 链路心跳配置
 	 * @param connection
 	 * @param config
 	 */
-	public void configHeart(JConnection connection,HeartConfig config)
+	public void heartConfig (JConnection connection,HeartConfig config)
 	{
 		Objects.requireNonNull(config);
 		connection.setAttribute(IdleConnectionKey.HeartConfig, config);
