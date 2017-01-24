@@ -229,7 +229,7 @@ public abstract class AbstractScriptProvider<T extends IScript> extends Abstract
 							+ codeMap.get(code));
 				} else {
 					codeMap.put(code, scriptClazz);
-					_log.info("loaded CodeScriptClass:code="+code+",class=" + scriptClazz);
+					_log.info("regist CodeScriptClass:code="+code+",class=" + scriptClazz);
 				}
 			}
 		}
@@ -292,7 +292,7 @@ public abstract class AbstractScriptProvider<T extends IScript> extends Abstract
 		 */
 		@Override
 		protected Class<?> findClass(final String name) throws ClassNotFoundException {
-			log.debug("findClass:"+name);
+			log.trace("findClass:"+name);
 			Class<?> clazz=findLoadedClass(name);
 			if (clazz != null) 
 			{
