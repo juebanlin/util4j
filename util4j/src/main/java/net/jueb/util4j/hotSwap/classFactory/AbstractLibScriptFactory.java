@@ -240,6 +240,7 @@ public abstract class AbstractLibScriptFactory<T extends IScript> extends Abstra
 			this.codeMap.putAll(newCodeMap);
 			this.loadedRecord.putAll(newLoadedRecord);
 			this.classLoader = newClassLoader;
+			this.classLoader.close();
 		} finally {
 			state = State.loaded;
 			rwLock.writeLock().unlock();

@@ -21,7 +21,9 @@ import net.jueb.util4j.hotSwap.classFactory.ScriptSource.DirClassFile;
 import net.jueb.util4j.hotSwap.classFactory.ScriptSource.URLClassFile;
 
 /**
- * 动态加载jar内的脚本,支持包含匿名内部类 T不能做为父类加载 T尽量为接口类型,因为只有接口类型的类才没有逻辑,才可以不热加载,并且子类可选择实现
+ * 动态加载jar内的脚本,支持包含匿名内部类 T不能做为父类加载 T尽量为接口类型,
+ * 因为只有接口类型的类才没有逻辑,才可以不热加载,并且子类可选择实现.
+ * 此类提供的脚本最好不要长期保持引用,由其是热重载后,原来的脚本要GC必须保证引用不存在
  */
 public abstract class AbstractScriptProvider<T extends IScript> extends AbstractStaticScriptFactory<T> {
 	protected final Logger _log = LoggerFactory.getLogger(this.getClass());
