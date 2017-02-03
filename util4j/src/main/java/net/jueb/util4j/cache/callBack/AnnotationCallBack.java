@@ -18,12 +18,5 @@ public interface AnnotationCallBack<T> extends CallBack<T>{
 	 * 方法上的CallBackFunction注解名称
 	 * @param name
 	 */
-	public String getFunctionName();
-	
-	/**
-	 * 获取超时处理函数
-	 * 方法上的CallBackFunction注解名称
-	 * @param name
-	 */
-	public String getTimeOutFunctionName();
+	public int getFunctionId();
 }

@@ -1,6 +1,7 @@
 package net.jueb.util4j.net.nettyImpl.client.http;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -93,10 +94,10 @@ public class NettyHttpClient{
 		return response;
 	}
 	
-	public void asyncRequest(URI uri,HttpRequest request,final CallBack<HttpResponse> callback)
+	public void asyncRequest(URI uri,HttpRequest request,final CallBack<HttpResponse> callback,long timeOut)
 	{
 		initRequest(uri, request);
-		asyncRequest(uri.getHost(),getPort(uri), request,callback);
+		asyncRequest(uri.getHost(),getPort(uri), request,callback,timeOut);
 	}
 	
 	/**
@@ -106,7 +107,7 @@ public class NettyHttpClient{
 	 * @param request
 	 * @param callback
 	 */
-	public void asyncRequest(String host,int port,HttpRequest request,final CallBack<HttpResponse> callback)
+	public void asyncRequest(String host,int port,HttpRequest request,final CallBack<HttpResponse> callback,long timeOut)
 	{
 		synchronized (request) {
 			final HttpListener listener=new HttpListener(request);
@@ -117,14 +118,8 @@ public class NettyHttpClient{
 				scheduExec.execute(new Runnable() {
 					@Override
 					public void run() {
-						HttpResponse result=listener.waitResponse(callback.getTimeOut());
-						if(result!=null)
-						{
-							callback.call(result);
-						}else
-						{
-							callback.timeOutCall();
-						}
+						HttpResponse result=listener.waitResponse(timeOut);
+						callback.call(result!=null,Optional.ofNullable(result));
 						client.stop();
 					}
 				});

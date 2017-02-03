@@ -16,15 +16,10 @@ import java.lang.annotation.Target;
 @Inherited
 @Documented
 public @interface CallBackFunction{
-	/**
-	 * 函数名
-	 * @return
-	 */
-	public String name() default "";
 	
 	/**
 	 * 函数ID
 	 * @return
 	 */
-	public int id() default 0;
+	public int id();
 }

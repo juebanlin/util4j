@@ -1,8 +1,14 @@
 package net.jueb.util4j.study.jdk8.methodReference;
 
+import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
 import net.jueb.util4j.cache.callBack.CallBack;
-import net.jueb.util4j.cache.callBack.impl.CallBackBind;
+import net.jueb.util4j.cache.callBack.impl.CallBackCache;
 import net.jueb.util4j.hotSwap.classFactory.IScript;
+import net.jueb.util4j.thread.NamedThreadFactory;
 
 /**
  * 方法引用
@@ -17,32 +23,48 @@ import net.jueb.util4j.hotSwap.classFactory.IScript;
  */
 public class TestMethodReference_callBack implements IScript{
 
-    public static void main(String[] args) {
+    public static void main(String[] args)   {
         new TestMethodReference_callBack().run();
     }
-
+    public static final ScheduledThreadPoolExecutor scheduExec = new ScheduledThreadPoolExecutor(2,new NamedThreadFactory("ServerExecutor", true));
+    public static final CallBackCache cb=new CallBackCache(Executors.newCachedThreadPool());
+    {
+    	scheduExec.scheduleAtFixedRate(cb.getCleanTask(), 10, 30, TimeUnit.MILLISECONDS);
+    }
     
-    public void run() {
-    	CallBack<Boolean> callBack=null;
+    public void run()  {
+    	CallBack<String> callBack=null;
     	//表达式实现
-    	callBack=new CallBackBind<Boolean>((result)->{
-    		System.out.println("登录结果:"+result);
-    	},()->{
-    		System.out.println("登录超时");
-    	});
+    	callBack=(timeOut,result)->{
+    		System.out.println("登录结果:timeOut="+timeOut+",result="+result);
+    	};
     	//方法引用
-    	callBack=new CallBackBind<Boolean>(this::login_call,this::login_call_timeout);
-    	callBack.call(true);
-    }
-
-    public void login_call(Boolean result)
-    {
-    	System.out.println("登录结果:"+result);
+    	callBack=this::login_call;
+    	
+    	//正常测试
+    	long key=cb.put(callBack, TimeUnit.SECONDS.toMillis(5));
+    	sleep(TimeUnit.SECONDS.toMillis(3));
+    	String result="正常测试";
+    	cb.poll(result, key).call(false,result);
+    	
+    	//超时测试
+    	cb.put(callBack, TimeUnit.SECONDS.toMillis(5));
+    	sleep(TimeUnit.SECONDS.toMillis(10));
     }
     
-    public void login_call_timeout()
+    public void sleep(long t)
     {
-    	System.out.println("登录超时");
+    	try {
+			Thread.sleep(t);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
+
+    public void login_call(boolean timeOut,Optional<String> result)
+    {
+    	System.out.println("登录结果:timeOut="+timeOut+",result="+result);
     }
     
 	@Override

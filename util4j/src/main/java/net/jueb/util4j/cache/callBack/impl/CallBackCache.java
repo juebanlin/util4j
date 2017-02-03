@@ -29,18 +29,18 @@ public class CallBackCache {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public final <TYPE> long put(CallBack<TYPE> callBack)
+	public final <TYPE> long put(CallBack<TYPE> callBack,long timeOut)
 	{
 		Objects.requireNonNull(callBack);
-		return caches.put((CallBack<Object>) callBack);
+		return caches.put((CallBack<Object>) callBack,timeOut);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public final <TYPE> long put(CallBack<TYPE> callBack,Executor timeOutExecutor)
+	public final <TYPE> long put(CallBack<TYPE> callBack,long timeOut,Executor timeOutExecutor)
 	{
 		Objects.requireNonNull(callBack);
 		Objects.requireNonNull(timeOutExecutor);
-		return caches.put((CallBack<Object>) callBack,timeOutExecutor);
+		return caches.put((CallBack<Object>) callBack,timeOut,timeOutExecutor);
 	}
 	
 	/**

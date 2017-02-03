@@ -1,6 +1,7 @@
 package net.jueb.util4j.cache.callBack.impl;
 
 import java.lang.management.ManagementFactory;
+import java.util.Objects;
 import java.util.concurrent.Executor;
 
 import org.slf4j.Logger;
@@ -25,15 +26,11 @@ public abstract class AbstractCallBackCache<KEY,TYPE> {
 		 callBacks=new TimedMapImpl<KEY,CallBack<TYPE>>(timeOutExecutor);
 	}
 	
-	public KEY put(CallBack<TYPE> callBack)
+	public KEY put(CallBack<TYPE> callBack,long timeOut)
 	{
-		if(callBack==null)
-		{
-			return null;
-		}
+		Objects.requireNonNull(callBack);
 		KEY ck=nextCallKey();
-		long timeOut=callBack.getTimeOut();
-		if(timeOut==0)
+		if(timeOut<=0)
 		{
 			timeOut=CallBack.DEFAULT_TIMEOUT;
 		}
@@ -43,7 +40,7 @@ public abstract class AbstractCallBackCache<KEY,TYPE> {
 			public void removed(KEY key, CallBack<TYPE> value, boolean expire) {
 				if(expire)
 				{
-					value.timeOutCall();
+					value.call(true);
 				}
 			}
 		});
@@ -56,15 +53,12 @@ public abstract class AbstractCallBackCache<KEY,TYPE> {
 	 * @param timeOutExecutor
 	 * @return
 	 */
-	public KEY put(CallBack<TYPE> callBack,final Executor timeOutExecutor)
+	public KEY put(CallBack<TYPE> callBack,long timeOut,final Executor timeOutExecutor)
 	{
-		if(callBack==null)
-		{
-			return null;
-		}
+		Objects.requireNonNull(callBack);
+		Objects.requireNonNull(timeOutExecutor);
 		KEY ck=nextCallKey();
-		long timeOut=callBack.getTimeOut();
-		if(timeOut==0)
+		if(timeOut<=0)
 		{
 			timeOut=CallBack.DEFAULT_TIMEOUT;
 		}
@@ -77,7 +71,7 @@ public abstract class AbstractCallBackCache<KEY,TYPE> {
 					timeOutExecutor.execute(new Runnable() {
 						@Override
 						public void run() {
-							value.timeOutCall();
+							value.call(true);
 						}
 					});
 				}
