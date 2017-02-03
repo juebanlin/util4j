@@ -54,6 +54,19 @@ public interface JConnection {
 	 * 清空属性
 	 */
 	public void clearAttributes();
+	
+	/**
+	 * 获取附件
+	 * @return
+	 */
+	public <T> T getAttachment();
+	
+	/**
+	 * 设置附件
+	 * @param attachment
+	 */
+	public <T> void setAttachment(T attachment);
+	
 	/**
 	 * 获取连接远程地址
 	 * @return

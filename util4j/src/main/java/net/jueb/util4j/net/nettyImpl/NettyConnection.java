@@ -22,6 +22,7 @@ public class NettyConnection implements JConnection{
 	protected final Map<String,Object> attributes=new HashMap<String,Object>();
 	protected final Channel channel;
 	protected int id;
+	private Object attachment;
 
 	public NettyConnection(Channel channel) {
 		this.channel=channel;
@@ -61,6 +62,11 @@ public class NettyConnection implements JConnection{
 	}
 
 	@Override
+	public Set<String> getAttributeNames() {
+		return attributes.keySet();
+	}
+
+	@Override
 	public Object getAttribute(String key) {
 		return attributes.get(key);
 	}
@@ -73,6 +79,21 @@ public class NettyConnection implements JConnection{
 	@Override
 	public void clearAttributes() {
 		attributes.clear();
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> T getAttachment() {
+		if(attachment !=null)
+		{
+			return (T) attachment;
+		}
+		return null;
+	}
+
+	@Override
+	public <T> void setAttachment(T attachment) {
+		this.attachment=attachment;
 	}
 
 	@Override
@@ -124,10 +145,5 @@ public class NettyConnection implements JConnection{
 	@Override
 	public String toString() {
 		return channel!=null?channel.toString()+",isActive:"+channel.isActive():super.toString();
-	}
-
-	@Override
-	public Set<String> getAttributeNames() {
-		return attributes.keySet();
 	}
 }
