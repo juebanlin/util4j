@@ -2,11 +2,15 @@ package net.jueb.util4j.study.jdk8.stream;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import org.apache.commons.lang.math.RandomUtils;
 
 public class StreamTest{
 
@@ -40,5 +44,56 @@ public class StreamTest{
         long t2 = System.nanoTime();
         //我本机的结果是serial: 0.06s, parallel 0.02s，证明并行流确实比顺序流快
         System.out.printf("serial: %.2fs, parallel %.2fs%n", (t1 - t0) * 1e-9, (t2 - t1) * 1e-9);
+	}
+	
+	
+	public int[] buildArray(int len)
+	{
+		int[] array=new int[len];
+		for(int i=0;i<array.length;i++)
+		{
+			array[i]=RandomUtils.nextInt(10000);
+		}
+		return array;
+	}
+	
+	public void blocking(long timeMils)
+	{
+		try {
+			Thread.sleep(timeMils);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * ForkJoinPool线程池实现
+	 */
+	public void testSpeed2()
+	{
+		List<Integer> list1=new ArrayList<>();
+		List<Integer> list2=new ArrayList<>();
+		for(int i=0;i<10;i++)
+		{//
+			list1.add(i);
+			list2.add(i);
+		}
+		long t0 = System.nanoTime();
+		long count1=list1.stream().filter(a-> {blocking(100);return true;}).count();
+        long t1 = System.nanoTime();
+        long count2=list2.stream().parallel().filter(a-> {blocking(100);return true;}).count();
+        long t2 = System.nanoTime();
+        System.out.println("count1="+count1+",count2="+count2);
+        System.out.printf("serial: %.2fs, parallel %.2fs%n", (t1 - t0) * 1e-9, (t2 - t1) * 1e-9);
+        System.out.printf("serial: %d, parallel %d%n",(t1 - t0), (t2 - t1));
+        System.out.printf("serial: %d, parallel %d%n",
+        		TimeUnit.NANOSECONDS.toMillis((t1 - t0)), 
+        		TimeUnit.NANOSECONDS.toMillis((t2 - t1)));
+	}
+	public static void main(String[] args) {
+		Scanner sc=new Scanner(System.in);
+		sc.nextLine();
+		new StreamTest().testSpeed2();
+		sc.nextLine();
 	}
 }
