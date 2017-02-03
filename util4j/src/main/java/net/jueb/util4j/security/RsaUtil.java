@@ -22,8 +22,6 @@ import javax.crypto.Cipher;
 4.A将这个消息发给B（已经用B的公钥加密消息）。
 5.B收到这个消息后，B用自己的私钥解密A的消息。其他所有收到这个报文的人都无法解密，因为只有B才有B的私钥。
 注意:非对称加密速度慢,随着加密数据长度而增加时间,所以一般用于加密对称加密算法的密钥
- * @author Administrator
- *
  */
 public class RsaUtil extends SecurityUtil{
 
@@ -45,7 +43,7 @@ public class RsaUtil extends SecurityUtil{
 	        pairgen.initialize(keySize, random);  
 	        return pairgen.generateKeyPair();
 		} catch (Exception e) {
-			log.debug(e.getMessage(),e);
+			log.error(e.getMessage(),e);
 		}  
         return null;  
     }
@@ -61,7 +59,7 @@ public class RsaUtil extends SecurityUtil{
 			keyPairGenerator = KeyPairGenerator.getInstance(algorithm);
 			return keyPairGenerator.generateKeyPair(); 
 		} catch (Exception e) {
-			log.debug(e.getMessage(),e);
+			log.error(e.getMessage(),e);
 		}  
         return null; 
     }
@@ -77,7 +75,7 @@ public class RsaUtil extends SecurityUtil{
 			keyPairGenerator.initialize(keysize);
 			return keyPairGenerator.generateKeyPair(); 
 		} catch (Exception e) {
-			log.debug(e.getMessage(),e);
+			log.error(e.getMessage(),e);
 		}  
         return null; 
     }
@@ -99,7 +97,7 @@ public class RsaUtil extends SecurityUtil{
 			cipher.init(Cipher.ENCRYPT_MODE, key);
 			return cipher.doFinal(data);
 		} catch (Exception e) {
-			log.debug(e.getMessage(),e);
+			log.error(e.getMessage(),e);
 		}
     	return null;
     }
@@ -121,7 +119,7 @@ public class RsaUtil extends SecurityUtil{
 			cipher.init(Cipher.ENCRYPT_MODE, key);
 			return cipher.doFinal(data);
 		} catch (Exception e) {
-			log.debug(e.getMessage(),e);
+			log.error(e.getMessage(),e);
 		}
     	return null;
 	}
@@ -143,7 +141,7 @@ public class RsaUtil extends SecurityUtil{
 			cipher.init(Cipher.DECRYPT_MODE, key);
 			return cipher.doFinal(data);
 		} catch (Exception e) {
-			log.debug(e.getMessage(),e);
+			log.error(e.getMessage(),e);
 		}
     	return null;
 	}
@@ -165,7 +163,7 @@ public class RsaUtil extends SecurityUtil{
 			cipher.init(Cipher.DECRYPT_MODE, key);
 			return cipher.doFinal(data);
 		} catch (Exception e) {
-			log.debug(e.getMessage(),e);
+			log.error(e.getMessage(),e);
 		}
     	return null;
 	}
@@ -188,7 +186,7 @@ public class RsaUtil extends SecurityUtil{
 			cipher.init(Cipher.WRAP_MODE,wrapKey);
 			return cipher.wrap(key);
 		} catch (Exception e) {
-			log.debug(e.getMessage(),e);
+			log.error(e.getMessage(),e);
 		}
     	return null;
 	}
@@ -211,7 +209,7 @@ public class RsaUtil extends SecurityUtil{
 			cipher.init(Cipher.UNWRAP_MODE,unwrapKey);
 			return (PrivateKey) cipher.unwrap(key, algorithm,Cipher.PRIVATE_KEY);
 		} catch (Exception e) {
-			log.debug(e.getMessage(),e);
+			log.error(e.getMessage(),e);
 		}
     	return null;
 	}
@@ -234,7 +232,7 @@ public class RsaUtil extends SecurityUtil{
 			cipher.init(Cipher.UNWRAP_MODE,unwrapKey);
 			return (PublicKey) cipher.unwrap(key, algorithm,Cipher.PUBLIC_KEY);
 		} catch (Exception e) {
-			log.debug(e.getMessage(),e);
+			log.error(e.getMessage(),e);
 		}
     	return null;
 	}
@@ -252,7 +250,7 @@ public class RsaUtil extends SecurityUtil{
            KeyFactory keyFactory = KeyFactory.getInstance(algorithm);  
            return keyFactory.generatePublic(spec);  
 		} catch (Exception e) {
-			log.debug(e.getMessage(),e);
+			log.error(e.getMessage(),e);
 		}
        return null;
     }  
@@ -269,7 +267,7 @@ public class RsaUtil extends SecurityUtil{
             KeyFactory keyFactory = KeyFactory.getInstance(algorithm);  
             return keyFactory.generatePrivate(spec); 
 		} catch (Exception e) {
-			log.debug(e.getMessage(),e);
+			log.error(e.getMessage(),e);
 		} 
     	return null;
     }

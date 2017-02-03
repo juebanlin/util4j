@@ -18,8 +18,6 @@ import javax.crypto.spec.SecretKeySpec;
  * 8.AES加密为base 64 code
  * 9.AES解密
  * 10.将base 64 code AES解密
- * @author uikoo9
- * @version 0.0.7.20140601
  */
 public class AesUtil extends SecurityUtil{
 	
