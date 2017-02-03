@@ -1,4 +1,4 @@
-package net.jueb.util4j.test.jdk8;
+package net.jueb.util4j.study.jdk8.function;
 public class RunnerImpl implements Runner {
 
     public static void main(String[] args) {
