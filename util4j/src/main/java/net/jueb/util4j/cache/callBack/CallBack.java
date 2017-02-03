@@ -3,9 +3,9 @@ package net.jueb.util4j.cache.callBack;
 import java.util.Optional;
 
 /**
- * 回调
+ * 回调函数
  * @author Administrator
- * @param <T>
+ * @param <R> 回调结果类型
  */
 @FunctionalInterface
 public interface CallBack<R> {
