@@ -14,7 +14,7 @@
 		<JDK.VERSION>1.8</JDK.VERSION>
 	</properties>
 	<repositories>
-		
+
 	</repositories>
 	<dependencies>
 		<dependency>
@@ -140,30 +140,31 @@
 		</dependency>
 		<!-- https://github.com/JCTools/JCTools -->
 		<dependency>
-            <groupId>org.jctools</groupId>
-            <artifactId>jctools-core</artifactId>
-            <version>2.0</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/co.paralleluniverse/quasar-core -->
+			<groupId>org.jctools</groupId>
+			<artifactId>jctools-core</artifactId>
+			<version>2.0</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/co.paralleluniverse/quasar-core -->
+		<dependency>
+			<groupId>co.paralleluniverse</groupId>
+			<artifactId>quasar-core</artifactId>
+			<version>0.7.7</version>
+			<optional>true</optional>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/co.paralleluniverse/quasar-actors -->
 		<dependency>
 		    <groupId>co.paralleluniverse</groupId>
-		    <artifactId>quasar-core</artifactId>
+		    <artifactId>quasar-actors</artifactId>
 		    <version>0.7.7</version>
-		    <optional>true</optional>
 		</dependency>
 	</dependencies>
 	<build>
 		<!-- 读取系统版本的扩展 -->
 		<extensions>
 			<extension>
-				<!-- ${os.name} and ${os.arch} 
-				[INFO] os.detected.name: windows
-				[INFO] os.detected.arch: x86_64
-				[INFO] os.detected.version: 10.0
-				[INFO] os.detected.version.major: 10
-				[INFO] os.detected.version.minor: 0
-				[INFO] os.detected.classifier: windows-x86_64
-				-->
+				<!-- ${os.name} and ${os.arch} [INFO] os.detected.name: windows [INFO] 
+					os.detected.arch: x86_64 [INFO] os.detected.version: 10.0 [INFO] os.detected.version.major: 
+					10 [INFO] os.detected.version.minor: 0 [INFO] os.detected.classifier: windows-x86_64 -->
 				<groupId>kr.motd.maven</groupId>
 				<artifactId>os-maven-plugin</artifactId>
 				<version>1.5.0.Final</version>
@@ -228,7 +229,7 @@
 					</excludes>
 				</configuration>
 			</plugin>
-			<!-- maven protobuf插件-->
+			<!-- maven protobuf插件 -->
 			<plugin>
 				<groupId>org.xolstice.maven.plugins</groupId>
 				<artifactId>protobuf-maven-plugin</artifactId>
@@ -245,9 +246,7 @@
 						</goals>
 						<configuration>
 							<!-- https://repo.maven.apache.org/maven2/com/google/protobuf/protoc/ 
-								自动发现下载exe,需要os-maven-plugin插件解析系统版本
-							<protocArtifact>com.google.protobuf:protoc:3.1.0:exe:${os.detected.classifier}</protocArtifact> 
-							-->
+								自动发现下载exe,需要os-maven-plugin插件解析系统版本 <protocArtifact>com.google.protobuf:protoc:3.1.0:exe:${os.detected.classifier}</protocArtifact> -->
 						</configuration>
 					</execution>
 				</executions>
