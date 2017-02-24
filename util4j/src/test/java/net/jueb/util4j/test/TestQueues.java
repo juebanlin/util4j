@@ -13,12 +13,12 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.math.RandomUtils;
 
 import net.jueb.util4j.common.game.cdkey.CdkeyFactoryRandomImpl;
-import net.jueb.util4j.queue.deprecated.taskQueue.Task;
-import net.jueb.util4j.queue.deprecated.taskQueue.TaskQueueExecutor;
-import net.jueb.util4j.queue.deprecated.taskQueue.TaskQueuesExecutor;
-import net.jueb.util4j.queue.deprecated.taskQueue.impl.order.queueExecutor.multithread.ThreadPoolTaskQueuesExecutor;
-import net.jueb.util4j.queue.deprecated.taskQueue.impl.order.queueExecutor.multithread.mina.FixedThreadPoolBlockingQueuesExecutor;
-import net.jueb.util4j.queue.deprecated.taskQueue.impl.order.queueExecutor.multithread.mina.FixedThreadPoolQueuesExecutor;
+import net.jueb.util4j.queue.taskQueue.Task;
+import net.jueb.util4j.queue.taskQueue.TaskQueueExecutor;
+import net.jueb.util4j.queue.taskQueue.TaskQueuesExecutor;
+import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.multithread.ThreadPoolTaskQueuesExecutor;
+import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.multithread.mina.FixedThreadPoolBlockingQueuesExecutor;
+import net.jueb.util4j.queue.taskQueue.impl.order.queueExecutor.multithread.mina.FixedThreadPoolQueuesExecutor;
 
 public class TestQueues{
     	 public Task buildTask()
