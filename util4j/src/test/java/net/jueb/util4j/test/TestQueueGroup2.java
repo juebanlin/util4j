@@ -51,7 +51,7 @@ public class TestQueueGroup2 {
 				return new RunnableQueueWrapper(queue);
 			}
 		};
-		IndexQueueGroupManager iqm=new DefaultIndexQueueManager(qf);
+		IndexQueueGroupManager iqm=new DefaultIndexQueueManager(qf,false);
 		KeyQueueGroupManager kqm=new DefaultKeyQueueManager(qf);
 		DefaultQueueGroupExecutor.Builder b=new DefaultQueueGroupExecutor.Builder();
 		return b.setMaxPoolSize(max).setCorePoolSize(min).setBossQueue(bossQueue).setIndexQueueGroupManager(iqm).setKeyQueueGroupManagerr(kqm).build();

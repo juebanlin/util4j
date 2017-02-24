@@ -33,15 +33,22 @@ public class DefaultIndexQueueManager extends AbstractQueueMaganer implements In
 	private volatile IndexGroupEventListener listener;
 
 	public DefaultIndexQueueManager() {
-		init();
+		
 	}
 	
 	public DefaultIndexQueueManager(QueueFactory queueFactory) {
-		super(queueFactory);
-		init();
+		this(queueFactory, false);
 	}
 	
-	protected void init()
+	public DefaultIndexQueueManager(QueueFactory queueFactory,boolean initQueues) {
+		super(queueFactory);
+		if(initQueues)
+		{
+			initQueues();
+		}
+	}
+	
+	protected void initQueues()
     {
 		for(int i=0;i<solts.length;i++)
     	{
@@ -111,6 +118,15 @@ public class DefaultIndexQueueManager extends AbstractQueueMaganer implements In
 
 	public QueueExecutor getQueueExecutor(short solt) {
 		int index = convertIndex(solt);
+		if(solts[index]==null)
+		{
+			synchronized (solts) {
+				if(solts[index]==null)
+				{
+					solts[index]=new SoltQueue(index,getQueueFactory_().buildQueue());
+				}
+			}
+		}
 		return solts[index];
 	}
 	
@@ -308,11 +324,24 @@ public class DefaultIndexQueueManager extends AbstractQueueMaganer implements In
 	
 	public static class Builder{
 		QueueFactory queueFactory=QueueFactory.DEFAULT_QUEUE_FACTORY;
+		boolean initQueues;
 		public Builder setQueueFactory(QueueFactory queueFactory) {
 			Objects.requireNonNull(queueFactory);
 			this.queueFactory = queueFactory;
 			return this;
 		}
+		
+		/**
+		 * 是否提前初始化队列
+		 * @param initQueues
+		 * @return
+		 */
+		public Builder setInitQueues(boolean initQueues)
+		{
+			this.initQueues=initQueues;
+			return this;
+		}
+		
 		/**
 		 * 设置多生产者单消费者队列工厂
 		 */
@@ -323,7 +352,7 @@ public class DefaultIndexQueueManager extends AbstractQueueMaganer implements In
 
 		public DefaultIndexQueueManager build()
 		{
-			return new DefaultIndexQueueManager(queueFactory);
+			return new DefaultIndexQueueManager(queueFactory,initQueues);
 		}
 	}
 }
