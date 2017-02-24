@@ -9,13 +9,10 @@ import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.jctools.queues.MpscLinkedQueue;
-
 import net.jueb.util4j.queue.queueExecutor.QueueFactory;
 import net.jueb.util4j.queue.queueExecutor.executor.QueueExecutor;
 import net.jueb.util4j.queue.queueExecutor.executor.impl.RunnableQueueExecutorEventWrapper;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.KeyQueueGroupManager;
-import net.jueb.util4j.queue.queueExecutor.queue.RunnableQueueWrapper;
 
 public class DefaultKeyQueueManager extends AbstractQueueMaganer implements KeyQueueGroupManager{
 
@@ -114,12 +111,17 @@ public class DefaultKeyQueueManager extends AbstractQueueMaganer implements KeyQ
 		};
 	}
 
-	protected void onQueueHandleTask(String index,Runnable handleTask)
+	/**
+	 * key对应的队里产生了处理任务
+	 * @param key
+	 * @param handleTask
+	 */
+	protected void onQueueHandleTask(String key,Runnable handleTask)
 	{
 		KeyGroupEventListener tmp=listener;
 		if(tmp!=null)
-		{
-			tmp.onQueueHandleTask(index, handleTask);
+		{//任务抛给监听者
+			tmp.onQueueHandleTask(key, handleTask);
 		}
 	}
 
@@ -127,7 +129,7 @@ public class DefaultKeyQueueManager extends AbstractQueueMaganer implements KeyQ
 	 * 插槽队列
 	 * @author juebanlin
 	 */
-	private class TaskQueue extends RunnableQueueExecutorEventWrapper{
+	private class TaskQueue extends RunnableQueueExecutorEventWrapper implements Runnable{
 		/**
 		 *队列索引
 		 */
@@ -137,6 +139,9 @@ public class DefaultKeyQueueManager extends AbstractQueueMaganer implements KeyQ
 	     * 次属性仅供本类持有
 	     */
 	    private final AtomicBoolean isLock = new AtomicBoolean(false);
+	    
+	    private final AtomicBoolean processLock = new AtomicBoolean(false);
+	    
 	    /**
 	     * 此队列完成的任务数量
 	     */
@@ -166,54 +171,9 @@ public class DefaultKeyQueueManager extends AbstractQueueMaganer implements KeyQ
 			return completedTaskCount;
 		}
 	
-		private class QueueProcessTask implements Runnable{
-			TaskQueue queue;
-	    	public QueueProcessTask(TaskQueue queue) {
-	    		this.queue=queue;
-			}
-			@Override
-			public void run() {
-				try {
-					handleQueueTask(queue);
-				} finally {
-					queue.isLock.set(false);
-				}
-			}
-			
-			 /**
-	         * 处理队列任务
-	         * @param queue
-	         */
-	        private void handleQueueTask(TaskQueue queue) {
-	        	Thread thread=Thread.currentThread();
-	        	for (;;) 
-	            {
-	        		Runnable task = queue.poll();
-	            	if(task == null)
-	                {//停止处理队列
-	            		break;
-	                }
-	            	beforeExecute(thread, task);
-	                boolean succeed = false;
-	                try {
-	                    task.run();
-	                    queue.getCompletedTaskCount().incrementAndGet();
-	                    totalCompleteTask.incrementAndGet();
-	                    succeed = true;
-	                    afterExecute(task, null);
-	                } catch (RuntimeException e) {
-	                    if (!succeed) {
-	                        afterExecute(task, e);
-	                    }
-	                    throw e;
-	                }
-	            }
-	        }
-	    }
-		
 		@Override
 		protected void onAddBefore() {
-			// TODO Auto-generated method stub
+			
 		}
 
 		@Override
@@ -222,7 +182,8 @@ public class DefaultKeyQueueManager extends AbstractQueueMaganer implements KeyQ
 			{
 				if(isLock.compareAndSet(false, true))
 			 	{//一个处理任务产生
-					onQueueHandleTask(index,new QueueProcessTask(this));
+//					onQueueHandleTask(index,new QueueProcessTask(this));
+					onQueueHandleTask(index,this);
 			 	}
 			}
 		}
@@ -233,6 +194,97 @@ public class DefaultKeyQueueManager extends AbstractQueueMaganer implements KeyQ
 	
 		protected void afterExecute(Runnable task,RuntimeException object) {
 			
+		}
+
+		@Override
+		public void run() {
+			TaskQueue queue=this;
+			if(queue.processLock.compareAndSet(false, true))
+			{//如果此runnable未被执行则执行,已执行则不可再次执行
+				try {
+					handleQueueTask(queue);
+				} finally {
+					queue.processLock.set(false);
+					queue.isLock.set(false);
+				}
+			}
+		}
+		
+		/**
+         * 处理队列任务
+         * @param queue
+         */
+        private void handleQueueTask(TaskQueue queue) {
+        	Thread thread=Thread.currentThread();
+        	for (;;) 
+            {
+        		Runnable task = queue.poll();
+            	if(task == null)
+                {//停止处理队列
+            		break;
+                }
+            	beforeExecute(thread, task);
+                boolean succeed = false;
+                try {
+                    task.run();
+                    queue.getCompletedTaskCount().incrementAndGet();
+                    totalCompleteTask.incrementAndGet();
+                    succeed = true;
+                    afterExecute(task, null);
+                } catch (RuntimeException e) {
+                    if (!succeed) {
+                        afterExecute(task, e);
+                    }
+                    throw e;
+                }
+            }
+        }
+
+		@SuppressWarnings("unused")
+		@Deprecated
+		private class QueueProcessTask implements Runnable{
+			TaskQueue queue;
+			private QueueProcessTask(TaskQueue queue) {
+				this.queue=queue;
+			}
+			@Override
+			public void run() {
+				try {
+					handleQueueTask(queue);
+				} finally {
+					queue.isLock.set(false);
+				}
+			}
+			
+			/**
+		     * 处理队列任务
+		     * @param queue
+		     */
+		    private void handleQueueTask(TaskQueue queue) {
+		    	Thread thread=Thread.currentThread();
+		    	for (;;) 
+		        {
+		    		Runnable task = queue.poll();
+		        	if(task == null)
+		            {//停止处理队列
+		        		break;
+		            }
+		        	beforeExecute(thread, task);
+		            boolean succeed = false;
+		            try {
+		                task.run();
+		                queue.getCompletedTaskCount().incrementAndGet();
+		                totalCompleteTask.incrementAndGet();
+		                succeed = true;
+		                afterExecute(task, null);
+		            } catch (RuntimeException e) {
+		                if (!succeed) {
+		                    afterExecute(task, e);
+		                }
+		                throw e;
+		            }
+		        }
+		    }
 		}
 	}
 	
@@ -249,7 +301,7 @@ public class DefaultKeyQueueManager extends AbstractQueueMaganer implements KeyQ
 		 * @return 
 		 */
 		public Builder setMpScQueueFactory() {
-			this.queueFactory=()->{return new RunnableQueueWrapper(MpscLinkedQueue.newMpscLinkedQueue());};
+			this.queueFactory=QueueFactory.MPSC_QUEUE_FACTORY;
 			return this;
 		}
 

@@ -7,13 +7,10 @@ import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.jctools.queues.MpscLinkedQueue;
-
 import net.jueb.util4j.queue.queueExecutor.QueueFactory;
 import net.jueb.util4j.queue.queueExecutor.executor.QueueExecutor;
 import net.jueb.util4j.queue.queueExecutor.executor.impl.RunnableQueueExecutorEventWrapper;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.IndexQueueGroupManager;
-import net.jueb.util4j.queue.queueExecutor.queue.RunnableQueueWrapper;
 
 public class DefaultIndexQueueManager extends AbstractQueueMaganer implements IndexQueueGroupManager{
 	/**
@@ -148,16 +145,21 @@ public class DefaultIndexQueueManager extends AbstractQueueMaganer implements In
 	 * 插槽队列,具有增删事件包装于queueFactory生产的queue
 	 * @author juebanlin
 	 */
-	private class SoltQueue extends RunnableQueueExecutorEventWrapper{
+	private class SoltQueue extends RunnableQueueExecutorEventWrapper implements Runnable{
 		/**
 		 * 队列索引
 		 */
 		private final int soltIndex;
+		
 		/**
-	     * 此队列是否锁定/是否被线程占用
-	     * 次属性仅供本类持有
+	     * 处理任务生成锁
 	     */
 	    private final AtomicBoolean isLock = new AtomicBoolean(false);
+	    
+	    /**
+	     * 任务处理锁
+	     */
+	    private final AtomicBoolean processLock = new AtomicBoolean(false);
 	    /**
 	     * 此队列完成的任务数量
 	     */
@@ -189,7 +191,7 @@ public class DefaultIndexQueueManager extends AbstractQueueMaganer implements In
 		
 		@Override
 		protected void onAddBefore() {
-			// TODO Auto-generated method stub
+			
 		}
 
 		@Override
@@ -198,15 +200,70 @@ public class DefaultIndexQueueManager extends AbstractQueueMaganer implements In
 			{
 				if(isLock.compareAndSet(false, true))
 			 	{//一个处理任务产生
-					onQueueHandleTask((short)soltIndex,new SoltQueueProcessTask(this));
+//					onQueueHandleTask((short)soltIndex,new SoltQueueProcessTask(this));
+					onQueueHandleTask((short)soltIndex,this);
 			 	}
 			}
 		}
 
+		protected void beforeExecute(Thread thread, Runnable task) {
+			
+		}
+
+		protected void afterExecute(Runnable task,RuntimeException object) {
+			
+		}
+
+		@Override
+		public void run() {
+			SoltQueue queue=this;
+			if(queue.processLock.compareAndSet(false, true))
+			{//如果此runnable未被执行则执行,已执行则不可再次执行
+				try {
+					handleQueueTask(queue);
+				} finally {
+					queue.processLock.set(false);
+					queue.isLock.set(false);
+				}
+			}
+		}
+		
+		/**
+         * 处理队列任务
+         * @param queue
+         */
+        private void handleQueueTask(SoltQueue queue) {
+        	Thread thread=Thread.currentThread();
+        	for (;;) 
+            {
+        		Runnable task = queue.poll();
+            	if(task == null)
+                {//停止处理队列
+            		break;
+                }
+            	beforeExecute(thread, task);
+                boolean succeed = false;
+                try {
+                    task.run();
+                    queue.getCompletedTaskCount().incrementAndGet();
+                    totalCompleteTask.incrementAndGet();
+                    succeed = true;
+                    afterExecute(task, null);
+                } catch (RuntimeException e) {
+                    if (!succeed) {
+                        afterExecute(task, e);
+                    }
+                    throw e;
+                }
+            }
+        }
+
+		@SuppressWarnings("unused")
+		@Deprecated
 		private class SoltQueueProcessTask implements Runnable{
-	    	SoltQueue queue;
-	    	public SoltQueueProcessTask(SoltQueue queue) {
-	    		this.queue=queue;
+			SoltQueue queue;
+			public SoltQueueProcessTask(SoltQueue queue) {
+				this.queue=queue;
 			}
 			@Override
 			public void run() {
@@ -218,47 +275,39 @@ public class DefaultIndexQueueManager extends AbstractQueueMaganer implements In
 			}
 			
 			 /**
-	         * 处理队列任务
-	         * @param queue
-	         */
-	        private void handleQueueTask(SoltQueue queue) {
-	        	Thread thread=Thread.currentThread();
-	        	for (;;) 
-	            {
-	        		Runnable task = queue.poll();
-	            	if(task == null)
-	                {//停止处理队列
-	            		break;
-	                }
-	            	beforeExecute(thread, task);
-	                boolean succeed = false;
-	                try {
-	                    task.run();
-	                    queue.getCompletedTaskCount().incrementAndGet();
-	                    totalCompleteTask.incrementAndGet();
-	                    succeed = true;
-	                    afterExecute(task, null);
-	                } catch (RuntimeException e) {
-	                    if (!succeed) {
-	                        afterExecute(task, e);
-	                    }
-	                    throw e;
-	                }
-	            }
-	        }
-	    }
-		
-		protected void beforeExecute(Thread thread, Runnable task) {
-			
-		}
-
-		protected void afterExecute(Runnable task,RuntimeException object) {
-			
+		     * 处理队列任务
+		     * @param queue
+		     */
+		    private void handleQueueTask(SoltQueue queue) {
+		    	Thread thread=Thread.currentThread();
+		    	for (;;) 
+		        {
+		    		Runnable task = queue.poll();
+		        	if(task == null)
+		            {//停止处理队列
+		        		break;
+		            }
+		        	beforeExecute(thread, task);
+		            boolean succeed = false;
+		            try {
+		                task.run();
+		                queue.getCompletedTaskCount().incrementAndGet();
+		                totalCompleteTask.incrementAndGet();
+		                succeed = true;
+		                afterExecute(task, null);
+		            } catch (RuntimeException e) {
+		                if (!succeed) {
+		                    afterExecute(task, e);
+		                }
+		                throw e;
+		            }
+		        }
+		    }
 		}
 	}
 	
 	public static class Builder{
-		QueueFactory queueFactory=DefaultQueueFactory;
+		QueueFactory queueFactory=QueueFactory.DEFAULT_QUEUE_FACTORY;
 		public Builder setQueueFactory(QueueFactory queueFactory) {
 			Objects.requireNonNull(queueFactory);
 			this.queueFactory = queueFactory;
@@ -268,7 +317,7 @@ public class DefaultIndexQueueManager extends AbstractQueueMaganer implements In
 		 * 设置多生产者单消费者队列工厂
 		 */
 		public Builder setMpScQueueFactory() {
-			this.queueFactory=()->{return new RunnableQueueWrapper(MpscLinkedQueue.newMpscLinkedQueue());};
+			this.queueFactory=QueueFactory.MPSC_QUEUE_FACTORY;
 			return this;
 		}
 

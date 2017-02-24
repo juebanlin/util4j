@@ -1,9 +1,6 @@
 package net.jueb.util4j.queue.queueExecutor.groupExecutor.impl;
 
-import java.util.concurrent.ConcurrentLinkedQueue;
-
 import net.jueb.util4j.queue.queueExecutor.QueueFactory;
-import net.jueb.util4j.queue.queueExecutor.queue.RunnableQueueWrapper;
 
 public abstract class AbstractQueueMaganer {
 
@@ -37,7 +34,7 @@ public abstract class AbstractQueueMaganer {
 		this.queueFactory=queueFactory;
 	}
 	
-	public static final QueueFactory DefaultQueueFactory=()->{return new RunnableQueueWrapper(new ConcurrentLinkedQueue<>());};
+	public static final QueueFactory DefaultQueueFactory=QueueFactory.DEFAULT_QUEUE_FACTORY;
 	
 	public QueueFactory queueFactory;
 
