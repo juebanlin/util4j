@@ -19,6 +19,10 @@ public interface CallBack<R> {
 		call(timeOut,Optional.ofNullable(null));
 	}
 	
+	public default void  call(R result){
+		call(false,Optional.ofNullable(result));
+	}
+	
 	public default void  call(boolean timeOut,R result){
 		call(timeOut,Optional.ofNullable(result));
 	}

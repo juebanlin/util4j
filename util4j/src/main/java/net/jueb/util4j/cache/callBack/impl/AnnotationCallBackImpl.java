@@ -19,6 +19,10 @@ public class AnnotationCallBackImpl<T> implements AnnotationCallBack<T>{
 	private final int functionId;
 	private final Method method;
 	
+	/**
+	 * @param callTarget 回调目标
+	 * @param functionId 回调目标方法上CallBackFunction注解的ID
+	 */
 	public AnnotationCallBackImpl(Object callTarget,int functionId) {
 		if(callTarget==null)
 		{
