@@ -1,8 +1,5 @@
 package net.jueb.util4j.beta.tools;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.commons.lang.math.RandomUtils;
 
 public class SnapshotBuffer3 {
@@ -11,9 +8,10 @@ public class SnapshotBuffer3 {
 	private final SnapshotBuffer3 parent;//
 	private final int offSet;//偏移索引
 	private volatile boolean readOnly;
-	private Map<Integer,Byte> override=new HashMap<Integer, Byte>();//底层数据覆盖
+//	private Map<Integer,Byte> override=new HashMap<Integer, Byte>();//底层数据覆盖
 //	private Map<Integer,Byte> override=BTreeMap.create();//底层数据覆盖
 //	private SparseArray<Byte> override=new SparseArray<Byte>();//底层数据覆盖
+	private Node override=new Node();//底层数据覆盖
 	
 	public SnapshotBuffer3() {
 		this(null,0);
