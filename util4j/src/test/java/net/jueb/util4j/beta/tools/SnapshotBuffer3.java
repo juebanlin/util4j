@@ -1,22 +1,24 @@
 package net.jueb.util4j.beta.tools;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 import org.apache.commons.lang.math.RandomUtils;
 
-public class SnapshotBuffer {
+public class SnapshotBuffer3 {
 	
 	private byte[] array=new byte[]{};
-	private final SnapshotBuffer parent;//
+	private final SnapshotBuffer3 parent;//
 	private final int offSet;//偏移索引
 	private volatile boolean readOnly;
-	private Map<Integer,Byte> override=new TreeMap<Integer, Byte>();//底层数据覆盖
+	private Map<Integer,Byte> override=new HashMap<Integer, Byte>();//底层数据覆盖
+//	private Map<Integer,Byte> override=BTreeMap.create();//底层数据覆盖
+//	private SparseArray<Byte> override=new SparseArray<Byte>();//底层数据覆盖
 	
-	public SnapshotBuffer() {
+	public SnapshotBuffer3() {
 		this(null,0);
 	}
-	public SnapshotBuffer(SnapshotBuffer parent,int offSet) {
+	public SnapshotBuffer3(SnapshotBuffer3 parent,int offSet) {
 		this.parent=parent;
 		this.offSet=offSet;
 	}
@@ -25,10 +27,10 @@ public class SnapshotBuffer {
 	 * 产生一个快照
 	 * @return
 	 */
-	public SnapshotBuffer snapshot()
+	public SnapshotBuffer3 snapshot()
 	{
 		readOnly=true;//当此对象建立了快照后,则为只读状态,不可修改
-		return new SnapshotBuffer(this,capacity());
+		return new SnapshotBuffer3(this,capacity());
 	}
 	
 	void checkIndex(int index, int fieldLength) {
@@ -218,14 +220,14 @@ public class SnapshotBuffer {
 
 		public void test1()
 		{
-			SnapshotBuffer array=new SnapshotBuffer();
+			SnapshotBuffer3 array=new SnapshotBuffer3();
 			String str="abc";
 			byte[] t=str.getBytes();
 			for(int i=0;i<t.length;i++)
 			{
 				array.writeByte(t[i]);
 			}
-			SnapshotBuffer array2=array.snapshot();
+			SnapshotBuffer3 array2=array.snapshot();
 			for(int i=0;i<t.length;i++)
 			{
 				array2.writeByte(t[i]);
@@ -241,13 +243,13 @@ public class SnapshotBuffer {
 		
 		public void test2()
 		{
-			SnapshotBuffer array=new SnapshotBuffer();
+			SnapshotBuffer3 array=new SnapshotBuffer3();
 			byte[] t="abc".getBytes();
 			for(int i=0;i<t.length;i++)
 			{
 				array.writeByte(t[i]);
 			}
-			SnapshotBuffer array2=array.snapshot();
+			SnapshotBuffer3 array2=array.snapshot();
 			t="123".getBytes();
 			for(int i=0;i<t.length;i++)
 			{
@@ -264,13 +266,13 @@ public class SnapshotBuffer {
 		
 		public void test3()
 		{
-			SnapshotBuffer array=new SnapshotBuffer();
+			SnapshotBuffer3 array=new SnapshotBuffer3();
 			byte[] t="abc".getBytes();
 			for(int i=0;i<t.length;i++)
 			{
 				array.writeByte(t[i]);
 			}
-			SnapshotBuffer array2=array.snapshot();
+			SnapshotBuffer3 array2=array.snapshot();
 			t="abc123".getBytes();
 			for(int i=0;i<t.length;i++)
 			{
@@ -287,13 +289,13 @@ public class SnapshotBuffer {
 		
 		public void test4()
 		{
-			SnapshotBuffer array=new SnapshotBuffer();
+			SnapshotBuffer3 array=new SnapshotBuffer3();
 			byte[] t="abc".getBytes();
 			for(int i=0;i<t.length;i++)
 			{
 				array.writeByte(t[i]);
 			}
-			SnapshotBuffer array2=array.snapshot();
+			SnapshotBuffer3 array2=array.snapshot();
 			t="123456".getBytes();
 			for(int i=0;i<t.length;i++)
 			{
@@ -310,11 +312,11 @@ public class SnapshotBuffer {
 		
 		public void test5()
 		{
-			SnapshotBuffer base=new SnapshotBuffer();
+			SnapshotBuffer3 base=new SnapshotBuffer3();
 			byte[] t1="abc".getBytes();
 			byte[] t2="123abc".getBytes();
 			base.writeBytes(t1);
-			SnapshotBuffer extend=base.snapshot();
+			SnapshotBuffer3 extend=base.snapshot();
 			extend.writeBytes(t2);
 			byte[] data1=new byte[base.readableBytes()];
 			base.readBytes(data1);
@@ -322,7 +324,7 @@ public class SnapshotBuffer {
 			extend.readBytes(data2);
 			System.out.println(new String(data1));
 			System.out.println(new String(data2));
-			SnapshotBuffer extend2=extend.snapshot();
+			SnapshotBuffer3 extend2=extend.snapshot();
 			byte[] t3="123xyz".getBytes();
 			extend2.writeBytes(t3);
 			byte[] data3=new byte[extend2.readableBytes()];
@@ -332,7 +334,7 @@ public class SnapshotBuffer {
 		
 		public void test6()
 		{
-			SnapshotBuffer base=new SnapshotBuffer();
+			SnapshotBuffer3 base=new SnapshotBuffer3();
 			byte[] mb10=new byte[1024*1024*10];
 			for(int i=0;i<mb10.length;i++)
 			{
@@ -351,7 +353,7 @@ public class SnapshotBuffer {
 			t=System.currentTimeMillis();
 			System.out.println("写入耗时:"+a1);
 			//快照写入耗时
-			SnapshotBuffer buff=base.snapshot();
+			SnapshotBuffer3 buff=base.snapshot();
 			buff.writeBytes(mb20);
 			long b1=System.currentTimeMillis()-t;
 			t=System.currentTimeMillis();
