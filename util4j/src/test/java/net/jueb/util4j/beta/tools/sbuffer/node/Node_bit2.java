@@ -8,11 +8,19 @@ public class Node_bit2 {
 	/**
 	 * 2进制的11
 	 */
-	static final int MASK_11=0x3;
-	static final int MASK_1111=0xF;
-	static final int MASK_1111_1111=0xFF;
-	static final int MASK=MASK_11;//截取掩码
+	static final int MASK=0x3;//截取掩码
 	private static final int maxPos=16;//16*2位
+	private static final int maskLen;//掩码长度
+	static{
+		int tmp=MASK;
+		int num=0;
+		while(tmp!=0)
+		{
+			tmp=tmp>>1;
+			num++;
+		}
+		maskLen=num;
+	}
 	
 	private Node_bit2[] sub=new Node_bit2[4];
 	private Byte attach;//附件
@@ -82,9 +90,11 @@ public class Node_bit2 {
 	 * @param pos 0开始
 	 * @return
 	 */
-	public int getPosValue(int number,int pos)
+	public int getPosValue(int number,int layout)
 	{
-		return (number & (MASK<<pos))>>pos;
+		int pos=maskLen*layout;
+		int posValue=(number & (MASK<<pos))>>>pos;
+		return posValue;
 	}
 	
 	public static class Test{

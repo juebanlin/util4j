@@ -10,6 +10,6 @@ public class Util {
 	 */
 	public static int getPosValue(int number,int pos)
 	{
-		return (number & (1<<pos))>>pos;
+		return (number & (0x1<<pos))>>>pos;
 	}
 }

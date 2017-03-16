@@ -74,9 +74,11 @@ public class Node_bit8 {
 	 * @param pos 0开始
 	 * @return
 	 */
-	public static int getPosValue(int number,int pos)
+	public int getPosValue(int number,int layout)
 	{
-		return (number & (0xFF<<pos))>>pos;
+		int pos=8*layout;//0xFF 是8长度bit位
+		int posValue=(number & (0xF<<pos))>>>pos;
+		return posValue;
 	}
 	
 	

@@ -1,5 +1,9 @@
 package net.jueb.util4j.beta.tools.sbuffer.node;
 
+import java.util.Scanner;
+
+import org.apache.commons.lang.math.RandomUtils;
+
 /**
  * 向右分层(适合index逐渐增大的情况) 4个bit位=16
  * @author juebanlin
@@ -44,6 +48,10 @@ public class Node_bit4 {
 		}
 		if(pos==0)
 		{
+			if(this.attach!=null)
+			{
+				System.out.println("");
+			}
 			this.attach=value;
 			return ;
 		}
@@ -74,9 +82,11 @@ public class Node_bit4 {
 	 * @param pos 0开始
 	 * @return
 	 */
-	public static int getPosValue(int number,int pos)
+	public static int getPosValue(int number,int layout)
 	{
-		return (number & (0xF<<pos))>>pos;
+		int pos=4*layout;//0xF 是4长度bit位
+		int posValue=(number & (0xF<<pos))>>>pos;
+		return posValue;
 	}
 	
 	
@@ -128,9 +138,43 @@ public class Node_bit4 {
 		    long t2=System.currentTimeMillis()-t;
 		    System.out.println("set:"+t1+",get:"+t2+",error="+error);
 		}
+		public void testNMap(byte[] data)
+		{
+			//nmap读写测试
+			Node_bit4 nmap=new Node_bit4();
+			long t=System.currentTimeMillis();
+			for(int i=0;i<data.length;i++)
+			{
+				nmap.put(i,data[i]);
+			}
+			long n1=System.currentTimeMillis()-t;
+			t=System.currentTimeMillis();
+			int error=0;
+			for(int i=0;i<data.length;i++)
+			{
+				byte value=nmap.get(i);
+				if(value!=data[i])
+				{
+					error++;
+				}
+			}
+			long n2=System.currentTimeMillis()-t;
+			t=System.currentTimeMillis();
+			System.out.println("nmap写:"+n1+",nmap读:"+n2+",error:"+error);
+		}
 	}
 	
 	public static void main(String[] args) {
-	    new Test().test2();
+		byte[] data=new byte[131075];
+		for(int i=0;i<data.length;i++)
+		{
+			data[i]=(byte) RandomUtils.nextInt(125);
+		}
+		Scanner sc=new Scanner(System.in);
+//		sc.nextLine();
+//		new Test().testMap(data);
+		sc.nextLine();
+		new Test().testNMap(data);
+		sc.nextLine();
 	}
 }
