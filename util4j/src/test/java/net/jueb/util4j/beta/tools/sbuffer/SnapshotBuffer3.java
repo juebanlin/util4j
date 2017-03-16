@@ -1,10 +1,10 @@
-package net.jueb.util4j.beta.tools;
+package net.jueb.util4j.beta.tools.sbuffer;
 
 import java.util.Scanner;
 
 import org.apache.commons.lang.math.RandomUtils;
 
-import net.jueb.util4j.beta.tools.avlMap2.AvlMap;
+import net.jueb.util4j.beta.tools.sbuffer.node.NodeMap;
 
 public class SnapshotBuffer3 {
 	
@@ -13,10 +13,12 @@ public class SnapshotBuffer3 {
 	private final int offSet;//偏移索引
 	private volatile boolean readOnly;
 //	private Map<Integer,Byte> override=new HashMap<Integer, Byte>();//底层数据覆盖
+//	private Map<Integer,Byte> override=new TreeMap<Integer, Byte>();//底层数据覆盖
 //	private Map<Integer,Byte> override=BTreeMap.create();//底层数据覆盖
 //	private SparseArray<Byte> override=new SparseArray<Byte>();//底层数据覆盖
-//	private Node override=new Node();//底层数据覆盖
-	private AvlMap<Integer,Byte> override=new AvlMap<>();//底层数据覆盖
+//	private Node_bit2 override=new Node_bit2();//底层数据覆盖
+	private NodeMap<Integer,Byte> override=new NodeMap<Integer,Byte>();//底层数据覆盖
+//	private KvCache override=new KvCache();//底层数据覆盖
 	
 	public SnapshotBuffer3() {
 		this(null,0);

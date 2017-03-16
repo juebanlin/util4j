@@ -1,4 +1,4 @@
-package net.jueb.util4j.beta.tools;
+package net.jueb.util4j.beta.tools.sbuffer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

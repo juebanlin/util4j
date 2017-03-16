@@ -1,4 +1,4 @@
-package net.jueb.util4j.beta.tools;
+package net.jueb.util4j.beta.tools.sbuffer;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
