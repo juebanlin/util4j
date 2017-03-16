@@ -32,9 +32,8 @@ public class CombinationUtil {
 		
 		/**
 		 * 输出事件
-		 * @param tmpBuff
-		 * @param output
-		 * @param outPutIndex
+		 * @param output 输出的数据排列
+		 * @param outPutIndex 输出的终点位置
 		 */
 		public ComputeStatus onOutEvent(T[] output,int outPutIndex);
 	}
@@ -44,9 +43,8 @@ public class CombinationUtil {
 		
 		/**
 		 * 输出事件
-		 * @param tmpBuff
-		 * @param output
-		 * @param outPutIndex
+		 * @param output 输出的数据index的排列
+		 * @param outPutIndex index数组的终点位置
 		 */
 		public ComputeStatus onOutEvent(int[] output,int outPutIndex);
 	}
@@ -92,10 +90,10 @@ public class CombinationUtil {
 	
 	/**
 	 * 遍历任意数组元素索引排列组合情况
-	 * @param input
-	 * @param inputSkip
-	 * @param output
-	 * @param outPutIndex
+	 * @param input 输入参数
+	 * @param inputSkip  需要跳过的输入参数
+	 * @param output 输出排列的input的index组合
+	 * @param outPutIndex 输出output的位置
 	 * @param controller
 	 */
 	public static <T> void forEachIndex(T[] input,boolean[] inputSkip,int[] output,int outPutIndex,ForEachIndexController controller)
