@@ -10,7 +10,7 @@ import org.apache.commons.lang.math.RandomUtils;
  * 向右分层(适合index逐渐增大的情况) 2个比特位=4
  * @author juebanlin
  */
-public class NodeMap0<K,V> implements INodeMap<K, V>{
+public class NodeMap_first<K,V> implements INodeMap<K, V>{
 	
 	static final int BIT_NUMS=32;//总bit位数量
 	/**
@@ -50,7 +50,7 @@ public class NodeMap0<K,V> implements INodeMap<K, V>{
 		System.out.println("层bit位数:"+bitNum+",层容量:"+nodeSize+",层高:"+layout);
 	}
 	@SuppressWarnings("unchecked")
-	private NodeMap0<K,V>[] sub=new NodeMap0[4];
+	private NodeMap_first<K,V>[] sub=new NodeMap_first[4];
 	private V fruit;//果实
 	
 	protected V getFruit() {
@@ -85,7 +85,7 @@ public class NodeMap0<K,V> implements INodeMap<K, V>{
 		}
 		pos--;
 		int p=getPosValue(number,pos,mask);
-		NodeMap0<K,V> node=sub[p];
+		NodeMap_first<K,V> node=sub[p];
 		if(node==null)
 		{
 			return null;
@@ -106,10 +106,10 @@ public class NodeMap0<K,V> implements INodeMap<K, V>{
 		}
 		pos--;
 		int p=getPosValue(number,pos,mask);
-		NodeMap0<K,V> node=sub[p];
+		NodeMap_first<K,V> node=sub[p];
 		if(node==null)
 		{
-			node=new NodeMap0<K,V>();
+			node=new NodeMap_first<K,V>();
 			sub[p]=node;
 		}
 		node._setByNumber(number, pos,value);
@@ -144,7 +144,7 @@ public class NodeMap0<K,V> implements INodeMap<K, V>{
 		
 		public void test()
 		{
-			NodeMap0<Integer,Byte> nmap=new NodeMap0<>();
+			NodeMap_first<Integer,Byte> nmap=new NodeMap_first<>();
 			int key=131072;
 			byte v=123;
 			nmap.put(key, v);
@@ -174,7 +174,7 @@ public class NodeMap0<K,V> implements INodeMap<K, V>{
 		public void testNMap(byte[] data)
 		{
 			//nmap读写测试
-			NodeMap0<Integer,Byte> nmap=new NodeMap0<>();
+			NodeMap_first<Integer,Byte> nmap=new NodeMap_first<>();
 			long t=System.currentTimeMillis();
 			for(int i=0;i<data.length;i++)
 			{
