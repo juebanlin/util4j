@@ -264,7 +264,6 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
 			log.error(e.getMessage(),e);
 		}finally {
 			rwLock.readLock().unlock();

@@ -20,8 +20,14 @@ public class SensitiveWordFilter {
 	
 	public static enum MatchType
 	{
-		minMatch,//最小匹配规则
-		maxMatch;//最大匹配规则
+		/**
+		 *最小匹配规则
+		 */
+		minMatch,
+		/**
+		 * 最大匹配规则
+		 */
+		maxMatch;
 	}
 	
 	

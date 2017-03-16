@@ -1,6 +1,10 @@
 package net.jueb.util4j.beta.tools;
 
+import java.util.Scanner;
+
 import org.apache.commons.lang.math.RandomUtils;
+
+import net.jueb.util4j.beta.tools.avlMap2.AvlMap;
 
 public class SnapshotBuffer3 {
 	
@@ -11,7 +15,8 @@ public class SnapshotBuffer3 {
 //	private Map<Integer,Byte> override=new HashMap<Integer, Byte>();//底层数据覆盖
 //	private Map<Integer,Byte> override=BTreeMap.create();//底层数据覆盖
 //	private SparseArray<Byte> override=new SparseArray<Byte>();//底层数据覆盖
-	private Node override=new Node();//底层数据覆盖
+//	private Node override=new Node();//底层数据覆盖
+	private AvlMap<Integer,Byte> override=new AvlMap<>();//底层数据覆盖
 	
 	public SnapshotBuffer3() {
 		this(null,0);
@@ -372,7 +377,9 @@ public class SnapshotBuffer3 {
 	}
 	
 	public static void main(String[] args) {
+		Scanner sc=new Scanner(System.in);
+		sc.nextLine();
 		new Test().test6();
-		new Test().test6();
+		sc.nextLine();
 	}
 }
