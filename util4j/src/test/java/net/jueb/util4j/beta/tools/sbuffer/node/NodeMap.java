@@ -233,9 +233,11 @@ public class NodeMap<K,V> implements RouteMap<K, V>{
 
 	
 	@Override
-	public void put(K key, V value) {
+	public V put(K key, V value) {
 		node.setByNumber(hash(key), value);
+		return value;
 	}
+
 
 	@Override
 	public V get(K key) {
