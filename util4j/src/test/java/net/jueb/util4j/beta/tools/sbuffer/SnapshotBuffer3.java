@@ -18,6 +18,7 @@ public class SnapshotBuffer3 {
 //	private SparseArray<Byte> override=new SparseArray<Byte>();//底层数据覆盖
 //	private Node_bit2 override=new Node_bit2();//底层数据覆盖
 //	private NodeMap<Integer,Byte> override=new NodeMap<Integer,Byte>();//底层数据覆盖
+//	private NodeMap4<Integer,Byte> override=new NodeMap4<Integer,Byte>();//底层数据覆盖
 //	private KvCache override=new KvCache();//底层数据覆盖
 	
 	public SnapshotBuffer3() {
