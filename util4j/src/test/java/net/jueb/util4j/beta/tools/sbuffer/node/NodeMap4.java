@@ -381,10 +381,10 @@ public class NodeMap4<K,V> implements RouteMap<K, V>{
 		Test t=new Test();
 		Scanner sc=new Scanner(System.in);
 		sc.nextLine();
-		t.testtMap(data);
-		sc.nextLine();
-		t.testMap(data);
-		sc.nextLine();
+//		t.testtMap(data);
+//		sc.nextLine();
+//		t.testMap(data);
+//		sc.nextLine();
 		t.testNMap(data);
 		sc.nextLine();
 	}
