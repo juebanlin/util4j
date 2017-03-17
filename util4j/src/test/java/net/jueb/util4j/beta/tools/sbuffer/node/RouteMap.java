@@ -1,6 +1,6 @@
 package net.jueb.util4j.beta.tools.sbuffer.node;
 
-public interface INodeMap<K,V> {
+public interface RouteMap<K,V> {
 
 	public void put(K key,V value);
 	

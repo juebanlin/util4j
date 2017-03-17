@@ -6,11 +6,13 @@ import java.util.Scanner;
 
 import org.apache.commons.lang.math.RandomUtils;
 
+import net.jueb.util4j.beta.tools.sbuffer.node.RouteMap;
+
 /**
- * 向右分层(适合index逐渐增大的情况) 2个比特位=4
+ * 优化节点非必要属性的内存占用
  * @author juebanlin
  */
-public class NodeMap3<K,V> implements INodeMap<K, V>{
+public class NodeMap3<K,V> implements RouteMap<K, V>{
 	
 	private static final int BIT_NUMS=32;//总bit位数量
 	private final MapConfig config;

@@ -10,7 +10,7 @@ import org.apache.commons.lang.math.RandomUtils;
  * 向右分层(适合index逐渐增大的情况) 2个比特位=4
  * @author juebanlin
  */
-public class NodeMap<K,V> implements INodeMap<K, V>{
+public class NodeMap<K,V> implements RouteMap<K, V>{
 	
 	private static final int BIT_NUMS=32;//总bit位数量
 	private final MapConfig config;
