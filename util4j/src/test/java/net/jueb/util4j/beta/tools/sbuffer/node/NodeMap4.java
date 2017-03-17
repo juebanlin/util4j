@@ -12,18 +12,18 @@ import net.jueb.util4j.beta.tools.sbuffer.node.RouteMap;
  * 优化节点非必要属性的内存占用
  * @author juebanlin
  */
-public class NodeMap3<K,V> implements RouteMap<K, V>{
+public class NodeMap4<K,V> implements RouteMap<K, V>{
 	
 	private static final int BIT_NUMS=32;//总bit位数量
 	private final MapConfig config;
 	private final LayOutNode<V> node;
 	final boolean byLeft;//从左边开始
 	
-	public NodeMap3() {
+	public NodeMap4() {
 		this(MaskEnum.MASK_1111, false);
 	}
 	
-	public NodeMap3(MaskEnum mask,boolean byLeft) {
+	public NodeMap4(MaskEnum mask,boolean byLeft) {
 		this.byLeft=byLeft;
 		int tmp=mask.getValue();
 		int num=0;
@@ -138,12 +138,12 @@ public class NodeMap3<K,V> implements RouteMap<K, V>{
 	{
 		protected T getByNumber(int number)
 		{
-			return _getByNumber(number,getLayout());
+			return _getByNumber(number,getConfig().getLayout());
 		}
 
 		protected void setByNumber(int number,T value)
 		{
-			_setByNumber(number,getLayout(),value);
+			_setByNumber(number,getConfig().getLayout(),value);
 		}
 
 		/**
@@ -169,13 +169,13 @@ public class NodeMap3<K,V> implements RouteMap<K, V>{
 			{
 				return getData();
 			}
-			layout--;
-			int p=getMaskValue(number,layout,getMask(),getMaskLen());
 			Node<T>[] sub=getSub();
 			if(sub==null)
 			{
 				return null;
 			}
+			layout--;
+			int p=getMaskValue(number,layout,getConfig().getMask(),getConfig().getMaskLen());
 			Node<T> node=sub[p];
 			if(node==null)
 			{
@@ -197,14 +197,14 @@ public class NodeMap3<K,V> implements RouteMap<K, V>{
 				setData(value);
 				return ;
 			}
-			layout--;
-			int p=getMaskValue(number,layout,getMask(),getMaskLen());
 			Node<T>[] sub=getSub();
 			if(sub==null)
 			{
-				sub=new Node[getNodeSize()];
+				sub=new Node[]{};
 				setSub(sub);
 			}
+			layout--;
+			int p=getMaskValue(number,layout,getConfig().getMask(),getConfig().getMaskLen());
 			Node<T> node=sub[p];
 			if(node==null)
 			{
@@ -332,7 +332,7 @@ public class NodeMap3<K,V> implements RouteMap<K, V>{
 			long m2=System.currentTimeMillis()-t;
 			System.out.println("map写:"+m1+",map读:"+m2);
 		}
-		NodeMap3<Integer,Byte> nmap=new NodeMap3<>();
+		NodeMap4<Integer,Byte> nmap=new NodeMap4<>();
 		public void testNMap(byte[] data)
 		{
 			//nmap读写测试
