@@ -10,18 +10,18 @@ import org.apache.commons.lang.math.RandomUtils;
  * 向右分层(适合index逐渐增大的情况) 2个比特位=4
  * @author juebanlin
  */
-public class NodeMap2<K,V> implements INodeMap<K, V>{
+public class NodeMap3<K,V> implements INodeMap<K, V>{
 	
 	private static final int BIT_NUMS=32;//总bit位数量
 	private final MapConfig config;
-	private final DataNode<V> node;
+	private final LayOutNode<V> node;
 	final boolean byLeft;//从左边开始
 	
-	public NodeMap2() {
+	public NodeMap3() {
 		this(MaskEnum.MASK_1111, false);
 	}
 	
-	public NodeMap2(MaskEnum mask,boolean byLeft) {
+	public NodeMap3(MaskEnum mask,boolean byLeft) {
 		this.byLeft=byLeft;
 		int tmp=mask.getValue();
 		int num=0;
@@ -35,9 +35,14 @@ public class NodeMap2<K,V> implements INodeMap<K, V>{
 		int layout=BIT_NUMS/maskLen;
 		config=new MapConfig(mask.getValue(), maskLen, layout, nodeSize);
 		System.out.println(config);
-		node=new DataNode<V>();
+		node=new LayOutNode<V>();
 	}
 
+	public final MapConfig getConfig()
+	{
+		return config;
+	}
+	
 	/**
 	 * 分段掩码
 	 * @author juebanlin
@@ -104,54 +109,39 @@ public class NodeMap2<K,V> implements INodeMap<K, V>{
 		}
 	}
 
-	/**
-	 * 可存储数据的节点
-	 * @author juebanlin
-	 * @param <T>
-	 */
-	private class EndDataNode<T extends V> extends DataNode<T>{
-		T data;
-		@Override
-		public T getData() {
-			return data;
-		}
-		@Override
-		public void setData(T data) {
-			this.data=data;
-		}
+	
+	private interface Node<V>{
+		V getData();
+		
+		void setData(V data);
+		
+		public Node<V>[] getSub();
+		
+		public void setSub(Node<V> sub[]);
+		
+		public int getMask();
+
+		public int getLayout();
+
+		public int getNodeSize();
+		
+		public int getMaskLen();
+		
+		public V _getByNumber(int number,int layout);
+		
+		public void _setByNumber(int number,int layout,V value);
 	}
 	
-	private class DataNode<T extends V>{
-		
-		private DataNode<T>[] sub;
-		
-		public DataNode() {
-			
-		}
-		
-		protected void setData(T data){
-			
-		}
-		
-		protected T getData(){
-			return null;
-		}
-		
-		public int getMask() {
-			return config.getMask();
-		}
-
-		public int getLayout() {
-			return config.getLayout();
-		}
-
-		public int getNodeSize() {
-			return config.getNodeSize();
-		}
-		
-		public int getMaskLen()
+	private abstract class AbstractNode<T extends V> implements Node<T>
+	{
+		protected T getByNumber(int number)
 		{
-			return config.getMaskLen();
+			return _getByNumber(number,getConfig().getLayout());
+		}
+
+		protected void setByNumber(int number,T value)
+		{
+			_setByNumber(number,getConfig().getLayout(),value);
 		}
 
 		/**
@@ -160,13 +150,14 @@ public class NodeMap2<K,V> implements INodeMap<K, V>{
 		 * @param pos 0开始
 		 * @return
 		 */
-		private int getMaskValue(int number,int layout,int mask,int maskLen)
+		protected int getMaskValue(int number,int layout,int mask,int maskLen)
 		{
 			int pos=maskLen*layout;
 			return (number & (mask<<pos))>>>pos;
 		}
-
-		private T _getByNumber(int number,int layout)
+		
+		@Override
+		public T _getByNumber(int number,int layout)
 		{
 			if(layout<0)
 			{//超出范围
@@ -177,12 +168,13 @@ public class NodeMap2<K,V> implements INodeMap<K, V>{
 				return getData();
 			}
 			layout--;
-			int p=getMaskValue(number,layout,getMask(),getMaskLen());
+			int p=getMaskValue(number,layout,getConfig().getMask(),getConfig().getMaskLen());
+			Node<T>[] sub=getSub();
 			if(sub==null)
 			{
 				return null;
 			}
-			DataNode<T> node=sub[p];
+			Node<T> node=sub[p];
 			if(node==null)
 			{
 				return null;
@@ -191,7 +183,8 @@ public class NodeMap2<K,V> implements INodeMap<K, V>{
 		}
 		
 		@SuppressWarnings("unchecked")
-		private void _setByNumber(int number,int layout,T value)
+		@Override
+		public void _setByNumber(int number,int layout,T value)
 		{
 			if(layout<0)
 			{//超出范围
@@ -203,34 +196,101 @@ public class NodeMap2<K,V> implements INodeMap<K, V>{
 				return ;
 			}
 			layout--;
-			int p=getMaskValue(number,layout,getMask(),getMaskLen());
+			int p=getMaskValue(number,layout,getConfig().getMask(),getConfig().getMaskLen());
+			Node<T>[] sub=getSub();
 			if(sub==null)
 			{
-				sub=new DataNode[getNodeSize()];
+				sub=new Node[getConfig().getNodeSize()];
+				setSub(sub);
 			}
-			DataNode<T> node=sub[p];
+			Node<T> node=sub[p];
 			if(node==null)
 			{
 				if(layout==0)
 				{//layout=0的node具有data属性
-					node=new EndDataNode<T>();
+					node=new DataNode<T>();
 				}else
 				{
-					node=new DataNode<T>();
+					node=new LayOutNode<T>();
 				}
 				sub[p]=node;
 			}
 			node._setByNumber(number, layout,value);
 		}
 		
-		protected T getByNumber(int number)
-		{
-			return _getByNumber(number,getLayout());
+		@Override
+		public int getMask() {
+			return config.getMask();
 		}
 
-		protected void setByNumber(int number,T value)
-		{
-			_setByNumber(number,getLayout(),value);
+		@Override
+		public int getLayout() {
+			return config.getLayout();
+		}
+
+		@Override
+		public int getNodeSize() {
+			return config.getNodeSize();
+		}
+
+		@Override
+		public int getMaskLen() {
+			return config.getMaskLen();
+		}
+		
+		@Override
+		public T getData() {
+			return null;
+		}
+
+		@Override
+		public void setData(T data) {
+		}
+		
+		@Override
+		public Node<T>[] getSub() {
+			return null;
+		}
+		@Override
+		public void setSub(Node<T>[] sub) {
+			
+		}
+	}
+	
+	/**
+	 * 层节点
+	 * @author juebanlin
+	 * @param <T>
+	 */
+	private class LayOutNode<T extends V> extends AbstractNode<T>{
+		
+		private Node<T>[] sub;
+		
+		@Override
+		public Node<T>[] getSub() {
+			return sub;
+		}
+
+		@Override
+		public void setSub(Node<T>[] sub) {
+			this.sub=sub;
+		}
+	}
+
+	/**
+	 * 可存储数据的节点
+	 * @author juebanlin
+	 * @param <T>
+	 */
+	private class DataNode<T extends V> extends AbstractNode<T>{
+		private T data;
+		@Override
+		public T getData() {
+			return data;
+		}
+		@Override
+		public void setData(T data) {
+			this.data=data;
 		}
 	}
 
@@ -270,7 +330,7 @@ public class NodeMap2<K,V> implements INodeMap<K, V>{
 			long m2=System.currentTimeMillis()-t;
 			System.out.println("map写:"+m1+",map读:"+m2);
 		}
-		NodeMap2<Integer,Byte> nmap=new NodeMap2<>();
+		NodeMap3<Integer,Byte> nmap=new NodeMap3<>();
 		public void testNMap(byte[] data)
 		{
 			//nmap读写测试
