@@ -3,10 +3,9 @@ package net.jueb.util4j.beta.tools.sbuffer.node;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.TreeMap;
 
 import org.apache.commons.lang.math.RandomUtils;
-
-import net.jueb.util4j.beta.tools.sbuffer.node.RouteMap;
 
 /**
  * 优化节点非必要属性的内存占用
@@ -138,12 +137,12 @@ public class NodeMap4<K,V> implements RouteMap<K, V>{
 	{
 		protected T getByNumber(int number)
 		{
-			return _getByNumber(number,getConfig().getLayout());
+			return _getByNumber(number,getLayout());
 		}
 
 		protected void setByNumber(int number,T value)
 		{
-			_setByNumber(number,getConfig().getLayout(),value);
+			_setByNumber(number,getLayout(),value);
 		}
 
 		/**
@@ -175,7 +174,7 @@ public class NodeMap4<K,V> implements RouteMap<K, V>{
 				return null;
 			}
 			layout--;
-			int p=getMaskValue(number,layout,getConfig().getMask(),getConfig().getMaskLen());
+			int p=getMaskValue(number,layout,getMask(),getMaskLen());
 			Node<T> node=sub[p];
 			if(node==null)
 			{
@@ -184,7 +183,6 @@ public class NodeMap4<K,V> implements RouteMap<K, V>{
 			return node._getByNumber(number, layout);
 		}
 		
-		@SuppressWarnings("unchecked")
 		@Override
 		public void _setByNumber(int number,int layout,T value)
 		{
@@ -197,14 +195,9 @@ public class NodeMap4<K,V> implements RouteMap<K, V>{
 				setData(value);
 				return ;
 			}
-			Node<T>[] sub=getSub();
-			if(sub==null)
-			{
-				sub=new Node[]{};
-				setSub(sub);
-			}
 			layout--;
-			int p=getMaskValue(number,layout,getConfig().getMask(),getConfig().getMaskLen());
+			int p=getMaskValue(number,layout,getMask(),getMaskLen());
+			Node<T>[] sub=getSub();
 			Node<T> node=sub[p];
 			if(node==null)
 			{
@@ -266,7 +259,8 @@ public class NodeMap4<K,V> implements RouteMap<K, V>{
 	 */
 	private class LayOutNode<T extends V> extends AbstractNode<T>{
 		
-		private Node<T>[] sub;
+		@SuppressWarnings("unchecked")
+		private Node<T>[] sub=new Node[getNodeSize()];
 		
 		@Override
 		public Node<T>[] getSub() {
@@ -314,10 +308,10 @@ public class NodeMap4<K,V> implements RouteMap<K, V>{
 
 	public static class Test{
 		
+		Map<Integer,Byte> map=new HashMap<>();
 		public void testMap(byte[] data)
 		{
 			//map读写测试
-			Map<Integer,Byte> map=new HashMap<>();
 			long t=System.currentTimeMillis();
 			for(int i=0;i<data.length;i++)
 			{
@@ -332,6 +326,26 @@ public class NodeMap4<K,V> implements RouteMap<K, V>{
 			long m2=System.currentTimeMillis()-t;
 			System.out.println("map写:"+m1+",map读:"+m2);
 		}
+		
+		Map<Integer,Byte> tmap=new TreeMap<>();
+		public void testtMap(byte[] data)
+		{
+			//map读写测试
+			long t=System.currentTimeMillis();
+			for(int i=0;i<data.length;i++)
+			{
+				tmap.put(i,data[i]);
+			}
+			long m1=System.currentTimeMillis()-t;
+			t=System.currentTimeMillis();
+			for(int i=0;i<data.length;i++)
+			{
+				tmap.get(i);
+			}
+			long m2=System.currentTimeMillis()-t;
+			System.out.println("map写:"+m1+",map读:"+m2);
+		}
+		
 		NodeMap4<Integer,Byte> nmap=new NodeMap4<>();
 		public void testNMap(byte[] data)
 		{
@@ -364,11 +378,13 @@ public class NodeMap4<K,V> implements RouteMap<K, V>{
 		{
 			data[i]=(byte) RandomUtils.nextInt(255);
 		}
-		Scanner sc=new Scanner(System.in);
-//		sc.nextLine();
-//		new Test().testMap(data);
-		sc.nextLine();
 		Test t=new Test();
+		Scanner sc=new Scanner(System.in);
+		sc.nextLine();
+		t.testtMap(data);
+		sc.nextLine();
+		t.testMap(data);
+		sc.nextLine();
 		t.testNMap(data);
 		sc.nextLine();
 	}
