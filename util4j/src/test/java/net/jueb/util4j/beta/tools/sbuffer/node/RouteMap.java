@@ -11,9 +11,4 @@ public interface RouteMap<K,V> {
 	public V put(K key,V value);
 	
 	public V get(K key);
-	
-	default V getOrDefault(K key,V defaultValue){
-		V v=get(key);
-		return v==null?defaultValue:v;
-	}
 }
