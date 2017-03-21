@@ -1,4 +1,4 @@
-package net.jueb.util4j.cache.map.mountMap;
+package net.jueb.util4j.cache.map.mtree;
 
 public interface MountTreeMap<K,V> extends MountTree<V>{
 

@@ -129,7 +129,7 @@ public class NodeMap5<K,V> implements RouteMap<K, V>{
 		
 		public V _getByNumber(int number,int layout);
 		
-		public void _setByNumber(int number,int layout,V value);
+		public V _setByNumber(int number,int layout,V value);
 	}
 	
 	private abstract class AbstractNode<T extends V> implements Node<T>
@@ -162,16 +162,17 @@ public class NodeMap5<K,V> implements RouteMap<K, V>{
 		}
 		
 		@Override
-		public void _setByNumber(int number,int layout,T value)
+		public T _setByNumber(int number,int layout,T value)
 		{
 			if(layout<0)
 			{//超出范围
-				return ;
+				return null;
 			}
 			if(layout==0)
 			{
+				T old=getData();
 				setData(value);
-				return ;
+				return old;
 			}
 			layout--;
 			int p=getMaskValue(number,layout);
@@ -188,7 +189,7 @@ public class NodeMap5<K,V> implements RouteMap<K, V>{
 				}
 				sub[p]=node;
 			}
-			node._setByNumber(number, layout,value);
+			return node._setByNumber(number, layout,value);
 		}
 
 		@Override
@@ -272,9 +273,9 @@ public class NodeMap5<K,V> implements RouteMap<K, V>{
 		return node._getByNumber(number,config.layout);
 	}
 
-	protected void setByNumber(int number,V value)
+	protected V setByNumber(int number,V value)
 	{
-		node._setByNumber(number,config.layout,value);
+		return node._setByNumber(number,config.layout,value);
 	}
 	
 	static final int hash(Object key) {
@@ -285,8 +286,7 @@ public class NodeMap5<K,V> implements RouteMap<K, V>{
 	
 	@Override
 	public V put(K key, V value) {
-		setByNumber(hash(key), value);
-		return value;
+		return setByNumber(hash(key), value);
 	}
 
 	@Override
