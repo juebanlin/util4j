@@ -3,7 +3,7 @@ package net.jueb.util4j.cache.map.btree;
 public interface BitTreeMap<K,V> extends BitTree<V>{
 
 	/**
-	 * 挂载数据
+	 * 保存数据
 	 * @param key
 	 * @param value
 	 * @return
@@ -13,11 +13,20 @@ public interface BitTreeMap<K,V> extends BitTree<V>{
 	}
 	
 	/**
-	 * 卸载数据
+	 * 读取数据
 	 * @param key
 	 * @return
 	 */
 	default V read(K key){
+		return read(hash(key));
+	}
+	
+	/**
+	 * 读取数据
+	 * @param key
+	 * @return
+	 */
+	default V readBy(Object key){
 		return read(hash(key));
 	}
 	

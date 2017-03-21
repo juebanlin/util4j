@@ -39,11 +39,6 @@ public class BTree<V> implements BitTree<V>{
 		System.out.println(config);
 	}
 
-	public final MapConfig getConfig()
-	{
-		return config;
-	}
-	
 	/**
 	 * 分段掩码
 	 * @author juebanlin
@@ -110,7 +105,7 @@ public class BTree<V> implements BitTree<V>{
 		}
 	}
 
-	private interface Node<V>{
+	interface Node<V>{
 		V getData();
 		
 		void setData(V data);
@@ -126,7 +121,7 @@ public class BTree<V> implements BitTree<V>{
 		public V _setByNumber(int number,int layout,V value);
 	}
 	
-	private abstract class AbstractNode<T extends V> implements Node<T>
+	abstract class AbstractNode<T extends V> implements Node<T>
 	{
 		
 		@Override
@@ -215,7 +210,7 @@ public class BTree<V> implements BitTree<V>{
 	 * @author juebanlin
 	 * @param <T>
 	 */
-	private class LayOutNode<T extends V> extends AbstractNode<T>{
+	class LayOutNode<T extends V> extends AbstractNode<T>{
 		
 		@SuppressWarnings("unchecked")
 		private Node<T>[] sub=new Node[getNodeSize()];
@@ -236,7 +231,7 @@ public class BTree<V> implements BitTree<V>{
 	 * @author juebanlin
 	 * @param <T>
 	 */
-	private class DataNode<T extends V> extends AbstractNode<T>{
+	class DataNode<T extends V> extends AbstractNode<T>{
 		private T data;
 		@Override
 		public T getData() {
@@ -270,6 +265,19 @@ public class BTree<V> implements BitTree<V>{
 	protected V setByNumber(int number,V value)
 	{
 		return node._setByNumber(number,config.layout,value);
+	}
+
+	protected final LayOutNode<V> getNode() {
+		return node;
+	}
+
+	protected final int[] getPosCache() {
+		return posCache;
+	}
+
+	protected final MapConfig getConfig()
+	{
+		return config;
 	}
 
 	@Override
