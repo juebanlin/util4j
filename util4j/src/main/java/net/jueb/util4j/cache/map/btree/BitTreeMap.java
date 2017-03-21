@@ -1,6 +1,6 @@
-package net.jueb.util4j.cache.map.mtree;
+package net.jueb.util4j.cache.map.btree;
 
-public interface MountTreeMap<K,V> extends MountTree<V>{
+public interface BitTreeMap<K,V> extends BitTree<V>{
 
 	/**
 	 * 挂载数据
@@ -8,8 +8,8 @@ public interface MountTreeMap<K,V> extends MountTree<V>{
 	 * @param value
 	 * @return
 	 */
-	default V mount(K key,V value){
-		return mount(hash(key), value);
+	default V write(K key,V value){
+		return write(hash(key), value);
 	}
 	
 	/**
@@ -17,8 +17,8 @@ public interface MountTreeMap<K,V> extends MountTree<V>{
 	 * @param key
 	 * @return
 	 */
-	default V umount(K key){
-		return umount(hash(key));
+	default V read(K key){
+		return read(hash(key));
 	}
 	
 	static int hash(Object key) {

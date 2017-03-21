@@ -1,11 +1,11 @@
-package net.jueb.util4j.cache.map.mtree;
+package net.jueb.util4j.cache.map.btree;
 
 /**
  * 优化节点非必要属性的内存占用
  * beta for NodeMap5
  * @author juebanlin
  */
-public class MTree<V> implements MountTree<V>{
+public class BTree<V> implements BitTree<V>{
 	
 	private static final int BIT_NUMS=32;//总bit位数量
 	private final MapConfig config;
@@ -13,11 +13,11 @@ public class MTree<V> implements MountTree<V>{
 	final boolean byLeft;//从左边开始
 	private final int[] posCache;
 	
-	public MTree() {
+	public BTree() {
 		this(MaskEnum.MASK_1111, false);
 	}
 	
-	public MTree(MaskEnum mask,boolean byLeft) {
+	public BTree(MaskEnum mask,boolean byLeft) {
 		this.byLeft=byLeft;
 		int tmp=mask.getValue();
 		int num=0;
@@ -273,12 +273,25 @@ public class MTree<V> implements MountTree<V>{
 	}
 
 	@Override
-	public V mount(int key, V value) {
+	public V write(int key, V value) {
 		return setByNumber(key, value);
 	}
 
 	@Override
-	public V umount(int key) {
+	public V read(int key) {
 		return getByNumber(key);
+	}
+	public static void main(String[] args) {
+		BTree<Byte> mtree=new BTree<>();
+		mtree.write(123,(byte) 11);
+		System.out.println(mtree.write(123,(byte) 22));
+		System.out.println(mtree.read(123));
+		long t=System.currentTimeMillis();
+		for(int i=Integer.MIN_VALUE;i<Integer.MAX_VALUE;i++)
+		{
+			mtree.read(i);
+		}
+		t=System.currentTimeMillis()-t;
+		System.out.println(t);
 	}
 }

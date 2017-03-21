@@ -1,4 +1,4 @@
-package net.jueb.util4j.cache.map.mtree;
+package net.jueb.util4j.cache.map.btree;
 
 import java.util.AbstractMap;
 import java.util.Set;
@@ -7,23 +7,23 @@ import java.util.Set;
  * 优化节点非必要属性的内存占用
  * @author juebanlin
  */
-public class MTreeMap<K,V> extends AbstractMap<K, V> implements MountTreeMap<K,V>{
+public class BTreeMap<K,V> extends AbstractMap<K, V> implements BitTreeMap<K,V>{
 
-	private final MTree<V> tree=new MTree<>();
+	private final BTree<V> tree=new BTree<>();
 	
 	@Override
-	public V mount(int key, V value) {
-		return tree.mount(key, value);
+	public V write(int key, V value) {
+		return tree.write(key, value);
 	}
 
 	@Override
-	public V umount(int key) {
-		return tree.umount(key);
+	public V read(int key) {
+		return tree.read(key);
 	}
 	
 	@Override
 	public V put(K key, V value) {
-		return mount(key, value);
+		return write(key, value);
 	}
 
 	@Override
