@@ -15,4 +15,11 @@ public interface BitTree<V> {
 	 * @return
 	 */
 	public V read(int bitNumber);
+	
+    void forEach(BitConsumer<V> consumer);
+    
+    @FunctionalInterface
+    public static interface BitConsumer<V>{
+    	void accept(int bitNumber,V value);
+    }
 }

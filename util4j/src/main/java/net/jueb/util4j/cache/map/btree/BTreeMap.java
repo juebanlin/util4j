@@ -44,4 +44,9 @@ public class BTreeMap<K,V> extends AbstractMap<K, V> implements BitTreeMap<K,V>{
 		//TODO
 		return null;
 	}
+
+	@Override
+	public void forEach(BitConsumer<V> consumer) {
+		tree.forEach(consumer);
+	}
 }

@@ -1,5 +1,7 @@
 package net.jueb.util4j.cache.map.btree;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * 优化节点非必要属性的内存占用
  * beta for NodeMap5
@@ -10,15 +12,13 @@ public class BTree<V> implements BitTree<V>{
 	private static final int BIT_NUMS=32;//总bit位数量
 	private final MapConfig config;
 	private final LayOutNode<V> node;
-	final boolean byLeft;//从左边开始
 	private final int[] posCache;
 	
 	public BTree() {
-		this(MaskEnum.MASK_1111, false);
+		this(MaskEnum.MASK_1111);
 	}
 	
-	public BTree(MaskEnum mask,boolean byLeft) {
-		this.byLeft=byLeft;
+	public BTree(MaskEnum mask) {
 		int tmp=mask.getValue();
 		int num=0;
 		while(tmp!=0)
@@ -289,17 +289,54 @@ public class BTree<V> implements BitTree<V>{
 	public V read(int key) {
 		return getByNumber(key);
 	}
+	
+	@Override
+	public void forEach(BitConsumer<V> consumer) {
+		forEach(node, config.layout,0,consumer);
+	}
+	
+	/**
+	 * 循环搜索路径上存储的k-v
+	 * @param currentNode
+	 * @param layout
+	 * @param number
+	 */
+	protected void forEach(Node<V> currentNode,int layout,int number,BitConsumer<V> consumer)
+	{
+		if(layout==0)
+		{
+			consumer.accept(number, currentNode.getData());
+			return ;
+		}
+		Node<V>[] sub=currentNode.getSub();
+		for(int i=0;i<sub.length;i++)
+		{
+			Node<V> node=sub[i];
+			if(node!=null)
+			{
+				layout--;
+				int num=number+i&getConfig().mask<<layout;
+				forEach(node, layout, num,consumer);
+				layout++;
+			}
+		}
+	}
+	
 	public static void main(String[] args) {
 		BTree<Byte> mtree=new BTree<>();
-		mtree.write(123,(byte) 11);
-		System.out.println(mtree.write(123,(byte) 22));
-		System.out.println(mtree.read(123));
 		long t=System.currentTimeMillis();
-		for(int i=Integer.MIN_VALUE;i<Integer.MAX_VALUE;i++)
+		for(int i=0;i<5000000;i++)
 		{
-			mtree.read(i);
+			mtree.write(i,(byte) (i+100));
 		}
-		t=System.currentTimeMillis()-t;
-		System.out.println(t);
+		long t1=System.currentTimeMillis()-t;
+		final AtomicInteger i=new AtomicInteger(0);
+		t=System.currentTimeMillis();
+		mtree.forEach((k,v)->{
+			i.incrementAndGet();
+//			System.out.println(k+":"+v);
+		});
+		long t2=System.currentTimeMillis()-t;
+		System.out.println(t1+","+t2+","+i.get());
 	}
 }
