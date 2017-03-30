@@ -163,18 +163,13 @@ public abstract class Environment {
 			{
 				try {
 					env=type.envImpl.newInstance();
+					env.initEnv();
 				} catch (InstantiationException e) {
 					e.printStackTrace();
 				} catch (IllegalAccessException e) {
 					e.printStackTrace();
 				}
-				if(env==null)
-				{
-					System.err.println("Not Found Environment");
-				}else
-				{
-					System.err.println(env.info());
-				}
+				System.err.println(env.info());
 			}
 		}
 		return env;
