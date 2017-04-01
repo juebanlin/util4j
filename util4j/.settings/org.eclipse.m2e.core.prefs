@@ -1,4 +1,4 @@
-activeProfiles=
+activeProfiles=disable-javadoc-doclint, ossrh, aliyun-profile
 eclipse.preferences.version=1
 resolveWorkspaceProjects=true
 version=1

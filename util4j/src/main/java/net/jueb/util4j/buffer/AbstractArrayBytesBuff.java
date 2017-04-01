@@ -86,9 +86,7 @@ public abstract class AbstractArrayBytesBuff implements BytesBuff {
 
 	/**
 	 * 保证缓冲区大小
-	 * 
-	 * @param minWritableBytes
-	 *            增加的字节数组长度
+	 * @param addBytes
 	 */
 	protected void ensureCapacityUnsafe(int addBytes) {
 		int newCapacity = writerIndex() + addBytes;
@@ -107,10 +105,9 @@ public abstract class AbstractArrayBytesBuff implements BytesBuff {
 
 	/**
 	 * 保证缓冲区大小
-	 * 
-	 * @param addBytes
-	 *            增加的字节数组长度
-	 * @return
+	 * @param addBytes 增加的字节数组长度
+	 *            
+	 * @return 返回当前buff
 	 */
 	protected BytesBuff ensureCapacity(int addBytes) {
 		if (addBytes < 0) {

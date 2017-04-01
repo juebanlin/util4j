@@ -8,36 +8,34 @@ public interface BytesBuff {
 
 	/**
 	 * 标记读索引
-	 * 
-	 * @return
+	 * @return 返回当前buff
 	 */
 	public abstract BytesBuff markReaderIndex();
 
 	/**
 	 * 重置读索引
-	 * 
-	 * @return
+	 * @return 返回当前buff
 	 */
 	public abstract BytesBuff resetReaderIndex();
 
 	/**
 	 * 标记写索引
 	 * 
-	 * @return
+	 * @return 返回当前buff
 	 */
 	public abstract BytesBuff markWriterIndex();
 
 	/**
 	 * 重置写索引
 	 * 
-	 * @return
+	 * @return 返回当前buff
 	 */
 	public abstract BytesBuff resetWriterIndex();
 
 	/**
 	 * 读索引
 	 * 
-	 * @return
+	 * @return 返回当前buff
 	 */
 	public abstract int readerIndex();
 
@@ -45,14 +43,14 @@ public interface BytesBuff {
 	 * 设置读索引
 	 * 
 	 * @param readerIndex
-	 * @return
+	 * @return 返回当前buff
 	 */
 	public abstract BytesBuff readerIndex(int readerIndex);
 
 	/**
 	 * 获取写索引
 	 * 
-	 * @return
+	 * @return 返回当前buff
 	 */
 	public abstract int writerIndex();
 
@@ -60,7 +58,7 @@ public interface BytesBuff {
 	 * 设置写索引
 	 * 
 	 * @param writerIndex
-	 * @return
+	 * @return 返回当前buff
 	 */
 	public abstract BytesBuff writerIndex(int writerIndex);
 
@@ -69,28 +67,28 @@ public interface BytesBuff {
 	 * 
 	 * @param readerIndex
 	 * @param writerIndex
-	 * @return
+	 * @return 返回当前buff
 	 */
 	public abstract BytesBuff setIndex(int readerIndex, int writerIndex);
 
 	/**
 	 * 可读字节数
 	 * 
-	 * @return
+	 * @return 返回当前buff
 	 */
 	public abstract int readableBytes();
 
 	/**
 	 * 可写字节数
 	 * 
-	 * @return
+	 * @return 返回当前buff
 	 */
 	public int writableBytes();
 
 	/**
 	 * 当前容量
 	 * 
-	 * @return
+	 * @return 返回当前buff
 	 */
 	public int capacity();
 
@@ -107,14 +105,14 @@ public interface BytesBuff {
 	/**
 	 * 有效数据长度 写入长度
 	 * 
-	 * @return
+	 * @return 返回buff长度
 	 */
 	public int length();
 
 	/**
 	 * 复制可读内容为一个缓冲区
 	 * 
-	 * @return
+	 * @return 返回当前buff
 	 */
 	public abstract BytesBuff copy();
 
@@ -123,27 +121,27 @@ public interface BytesBuff {
 	 * 
 	 * @param index
 	 * @param length
-	 * @return
+	 * @return 返回当前buff
 	 */
 	public abstract BytesBuff copy(int index, int length);
 
 	/**
 	 * 获取写入的字节数组(0~writeIndex)
 	 * 
-	 * @return
+	 * @return 返回写入的所有数据
 	 */
 	public byte[] getBytes();
 	
 	/**
 	 * 获取可读取的字节数组(readIndex~writeIndex)
-	 * @return
+	 * @return 返回可读数据
 	 */
 	public byte[] getReadableBytes();
 
 	/**
 	 * 获取全部字节数组
 	 * 
-	 * @return
+	 * @return 返回所有数据包含未写入的
 	 */
 	public byte[] getRawBytes();
 
