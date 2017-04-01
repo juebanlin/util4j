@@ -36,31 +36,49 @@ public abstract class PropertiesMapping {
 		if(type==String.class)
 		{
 			f.set(this, value);
-		}else if(type==Integer.class)
+			return ;
+		}
+		if(value==null || value.trim().isEmpty())
+		{//字符串不转换为非字符串的属性
+			log.warn("filedValue is empty,name="+f.getName()+",type="+type+",value="+value);
+			return ;
+		}
+		if(type==Integer.class || type==int.class)
 		{
 			f.setInt(this,Integer.parseInt(value));
-		}else if(type==Long.class)
+			return ;
+		}
+		if(type==Long.class || type==long.class)
 		{
 			f.setLong(this,Long.parseLong(value));
-		}else if(type==Double.class)
+			return ;
+		}
+		if(type==Double.class || type==double.class)
 		{
 			f.setDouble(this,Double.parseDouble(value));
-		}else if(type==Float.class)
+			return ;
+		}
+		if(type==Float.class || type==float.class)
 		{
 			f.setFloat(this,Float.parseFloat(value));
-		}else if(type==Boolean.class)
+			return ;
+		}
+		if(type==Boolean.class || type==boolean.class)
 		{
 			f.setBoolean(this,Boolean.parseBoolean(value));
-		}else if(type==Byte.class)
+			return ;
+		}
+		if(type==Byte.class || type==byte.class)
 		{
 			f.setByte(this,Byte.parseByte(value));
-		}else if(type==Short.class)
+			return ;
+		}
+		if(type==Short.class || type==short.class)
 		{
 			f.setShort(this,Short.parseShort(value));
-		}else
-		{
-			log.warn("no type mapping,type="+type+",value="+value);
+			return ;
 		}
+		log.warn("no type mapping filed,name="+f.getName()+",type="+type+",value="+value);
 	}
 	
 	/**
@@ -76,7 +94,6 @@ public abstract class PropertiesMapping {
 				f.set(this,ps.getProperty(f.getName()));
 			} catch (Exception e) {
 				log.error(e.getMessage(),e);
-				e.printStackTrace();
 			}
 		}
 	}
