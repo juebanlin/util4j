@@ -25,7 +25,7 @@
 		</mirror>
 	</mirrors>
 	<profiles>
-    	<!-- 中央pgp签名密码配置-->
+    	<!-- 中央pgp签名密码配置,需要系统安装gpg4win-->
 		<profile>
 	      <id>ossrh</id>
 	      <activation>
