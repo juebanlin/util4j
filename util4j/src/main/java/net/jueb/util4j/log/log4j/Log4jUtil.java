@@ -29,10 +29,17 @@ public class Log4jUtil {
 	 */
 	public static void initLogConfig(String logConfigpath)
 	{
-		ConfigurationSource source;
 		try {
-			source = new ConfigurationSource(new FileInputStream(logConfigpath));
-			Configurator.initialize(null, source);
+			LoggerContext context =(LoggerContext)LogManager.getContext(false);
+			if(context!=null)
+			{
+				 context.setConfigLocation(new File(logConfigpath).toURI());
+			     context.reconfigure();//重新初始化Log4j2的配置上下文
+			}else
+			{
+				ConfigurationSource source = new ConfigurationSource(new FileInputStream(logConfigpath));
+				Configurator.initialize(null, source);
+			}
 			Logger log=LoggerFactory.getLogger(Log4jUtil.class);
 			log.info("日志配置初始化完成:"+logConfigpath);
 		} catch (FileNotFoundException e) {
@@ -51,8 +58,7 @@ public class Log4jUtil {
 		try {
 			 LoggerContext context =(LoggerContext)LogManager.getContext(false);
 		     context.setConfigLocation(new File(logConfigpath).toURI());
-		     //重新初始化Log4j2的配置上下文
-		     context.reconfigure();
+		     context.reconfigure(); //重新初始化Log4j2的配置上下文
 		     Logger log=LoggerFactory.getLogger(Log4jUtil.class);
 			 log.info("日志配置重新初始化完成:"+logConfigpath);
 		} catch (Exception e) {
