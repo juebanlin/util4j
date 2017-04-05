@@ -4,7 +4,7 @@
 
 	<groupId>net.jueb</groupId>
 	<artifactId>util4j</artifactId>
-	<version>4.0.1</version>
+	<version>4.0.2</version>
 	<packaging>jar</packaging>
 
 	<name>${project.groupId}:${project.artifactId}</name>
@@ -128,36 +128,6 @@
 			<groupId>commons-lang</groupId>
 			<artifactId>commons-lang</artifactId>
 			<version>2.6</version>
-			<optional>true</optional>
-		</dependency>
-		<dependency>
-			<groupId>net.jueb.jave3</groupId>
-			<artifactId>jave3-core</artifactId>
-			<version>3.1</version>
-			<optional>true</optional>
-		</dependency>
-		<dependency>
-			<groupId>net.jueb.jave3</groupId>
-			<artifactId>jave3-linux32</artifactId>
-			<version>3.1</version>
-			<optional>true</optional>
-		</dependency>
-		<dependency>
-			<groupId>net.jueb.jave3</groupId>
-			<artifactId>jave3-linux64</artifactId>
-			<version>3.1</version>
-			<optional>true</optional>
-		</dependency>
-		<dependency>
-			<groupId>net.jueb.jave3</groupId>
-			<artifactId>jave3-win32</artifactId>
-			<version>3.1</version>
-			<optional>true</optional>
-		</dependency>
-		<dependency>
-			<groupId>net.jueb.jave3</groupId>
-			<artifactId>jave3-win64</artifactId>
-			<version>3.1</version>
 			<optional>true</optional>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.apache.mina/mina-core -->
