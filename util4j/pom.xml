@@ -273,11 +273,11 @@
 				<configuration>
 					<!-- jar资源过滤 -->
 					<excludes>
-						<exclude>conf/</exclude>
+						<exclude>conf/</exclude><!-- 过滤目录 -->
 						<exclude>shell/</exclude>
-						<exclude>**/.svn/*</exclude>
-						<exclude>**/*.java</exclude>
-						<exclude>/*.*</exclude>
+						<exclude>**/.svn/*</exclude><!-- 过滤某目录下的所有文件 -->
+						<exclude>**/*.java</exclude><!-- 过滤所有的.java文件 -->
+						<exclude>/*.*</exclude><!-- 过滤根目录下的所有文件 -->
 					</excludes>
 				</configuration>
 			</plugin>
