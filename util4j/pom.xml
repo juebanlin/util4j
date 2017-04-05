@@ -273,11 +273,11 @@
 				<configuration>
 					<!-- jar资源过滤 -->
 					<excludes>
-						<exclude>**/conf/*</exclude>
-						<exclude>**/shell/*</exclude>
+						<exclude>conf/</exclude>
+						<exclude>shell/</exclude>
 						<exclude>**/.svn/*</exclude>
 						<exclude>**/*.java</exclude>
-						<exclude>log4j2.xml</exclude>
+						<exclude>/*.*</exclude>
 					</excludes>
 				</configuration>
 			</plugin>
