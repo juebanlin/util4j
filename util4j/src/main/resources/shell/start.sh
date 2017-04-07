@@ -2,7 +2,7 @@
 #
 BootDir=$(cd `dirname $0`; pwd)
 Boot_JAVA_HOME=/data/jdk
-Boot_Class=net.jueb.mj.center.CenterServerStart
+Boot_Class=net.jueb.xx.MainClass
 Boot_Class_Args=
 Jvm_Args="-server -verbose:gc -Xms256m -Xmx1024m -Xloggc:logs/gc.log"
 LogFile=$BootDir/console.out

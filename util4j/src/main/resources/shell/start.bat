@@ -2,7 +2,7 @@
 echo BootDir:%cd%
 ::设置javahome,如果没有则使用系统变量
 set Boot_JAVA_HOME=
-set Boot_Class=net.jueb.xx.ServerStart
+set Boot_Class=net.jueb.xx.MainClass
 set Boot_Class_Args=
 set Jvm_Args=-Xms128m -Xmx1024m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=%ROOT_HOME%\heap.dump -Xloggc:%ROOT_HOME%\logs\gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps
 
