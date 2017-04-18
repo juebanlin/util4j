@@ -331,13 +331,19 @@ public abstract class AbstractScriptProvider<T extends IScript> extends Abstract
 		return state;
 	}
 
-	public final T buildInstance(int code) {
-		T result=null;
+	private Class<? extends T> getClass(int code)
+	{
 		Class<? extends T> c = getStaticScriptClass(code);
 		if(c==null)
 		{
 			c = getScriptClass(code);
 		}
+		return c;
+	}
+	
+	public final T buildInstance(int code) {
+		T result=null;
+		Class<? extends T> c = getClass(code);
 		if (c == null) 
 		{
 			_log.error("not found script,code=" + code + "(0x" + Integer.toHexString(code) + ")");
@@ -349,13 +355,9 @@ public abstract class AbstractScriptProvider<T extends IScript> extends Abstract
 	}
 	
 	@Override
-	public T buildInstance(int code, Object... args) {
+	public final T buildInstance(int code, Object... args) {
 		T result=null;
-		Class<? extends T> c = getStaticScriptClass(code);
-		if(c==null)
-		{
-			c = getScriptClass(code);
-		}
+		Class<? extends T> c = getClass(code);
 		if (c == null) 
 		{
 			_log.error("not found script,code=" + code + "(0x" + Integer.toHexString(code) + ")");
@@ -377,6 +379,11 @@ public abstract class AbstractScriptProvider<T extends IScript> extends Abstract
 		} catch (Throwable e) {
 			_log.error(e.getMessage(), e);
 		}
+	}
+	
+	public final boolean hasCode(int code)
+	{
+		return getClass(code)!=null;
 	}
 	
 	/**
