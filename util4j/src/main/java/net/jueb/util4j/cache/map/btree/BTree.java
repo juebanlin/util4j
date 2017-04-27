@@ -1,9 +1,8 @@
 package net.jueb.util4j.cache.map.btree;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
  * 优化节点非必要属性的内存占用
+ * 分解层数越小,内存占用越低,速度越快
  * beta for NodeMap5
  * @author juebanlin
  */
@@ -15,7 +14,7 @@ public class BTree<V> implements BitTree<V>{
 	private final int[] posCache;
 	
 	public BTree() {
-		this(MaskEnum.MASK_1111);
+		this(MaskEnum.MASK_1111_1111);
 	}
 	
 	public BTree(MaskEnum mask) {
@@ -321,23 +320,5 @@ public class BTree<V> implements BitTree<V>{
 				layout++;
 			}
 		}
-	}
-	
-	public static void main(String[] args) {
-		BTree<Byte> mtree=new BTree<>(MaskEnum.MASK_1);
-		long t=System.currentTimeMillis();
-		for(int i=0;i<5000000;i++)
-		{
-			mtree.write(i,(byte) (i+100));
-		}
-		long t1=System.currentTimeMillis()-t;
-		final AtomicInteger i=new AtomicInteger(0);
-		t=System.currentTimeMillis();
-		mtree.forEach((k,v)->{
-			i.incrementAndGet();
-//			System.out.println(k+":"+v);
-		});
-		long t2=System.currentTimeMillis()-t;
-		System.out.println(t1+","+t2+","+i.get());
 	}
 }
