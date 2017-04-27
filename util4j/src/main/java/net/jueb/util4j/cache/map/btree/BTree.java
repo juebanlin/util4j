@@ -27,9 +27,9 @@ public class BTree<V> implements BitTree<V>{
 			num++;
 		}
 		int maskLen=num;
-		int nodeSize=2<<maskLen-1;
-		int layout=BIT_NUMS/maskLen;
-		posCache=new int[layout];
+		int nodeSize=2<<maskLen-1;//层节点数量
+		int layout=BIT_NUMS/maskLen;//分解层级
+		posCache=new int[layout];//层级数组
 		for(int i=0;i<layout;i++)
 		{
 			posCache[i]=maskLen*i;
