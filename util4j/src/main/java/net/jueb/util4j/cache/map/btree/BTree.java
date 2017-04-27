@@ -44,6 +44,7 @@ public class BTree<V> implements BitTree<V>{
 	 * @author juebanlin
 	 */
 	public static enum MaskEnum{
+		MASK_1(0x1),
 		MASK_11(0x3),
 		MASK_1111(0xF),
 		MASK_1111_1111(0xFF),
@@ -323,7 +324,7 @@ public class BTree<V> implements BitTree<V>{
 	}
 	
 	public static void main(String[] args) {
-		BTree<Byte> mtree=new BTree<>();
+		BTree<Byte> mtree=new BTree<>(MaskEnum.MASK_1);
 		long t=System.currentTimeMillis();
 		for(int i=0;i<5000000;i++)
 		{
