@@ -1,6 +1,7 @@
 package net.jueb.util4j.cache.map.btree;
 
 import java.util.Iterator;
+import java.util.Stack;
 
 /**
  * 优化节点非必要属性的内存占用
@@ -14,6 +15,8 @@ public class BTree<V> implements BitTree<V>{
 	private final MapConfig config;
 	private final LayOutNode<V> root;
 	private final int[] posCache;
+	
+	private int size;
 	
 	public BTree() {
 		this(MaskEnum.MASK_1111_1111);
@@ -284,6 +287,7 @@ public class BTree<V> implements BitTree<V>{
 
 	@Override
 	public V write(int key, V value) {
+		size++;
 		return setByNumber(key, value);
 	}
 
@@ -296,6 +300,7 @@ public class BTree<V> implements BitTree<V>{
 	public final void clear()
 	{
 		getRootNode().setSub(new Node[getConfig().getNodeSize()]);
+		size=0;
 	}
 	
 	@Override
@@ -330,39 +335,111 @@ public class BTree<V> implements BitTree<V>{
 		}
 	}
 	
+	public Iterator<V> iterator(){
+		return new NodeIteratorBeta();
+	}
+	
+	public int size()
+	{
+		return size;
+	}
+	
 	/**
 	 * 迭代器
 	 * @author juebanlin
 	 */
 	class NodeIteratorBeta implements Iterator<V> {
-		Node<V>[] rootNodeVersion=getRootNode().getSub();
-		
+		final Node<V>[] rootNodeVersion=getRootNode().getSub();
 		V next=null;
-		Node<V> currentNode;
-		int layout;
-		int number;
+		int next_number;
+		class StackContext {
+			Node<V> currentNode;
+			int layout;
+			int number;
+			public StackContext(Node<V> currentNode ,int layout, int number) {
+				super();
+				this.currentNode = currentNode;
+				this.layout = layout;
+				this.number = number;
+			}
+		}
+		//用栈保存递归搜索上下文
+		final Stack<StackContext> stack=new Stack<>();
+		public NodeIteratorBeta() {
+			stack.push(new StackContext(root, config.layout,0));
+		}
 		@Override
 		public boolean hasNext() {
 			if(getRootNode().getSub()==rootNodeVersion)
 			{
 				if(next==null)
 				{
-					forEach(root, config.layout,0,this::accept);
-					return next!=null;
+					if(!stack.isEmpty())
+					{
+						while(!stack.isEmpty())
+						{
+							StackContext ctx=stack.pop();
+							if(ctx.layout==0)
+							{
+								accept(ctx.number,ctx.currentNode.getData());
+								break;
+							}
+							Node<V>[] sub=ctx.currentNode.getSub();
+							for(int i=0;i<sub.length;i++)
+							{
+								Node<V> node=sub[i];
+								if(node!=null)
+								{
+									int layOut=ctx.layout-1;
+									int num=ctx.number+i&getConfig().mask<<layOut;
+									stack.push(new StackContext(node,layOut,num));
+								}
+							}
+						}
+					}
 				}
 			}
-			return false;
+			return next!=null;
 		}
 
-		@Override
-		public V next() {
-			return next;
-		}
-		
 		public void accept(int number,V value)
 		{
-			this.number=number;
-			next=value;
+			this.next=value;
+			this.next_number=number;
+		}
+		
+		@Override
+		public V next() {
+			V result=next;
+			next=null;
+			return result;
+		}
+	}
+	
+	
+	
+	public static void main(String[] args) {
+		BTree<String> b=new BTree<>();
+		for(int i=0;i<10;i++)
+		{
+			b.write(i,"i="+i);
+		}
+		Iterator<String> it=b.iterator();
+		int i=0;
+		for(;;)
+		{
+			if(it.hasNext())
+			{
+				System.out.println(it.next());
+				i++;
+			}else
+			{
+				break;
+			}
+			if(i>5)
+			{
+				b.clear();
+			}
 		}
 	}
 }
