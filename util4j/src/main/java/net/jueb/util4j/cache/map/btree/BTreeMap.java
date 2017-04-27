@@ -1,9 +1,10 @@
 package net.jueb.util4j.cache.map.btree;
 
 import java.util.AbstractMap;
+import java.util.AbstractSet;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
-
-import net.jueb.util4j.cache.map.btree.BTree.Node;
 
 /**
  * 优化节点非必要属性的内存占用
@@ -33,16 +34,33 @@ public class BTreeMap<K,V> extends AbstractMap<K, V> implements BitTreeMap<K,V>{
 		return BitTreeMap.super.readBy(key);
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public void clear() {
-		tree.getNode().setSub(new Node[tree.getNode().getSub().length]);
+		tree.clear();
 	}
 	
 	@Override
 	public Set<java.util.Map.Entry<K, V>> entrySet() {
-		//TODO
-		return null;
+		return new AbstractSet<Map.Entry<K,V>>() {
+			@Override
+			public Iterator<java.util.Map.Entry<K, V>> iterator() {
+				return new Iterator<Map.Entry<K,V>>() {
+					@Override
+					public boolean hasNext() {
+						return false;
+					}
+
+					@Override
+					public java.util.Map.Entry<K, V> next() {
+						return null;
+					}
+				};
+			}
+			@Override
+			public int size() {
+				return 0;
+			}
+		};
 	}
 
 	@Override

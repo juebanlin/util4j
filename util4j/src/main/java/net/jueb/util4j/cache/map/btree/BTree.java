@@ -1,5 +1,7 @@
 package net.jueb.util4j.cache.map.btree;
 
+import java.util.Iterator;
+
 /**
  * 优化节点非必要属性的内存占用
  * 分解层数越小,内存占用越低,速度越快
@@ -10,7 +12,7 @@ public class BTree<V> implements BitTree<V>{
 	
 	private static final int BIT_NUMS=32;//总bit位数量
 	private final MapConfig config;
-	private final LayOutNode<V> node;
+	private final LayOutNode<V> root;
 	private final int[] posCache;
 	
 	public BTree() {
@@ -34,7 +36,7 @@ public class BTree<V> implements BitTree<V>{
 			posCache[i]=maskLen*i;
 		}
 		config=new MapConfig(mask.getValue(), maskLen, layout, nodeSize);
-		node=new LayOutNode<V>();
+		root=new LayOutNode<V>();
 		System.out.println(config);
 	}
 
@@ -259,16 +261,16 @@ public class BTree<V> implements BitTree<V>{
 
 	protected V getByNumber(int number)
 	{
-		return node._getByNumber(number,config.layout);
+		return root._getByNumber(number,config.layout);
 	}
 
 	protected V setByNumber(int number,V value)
 	{
-		return node._setByNumber(number,config.layout,value);
+		return root._setByNumber(number,config.layout,value);
 	}
 
-	protected final LayOutNode<V> getNode() {
-		return node;
+	protected final LayOutNode<V> getRootNode() {
+		return root;
 	}
 
 	protected final int[] getPosCache() {
@@ -290,18 +292,24 @@ public class BTree<V> implements BitTree<V>{
 		return getByNumber(key);
 	}
 	
+	@SuppressWarnings("unchecked")
+	public final void clear()
+	{
+		getRootNode().setSub(new Node[getConfig().getNodeSize()]);
+	}
+	
 	@Override
 	public void forEach(BitConsumer<V> consumer) {
-		forEach(node, config.layout,0,consumer);
+		forEach(root, config.layout,0,consumer);
 	}
 	
 	/**
 	 * 循环搜索路径上存储的k-v
 	 * @param currentNode
 	 * @param layout
-	 * @param number
+	 * @param number 逆向出来的数值key
 	 */
-	protected void forEach(Node<V> currentNode,int layout,int number,BitConsumer<V> consumer)
+	protected final void forEach(Node<V> currentNode,int layout,int number,BitConsumer<V> consumer)
 	{
 		if(layout==0)
 		{
@@ -319,6 +327,42 @@ public class BTree<V> implements BitTree<V>{
 				forEach(node, layout, num,consumer);
 				layout++;
 			}
+		}
+	}
+	
+	/**
+	 * 迭代器
+	 * @author juebanlin
+	 */
+	class NodeIteratorBeta implements Iterator<V> {
+		Node<V>[] rootNodeVersion=getRootNode().getSub();
+		
+		V next=null;
+		Node<V> currentNode;
+		int layout;
+		int number;
+		@Override
+		public boolean hasNext() {
+			if(getRootNode().getSub()==rootNodeVersion)
+			{
+				if(next==null)
+				{
+					forEach(root, config.layout,0,this::accept);
+					return next!=null;
+				}
+			}
+			return false;
+		}
+
+		@Override
+		public V next() {
+			return next;
+		}
+		
+		public void accept(int number,V value)
+		{
+			this.number=number;
+			next=value;
 		}
 	}
 }

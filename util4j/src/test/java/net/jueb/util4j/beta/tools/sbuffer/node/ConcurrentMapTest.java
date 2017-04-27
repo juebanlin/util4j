@@ -9,7 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import net.jueb.util4j.beta.tools.sbuffer.node.NodeMap4;  
+import net.jueb.util4j.beta.tools.sbuffer.node.NodeMap4;
+import net.jueb.util4j.cache.map.btree.BTreeMap;  
 
 /** 
  * Set -Xms1024M to avoid JVM heap size increase during the test  
@@ -84,8 +85,8 @@ public class ConcurrentMapTest {
         }  
         Collections.shuffle(list);  
                   
-//        singleThreadMapTest(new HashMap<Integer, Integer>(), list);  
-//        singleThreadMapTest(new NMap<Integer, Integer>(), list);  
+        singleThreadMapTest(new HashMap<Integer, Integer>(), list);  
+        singleThreadMapTest(new BTreeMap<Integer, Integer>(), list);  
         //singleThreadMapTest(new TreeMap<Integer, Integer>(), list);  
           
         
@@ -93,7 +94,7 @@ public class ConcurrentMapTest {
 //        concurrentMapTest(Collections.synchronizedMap(new NMap<Integer, Integer>()), list);  
 //        concurrentMapTest(Collections.synchronizedMap(new HashMap<Integer, Integer>()), list);  
 //        concurrentMapTest(new NMap<Integer, Integer>(), list);  
-        concurrentMapTest(new HashMap<Integer, Integer>(), list);  
+//        concurrentMapTest(new HashMap<Integer, Integer>(), list);  
 //        concurrentMapTest(new ConcurrentHashMap<Integer, Integer>(), list);  
         //concurrentMapTest(Collections.synchronizedSortedMap(new TreeMap<Integer, Integer>()), list);  
         //concurrentMapTest(new ConcurrentSkipListMap<Integer, Integer>(), list);  
