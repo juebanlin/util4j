@@ -1,4 +1,4 @@
-package net.jueb.util4j.test;
+package net.jueb.util4j.test.classLoader;
 
 import java.io.File;
 import java.io.FileInputStream;

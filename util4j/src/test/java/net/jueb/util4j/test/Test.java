@@ -3,6 +3,8 @@ package net.jueb.util4j.test;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import net.jueb.util4j.test.classLoader.MyUrlClassLoader;
+
 public class Test {
 
 	public static void main(String[] args) {

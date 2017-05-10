@@ -1,4 +1,4 @@
-package net.jueb.util4j.hotSwap.classFactory;
+package net.jueb.util4j.hotSwap.classFactory.lite;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,10 +26,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.jueb.util4j.file.FileUtil;
+import net.jueb.util4j.hotSwap.classFactory.AbstractStaticScriptFactory;
+import net.jueb.util4j.hotSwap.classFactory.IScript;
 import net.jueb.util4j.thread.NamedThreadFactory;
 
 /**
- * 动态加载jar内的脚本,支持包含匿名内部类 T不能做为父类加载 T尽量为接口类型,因为只有接口类型的类才没有逻辑,才可以不热加载,并且子类可选择实现
+ * 动态加载jar内的脚本,支持包含匿名内部类 T不能做为父类加载 T尽量为接口类型,
+ * 因为只有接口类型的类才没有逻辑,才可以不热加载,并且子类可选择实现
+ * (本类实现的文件变动监听用以执行重加载)
  */
 public abstract class AbstractLibScriptFactory<T extends IScript> extends AbstractStaticScriptFactory<T> {
 	protected final Logger _log = LoggerFactory.getLogger(this.getClass());

@@ -1,5 +1,7 @@
-package net.jueb.util4j.test;
+package net.jueb.util4j.test.classLoader;
 
+import java.io.File;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 
@@ -41,6 +43,8 @@ public  class MyUrlClassLoader extends URLClassLoader{
 		System.out.println(getClass().getName()+"加载器加载:"+clazz);
 		return clazz;
 	}
-	
+	public static void main(String[] args) throws MalformedURLException, ClassNotFoundException {
+		
+	}
 	
 }
