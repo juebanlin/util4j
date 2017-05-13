@@ -11,7 +11,7 @@ import net.jueb.util4j.net.nettyImpl.handler.websocket.binary.WebSocketServerBin
  * @author Administrator
  */
 public class NettyWebSocketServer extends NettyServer{
-	private String uri;
+	protected final String uri;
 	
 	public NettyWebSocketServer(String host,int port,String uri,ChannelInboundHandlerAdapter handler) {
 		super(new InetSocketAddress(host, port), handler);
@@ -34,6 +34,9 @@ public class NettyWebSocketServer extends NettyServer{
 		}
 	}
 
+	/**
+	 * 使用websocket字节流的服务器
+	 */
 	@Override
 	protected ChannelInboundHandlerAdapter fixHandlerBeforeDoBooterBind(ChannelHandler handler) {
 		return new WebSocketServerBinaryAdapterHandler(uri, handler);
