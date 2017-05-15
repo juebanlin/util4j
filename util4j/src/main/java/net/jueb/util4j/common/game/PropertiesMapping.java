@@ -13,23 +13,6 @@ public abstract class PropertiesMapping {
 	
 	protected  Logger log=LoggerFactory.getLogger(getClass());		
 	
-	/**
-	 * getFields()只能访问类中声明为公有的字段,私有的字段它无法访问，能访问从其它类继承来的公有方法.
-	 * @param ps
-	 */
-	public final void loadPublic(Properties ps)
-	{
-		//表示如果Field是static的，则obj即便给它传值，JVM也会忽略的。还说明了，此入参在这种情况下可以为null
-		for(Field f:getClass().getFields())
-		{
-			try {
-				setFiled(f,ps.getProperty(f.getName()));
-			} catch (Exception e) {
-				log.error(e.getMessage(),e);
-			}
-		}
-	}
-	
 	private final void setFiled(Field f,String value) throws Exception
 	{
 		Class<?> type=f.getType();
@@ -82,6 +65,23 @@ public abstract class PropertiesMapping {
 	}
 	
 	/**
+	 * getFields()只能访问类中声明为公有的字段,私有的字段它无法访问，能访问从其它类继承来的公有方法.
+	 * @param ps
+	 */
+	public final void loadPublic(Properties ps)
+	{
+		//表示如果Field是static的，则obj即便给它传值，JVM也会忽略的。还说明了，此入参在这种情况下可以为null
+		for(Field f:getClass().getFields())
+		{
+			try {
+				setFiled(f,ps.getProperty(f.getName()));
+			} catch (Exception e) {
+				log.error(e.getMessage(),e);
+			}
+		}
+	}
+
+	/**
 	 * getDeclaredFields()能访问类中所有的字段,与public,private,protect无关，不能访问从其它类继承来的方法  
 	 * @param ps
 	 */
@@ -91,7 +91,7 @@ public abstract class PropertiesMapping {
 		for(Field f:getClass().getDeclaredFields())
 		{
 			try {
-				f.set(this,ps.getProperty(f.getName()));
+				setFiled(f,ps.getProperty(f.getName()));
 			} catch (Exception e) {
 				log.error(e.getMessage(),e);
 			}
