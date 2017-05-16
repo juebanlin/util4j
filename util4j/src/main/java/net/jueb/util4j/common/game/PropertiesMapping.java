@@ -28,37 +28,37 @@ public abstract class PropertiesMapping {
 		}
 		if(type==Integer.class || type==int.class)
 		{
-			f.setInt(this,Integer.parseInt(value));
+			f.set(this, Integer.parseInt(value));
 			return ;
 		}
 		if(type==Long.class || type==long.class)
 		{
-			f.setLong(this,Long.parseLong(value));
+			f.set(this,Long.parseLong(value));
 			return ;
 		}
 		if(type==Double.class || type==double.class)
 		{
-			f.setDouble(this,Double.parseDouble(value));
+			f.set(this,Double.parseDouble(value));
 			return ;
 		}
 		if(type==Float.class || type==float.class)
 		{
-			f.setFloat(this,Float.parseFloat(value));
+			f.set(this,Float.parseFloat(value));
 			return ;
 		}
 		if(type==Boolean.class || type==boolean.class)
 		{
-			f.setBoolean(this,Boolean.parseBoolean(value));
+			f.set(this,Boolean.parseBoolean(value));
 			return ;
 		}
 		if(type==Byte.class || type==byte.class)
 		{
-			f.setByte(this,Byte.parseByte(value));
+			f.set(this,Byte.parseByte(value));
 			return ;
 		}
 		if(type==Short.class || type==short.class)
 		{
-			f.setShort(this,Short.parseShort(value));
+			f.set(this,Short.parseShort(value));
 			return ;
 		}
 		log.warn("no type mapping filed,name="+f.getName()+",type="+type+",value="+value);
