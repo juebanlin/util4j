@@ -232,10 +232,7 @@ public abstract class AbstractNettyClient implements JNetClient{
 	 * 发送数据,但不flush
 	 */
 	public void sendData(byte[] data) {
-		if(channel!=null)
-		{
-			channel.write(data);
-		}
+		sendObject(data);
 	}
 	
 	/**
