@@ -49,14 +49,12 @@ public class CallBackCache {
 	@SuppressWarnings("unchecked")
 	public final <TYPE> CallBack<TYPE> poll(Class<TYPE> type,long callKey)
 	{
-		Objects.requireNonNull(type);
 		return (CallBack<TYPE>) caches.poll(callKey);
 	}
 	
 	@SuppressWarnings("unchecked")
 	public final <TYPE> CallBack<TYPE> poll(TYPE type,long callKey)
 	{
-		Objects.requireNonNull(type);
 		return (CallBack<TYPE>) caches.poll(callKey);
 	}
 	
