@@ -1,6 +1,7 @@
 package net.jueb.util4j.cache.map;
 
 import java.util.AbstractCollection;
+import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,7 +35,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 	protected Logger log=LoggerFactory.getLogger(getClass());
 	private final Executor lisenterExecutor;
 	private final ReentrantReadWriteLock rwLock=new ReentrantReadWriteLock();
-	private final Map<K,EntryAdapter<K,V>> entryMap=new HashMap<>();
+	private final Map<K,TimedEntry<K,V>> entryMap=new HashMap<>();
 	
 	/**
 	 * 建议线程池固定大小,否则移除事件过多会消耗很多线程资源
@@ -53,7 +54,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 	}
 	
 	@SuppressWarnings("hiding")
-	class EntryAdapter<K,V> implements Entry<K, V>{
+	class TimedEntry<K,V> implements Entry<K, V>{
 	
 		/**
 		 * 创建时间
@@ -82,14 +83,14 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		 */
 		private Set<EventListener<K,V>> listeners=new HashSet<EventListener<K,V>>(); 
 	
-		EntryAdapter(K key, V value) {
+		TimedEntry(K key, V value) {
 			super();
 			this.key = key;
 			this.value = value;
 			this.lastActiveTime=createTime;
 		}
 		
-		EntryAdapter(K key, V value,long ttl) {
+		TimedEntry(K key, V value,long ttl) {
 			super();
 			this.key = key;
 			this.value = value;
@@ -170,7 +171,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		    {
 			if (o instanceof Map.Entry)
 			    {
-				EntryAdapter<K,V> other = (EntryAdapter<K,V>)o;
+				TimedEntry<K,V> other = (TimedEntry<K,V>)o;
 				return
 				    eqOrBothNull( this.getKey(), other.getKey() ) &&
 				    eqOrBothNull( this.getValue(), other.getValue() );
@@ -186,49 +187,8 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 			    (this.getValue() == null ? 0 : this.getValue().hashCode());
 		 }
 	}
+
 	
-	class IteratorAdapter implements Iterator<V>{
-		private final Iterator<EntryAdapter<K, V>> it;
-		
-		public IteratorAdapter(Iterator<EntryAdapter<K, V>> it) {
-			this.it=it;
-		}
-		
-		@Override
-		public boolean hasNext() {
-			return it.hasNext();
-		}
-
-		@Override
-		public V next() {
-			EntryAdapter<K, V> value=it.next();
-			if(value!=null)
-			{
-				return value.getValue();
-			}
-			return null;
-		}
-	}
-	
-	class CollectionAdapter extends AbstractCollection<V>{
-		private final IteratorAdapter it;
-		
-		public CollectionAdapter(IteratorAdapter it) {
-			this.it=it;
-		}
-
-		@Override
-		public Iterator<V> iterator() {
-			return it;
-		}
-
-		@Override
-		public int size() {
-			return entryMap.size();
-		}
-	}
-	
-
 	/**
 	 * 获取清理超时的任务,执行后将会触发监听器执行
 	 * @return
@@ -255,12 +215,11 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		Map<K,V> map=new HashMap<>();
 		Set<K> removeKeys=new HashSet<K>();
 		try {
-			for(K key:entryMap.keySet())
+			for(java.util.Map.Entry<K, TimedMapImpl<K, V>.TimedEntry<K, V>> entry:entryMap.entrySet())
 			{
-				EntryAdapter<K,V> entry=entryMap.get(key);
-				if(entry.isTimeOut())
+				if(entry.getValue().isTimeOut())
 				{
-					removeKeys.add(key);
+					removeKeys.add(entry.getKey());
 				}
 			}
 		} catch (Exception e) {
@@ -274,7 +233,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 			try {
 				for(Object key:removeKeys)
 				{
-					EntryAdapter<K, V> entry=removeAndListener(key,true);
+					TimedEntry<K, V> entry=removeAndListener(key,true);
 					if(entry!=null)
 					{
 						map.put(entry.key, entry.value);
@@ -296,9 +255,9 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 	 * @param expire 是否超时才执行的移除
 	 * @return
 	 */
-	protected EntryAdapter<K, V> removeAndListener(Object key,final boolean expire)
+	protected TimedEntry<K, V> removeAndListener(Object key,final boolean expire)
 	{
-		final EntryAdapter<K, V> entry=entryMap.remove(key);
+		final TimedEntry<K, V> entry=entryMap.remove(key);
 		try {
 			if(entry!=null)
 			{//通知被移除
@@ -333,7 +292,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 			rwLock.readLock().unlock();
 		}
 	}
-
+	
 	@Override
 	public boolean isEmpty() {
 		rwLock.readLock().lock();
@@ -382,7 +341,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		if (key == null || value == null) throw new NullPointerException();
 		rwLock.writeLock().lock();
 		try {
-			entryMap.put(key, new EntryAdapter<K,V>(key, value,ttl));
+			entryMap.put(key, new TimedEntry<K,V>(key, value,ttl));
 		} catch (Exception e) {
 			log.error(e.getMessage(),e);
 		}finally{
@@ -397,7 +356,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		V result=null;
 		boolean remove=false;
 		try {
-			EntryAdapter<K, V> e=entryMap.get(key);
+			TimedEntry<K, V> e=entryMap.get(key);
 			if(e!=null)
 			{
 				e.setLastActiveTime(System.currentTimeMillis());
@@ -436,7 +395,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 	@Override
 	public V remove(Object key) {
 		rwLock.writeLock().lock();
-		EntryAdapter<K,V> value=null;
+		TimedEntry<K,V> value=null;
 		try {
 			value=removeAndListener(key,false);
 		} catch (Exception e) {
@@ -459,7 +418,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		try {
 			for(java.util.Map.Entry<? extends K, ? extends V> e:m.entrySet())
 			{
-				entryMap.put(e.getKey(), new EntryAdapter<K,V>(e.getKey(), e.getValue()));
+				entryMap.put(e.getKey(), new TimedEntry<K,V>(e.getKey(), e.getValue()));
 			}
 		} catch (Exception e) {
 			log.error(e.getMessage(),e);
@@ -480,44 +439,191 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		}
 	}
 
+	class EntryIterator implements Iterator<Entry<K,V>>{
+		Iterator<java.util.Map.Entry<K, TimedMapImpl<K, V>.TimedEntry<K, V>>> it=entryMap.entrySet().iterator();
+		@Override
+		public boolean hasNext() {
+			return it.hasNext();
+		}
+		@Override
+		public Entry<K,V> next() {
+			Entry<K, TimedMapImpl<K, V>.TimedEntry<K, V>> value=it.next();
+			if(value!=null)
+			{
+				TimedEntry<K, V> entry=value.getValue();
+				if(entry!=null)
+				{
+					entry.setLastActiveTime(System.currentTimeMillis());
+				}
+				return entry;
+			}
+			return null;
+		}
+		@Override
+		public void remove() {
+			it.remove();
+		}
+	}
+
+	
+	class KeyIterator implements Iterator<K>{
+		EntryIterator it=new EntryIterator();
+		@Override
+		public boolean hasNext() {
+			return it.hasNext();
+		}
+		@Override
+		public K next() {
+			Entry<K,V> entry=it.next();
+			if(entry!=null)
+			{
+				return entry.getKey();
+			}
+			return null;
+		}
+		@Override
+		public void remove() {
+			it.remove();
+		}
+	}
+	
+	class ValueIterator implements Iterator<V>{
+		EntryIterator it=new EntryIterator();
+		@Override
+		public boolean hasNext() {
+			return it.hasNext();
+		}
+		@Override
+		public V next() {
+			Entry<K,V> entry=it.next();
+			if(entry!=null)
+			{
+				return entry.getValue();
+			}
+			return null;
+		}
+		@Override
+		public void remove() {
+			it.remove();
+		}
+	}
+
+    transient volatile Set<K>        keySet;
+    transient volatile Collection<V> values;
+    transient Set<Map.Entry<K,V>> entrySet;
+    
+	class TimedKeySet extends AbstractSet<K>
+	{
+		@Override
+		public Iterator<K> iterator() {
+			return new KeyIterator();
+		}
+
+		@Override
+		public int size() {
+			return TimedMapImpl.this.size();
+		}
+		
+		public boolean isEmpty() {
+            return TimedMapImpl.this.isEmpty();
+        }
+
+        public void clear() {
+        	TimedMapImpl.this.clear();
+        }
+
+        public boolean contains(Object k) {
+            return TimedMapImpl.this.containsKey(k);
+        }
+	}
+	
+	class TimedValues extends AbstractCollection<V>
+	{
+		@Override
+		public Iterator<V> iterator() {
+			return new ValueIterator();
+		}
+
+		@Override
+		public int size() {
+			return TimedMapImpl.this.size();
+		}
+		
+		public boolean isEmpty() {
+            return TimedMapImpl.this.isEmpty();
+        }
+
+        public void clear() {
+        	TimedMapImpl.this.clear();
+        }
+
+        public boolean contains(Object k) {
+            return TimedMapImpl.this.containsKey(k);
+        }
+	}
+	
+	class TimedEntrySet extends AbstractSet<Entry<K,V>>
+	{
+		@Override
+		public Iterator<Entry<K,V>> iterator() {
+			return new EntryIterator();
+		}
+	
+		@Override
+		public int size() {
+			return TimedMapImpl.this.size();
+		}
+		public boolean isEmpty() {
+            return TimedMapImpl.this.isEmpty();
+        }
+
+        public void clear() {
+        	TimedMapImpl.this.clear();
+        }
+		
+		public final boolean contains(Object o) {
+            if (!(o instanceof Map.Entry))
+                return false;
+            Map.Entry<?,?> e = (Map.Entry<?,?>) o;
+            Object key = e.getKey();
+            return TimedMapImpl.this.containsKey(key);
+        }
+        public final boolean remove(Object o) {
+            if (o instanceof Map.Entry) {
+                Map.Entry<?,?> e = (Map.Entry<?,?>) o;
+                Object key = e.getKey();
+                return  TimedMapImpl.this.remove(key)!= null;
+            }
+            return false;
+        }
+	}
+
+
 	@Override
 	public Set<K> keySet() {
-		rwLock.readLock().lock();
-		try {
-			return entryMap.keySet();
-		} catch (Exception e) {
-			log.error(e.getMessage(),e);
-		}finally{
-			rwLock.readLock().unlock();
+		if(keySet==null)
+		{
+			keySet=new TimedKeySet();
 		}
-		return null;
+		return keySet;
 	}
 
 	@Override
 	public Collection<V> values() {
-		rwLock.readLock().lock();
-		try {
-			return new CollectionAdapter(new IteratorAdapter(entryMap.values().iterator()));
-		} catch (Exception e) {
-			log.error(e.getMessage(),e);
-		}finally{
-			rwLock.readLock().unlock();
+		if(values==null)
+		{
+			values=new TimedValues();
 		}
-		return null;
+		return values;
 	}
 
 	@Override
 	public Set<java.util.Map.Entry<K, V>> entrySet() {
-		rwLock.readLock().lock();
-		Set<java.util.Map.Entry<K, V>> set=new HashSet<java.util.Map.Entry<K, V>>();
-		try {
-			set.addAll(entryMap.values());
-		} catch (Exception e) {
-			log.error(e.getMessage(),e);
-		}finally{
-			rwLock.readLock().unlock();
+		if(entrySet==null)
+		{
+			entrySet=new TimedEntrySet();
 		}
-		return set;
+		return entrySet;
 	}
 
 	@Override
@@ -525,7 +631,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		rwLock.writeLock().lock();
 		V result=null;
 		try {
-			EntryAdapter<K, V> e=entryMap.get(key);
+			TimedEntry<K, V> e=entryMap.get(key);
 			if(e!=null)
 			{
 				e.setLastActiveTime(System.currentTimeMillis());
@@ -556,7 +662,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		boolean remove=false;
 		long result=-1;//过期移除
 		try {
-			EntryAdapter<K, V> e=entryMap.get(key);
+			TimedEntry<K, V> e=entryMap.get(key);
 			if(e!=null)
 			{//未过期
 				if(e.getTtl()>0)
@@ -597,7 +703,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		V result=null;
 		boolean remove=false;
 		try {
-			EntryAdapter<K, V> e=entryMap.get(key);
+			TimedEntry<K, V> e=entryMap.get(key);
 			if(e!=null)
 			{
 				e.setLastActiveTime(System.currentTimeMillis());
@@ -638,7 +744,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		V result=null;
 		boolean remove=false;
 		try {
-			EntryAdapter<K, V> e=entryMap.get(key);
+			TimedEntry<K, V> e=entryMap.get(key);
 			if(e!=null)
 			{
 				e.setLastActiveTime(System.currentTimeMillis());
@@ -679,7 +785,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		V result=null;
 		boolean remove=false;
 		try {
-			EntryAdapter<K, V> e=entryMap.get(key);
+			TimedEntry<K, V> e=entryMap.get(key);
 			if(e!=null)
 			{
 				e.setLastActiveTime(System.currentTimeMillis());
@@ -799,7 +905,6 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 			getThread.setName("getThread");
 			getThread.start();
 		}
-		
 	}
 	public static void main(String[] args) {
 		Test t=new Test();
