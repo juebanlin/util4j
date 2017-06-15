@@ -77,7 +77,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		/**
 		 * 监听器
 		 */
-		private Set<EventListener<K,V>> listeners=new HashSet<EventListener<K,V>>(); 
+		private EventListener<K,V> listener; 
 	
 		TimedEntry(K key, V value) {
 			super();
@@ -138,20 +138,15 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 				return false;
 			}
 		}
+
+		public EventListener<K, V> getListener() {
+			return listener;
+		}
+
+		public void setListener(EventListener<K, V> listener) {
+			this.listener = listener;
+		}
 		
-		public Set<EventListener<K, V>> getListeners() {
-			return listeners;
-		}
-
-		public void setListeners(Set<EventListener<K, V>> listeners) {
-			this.listeners = listeners;
-		}
-
-		@Override
-		public String toString() {
-			return "CacheEntry [createTime=" + createTime + ", lastActiveTime=" + lastActiveTime + ", ttl=" + ttl
-					+ ", key=" + key + ", value=" + value + "]";
-		}
 		private boolean eqOrBothNull(Object a, Object b)
 	    {
 		if (a == b)
@@ -182,6 +177,12 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 			    (this.getKey()   == null ? 0 : this.getKey().hashCode()) ^
 			    (this.getValue() == null ? 0 : this.getValue().hashCode());
 		 }
+
+		@Override
+		public String toString() {
+			return "TimedEntry [createTime=" + createTime + ", lastActiveTime=" + lastActiveTime + ", ttl=" + ttl
+					+ ", key=" + key + ", value=" + value + ", listener=" + listener + "]";
+		}
 	}
 
 	
@@ -257,9 +258,10 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		try {
 			if(entry!=null)
 			{//通知被移除
-				for(EventListener<K, V> l:entry.getListeners())
+				final EventListener<K, V> listener=entry.listener;
+				entry.setListener(null);
+				if(listener!=null)
 				{
-					final EventListener<K, V> listener=l;
 					lisenterExecutor.execute(new Runnable() {
 						@Override
 						public void run() {
@@ -271,7 +273,6 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 						}
 					});
 				}
-				entry.getListeners().clear();
 			}
 		} catch (Exception e) {
 			log.error(e.getMessage(),e);
@@ -343,10 +344,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		rwLock.writeLock().lock();
 		try {
 			TimedEntry<K,V> entry=new TimedEntry<K,V>(key, value,ttl);
-			if(listeners!=null)
-			{
-				entry.getListeners().add(listeners);
-			}
+			entry.setListener(null);
 			entryMap.put(key,entry);
 		} catch (Exception e) {
 			log.error(e.getMessage(),e);
@@ -704,7 +702,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 	}
 	
 	@Override
-	public V addEventListener(K key,EventListener<K, V> lisnener) {
+	public V setEventListener(K key,EventListener<K, V> lisnener) {
 		rwLock.readLock().lock();
 		V result=null;
 		boolean remove=false;
@@ -718,10 +716,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 					remove=true;
 				}else
 				{
-					if(lisnener!=null)
-					{
-						e.getListeners().add(lisnener);
-					}
+					e.setListener(lisnener);
 					result= e.getValue();
 				}
 			}
@@ -736,85 +731,6 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 			try {
 				removeAndListener(key,true);
 			} catch (Exception e) {
-				log.error(e.getMessage(),e);
-			}finally {
-				rwLock.writeLock().unlock();
-			}
-		}
-		return result;
-	}
-
-	@Override
-	public V removeEventListener(K key,TimedMap.EventListener<K, V> lisnener) {
-		rwLock.readLock().lock();
-		V result=null;
-		boolean remove=false;
-		try {
-			TimedEntry<K, V> e=entryMap.get(key);
-			if(e!=null)
-			{
-				e.setLastActiveTime(System.currentTimeMillis());
-				if(e.isTimeOut())
-				{
-					remove=true;
-				}else
-				{
-					if(lisnener!=null)
-					{
-						e.getListeners().remove(lisnener);
-					}
-					result= e.getValue();
-				}
-			}
-		} catch (Exception e) {
-			log.error(e.getMessage(),e);
-		}finally {
-			rwLock.readLock().unlock();
-		}
-		if(remove)
-		{
-			rwLock.writeLock().lock();
-			try {
-				removeAndListener(key,true);
-			}catch (Exception e) {
-				log.error(e.getMessage(),e);
-			}finally {
-				rwLock.writeLock().unlock();
-			}
-		}
-		return result;
-	}
-
-	@Override
-	public V removeAllEventListener(K key) {
-		rwLock.readLock().lock();
-		V result=null;
-		boolean remove=false;
-		try {
-			TimedEntry<K, V> e=entryMap.get(key);
-			if(e!=null)
-			{
-				e.setLastActiveTime(System.currentTimeMillis());
-				if(e.isTimeOut())
-				{
-					remove=true;
-				}else
-				{
-					e.getListeners().clear();
-					result= e.getValue();
-				}
-			}
-		} catch (Exception e) {
-			log.error(e.getMessage(),e);
-		}finally {
-			rwLock.readLock().unlock();
-		}
-		if(remove)
-		{
-			rwLock.writeLock().lock();
-			try {
-				removeAndListener(key,true);
-			}catch (Exception e) {
 				log.error(e.getMessage(),e);
 			}finally {
 				rwLock.writeLock().unlock();

@@ -34,8 +34,7 @@ public abstract class AbstractCallBackCache<KEY,TYPE> {
 		{
 			timeOut=CallBack.DEFAULT_TIMEOUT;
 		}
-		callBacks.put(ck, callBack, timeOut);
-		callBacks.addEventListener(ck, new EventListener<KEY,CallBack<TYPE>>(){
+		EventListener<KEY,CallBack<TYPE>> listener=new EventListener<KEY,CallBack<TYPE>>(){
 			@Override
 			public void removed(KEY key, CallBack<TYPE> value, boolean expire) {
 				if(expire)
@@ -43,7 +42,8 @@ public abstract class AbstractCallBackCache<KEY,TYPE> {
 					value.call(true);
 				}
 			}
-		});
+		};
+		callBacks.put(ck, callBack, timeOut,listener);
 		return ck;
 	}
 	
@@ -62,10 +62,9 @@ public abstract class AbstractCallBackCache<KEY,TYPE> {
 		{
 			timeOut=CallBack.DEFAULT_TIMEOUT;
 		}
-		callBacks.put(ck, callBack, timeOut);
-		callBacks.addEventListener(ck, new EventListener<KEY,CallBack<TYPE>>(){
+		EventListener<KEY,CallBack<TYPE>> listener=new EventListener<KEY,CallBack<TYPE>>(){
 			@Override
-			public void removed(KEY key, final CallBack<TYPE> value, boolean expire) {
+			public void removed(KEY key, CallBack<TYPE> value, boolean expire) {
 				if(expire)
 				{
 					timeOutExecutor.execute(new Runnable() {
@@ -76,7 +75,8 @@ public abstract class AbstractCallBackCache<KEY,TYPE> {
 					});
 				}
 			}
-		});
+		};
+		callBacks.put(ck, callBack, timeOut,listener);
 		return ck;
 	}
 	

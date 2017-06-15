@@ -58,19 +58,7 @@ public interface TimedMap<K,V> extends Map<K,V>{
 	 * @param lisnener
 	 * @return
 	 */
-	public V addEventListener(K key,EventListener<K,V> lisnener);
-	
-	/**
-	 * 移除事件监听器
-	 */
-	public V removeEventListener(K key,EventListener<K,V> lisnener);
-	
-	/**
-	 * 移除所有事件监听器
-	 * @param key
-	 * @return
-	 */
-	public V removeAllEventListener(K key);
+	public V setEventListener(K key,EventListener<K,V> lisnener);
 	
 	/**
 	 * 事件监听器
