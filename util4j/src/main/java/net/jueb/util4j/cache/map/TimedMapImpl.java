@@ -32,21 +32,25 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 	private final Executor lisenterExecutor;
 	private final ReentrantReadWriteLock rwLock=new ReentrantReadWriteLock();
 	private final Map<K,TimedEntry<K,V>> entryMap=new HashMap<>();
+	private volatile boolean iteratorUpdate;//对map集合进行迭代时,是否刷新时间
 	
 	/**
 	 * 建议线程池固定大小,否则移除事件过多会消耗很多线程资源
-	 * @param lisenterExecutor
+	 * @param lisenterExecutor 指定处理超时监听的executor
+	 * @param iteratorUpdate 是否在迭代的时候也更新ttl
 	 */
-	public TimedMapImpl(Executor lisenterExecutor){
+	public TimedMapImpl(Executor lisenterExecutor,boolean iteratorUpdate){
 		Objects.requireNonNull(lisenterExecutor);
 		this.lisenterExecutor=lisenterExecutor;
+		this.iteratorUpdate=iteratorUpdate;
 	}
+	
 	
 	/**
 	 * 默认最大2个线程处理监听器
 	 */
 	public TimedMapImpl(){
-		this(Executors.newFixedThreadPool(2,new NamedThreadFactory("TimedMapLisenterExecutor", true)));
+		this(Executors.newFixedThreadPool(2,new NamedThreadFactory("TimedMapLisenterExecutor", true)),true);
 	}
 	
 	@SuppressWarnings("hiding")
@@ -185,6 +189,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		}
 	}
 
+	transient volatile Runnable cleanTask;
 	
 	/**
 	 * 获取清理超时的任务,执行后将会触发监听器执行
@@ -192,7 +197,11 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 	 */
 	public Runnable getCleanTask()
 	{
-		return new CleanTask();
+		if(cleanTask==null)
+		{
+			cleanTask=new CleanTask();
+		}
+		return cleanTask;
 	}
 	
 	private class CleanTask implements Runnable{
@@ -280,6 +289,14 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		return entry;
 	}
 
+	public boolean isIteratorUpdate() {
+		return iteratorUpdate;
+	}
+
+	public void setIteratorUpdate(boolean iteratorUpdate) {
+		this.iteratorUpdate = iteratorUpdate;
+	}
+
 	@Override
 	public int size() {
 		rwLock.readLock().lock();
@@ -339,12 +356,12 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 	}
 	
 	@Override
-	public V put(K key, V value, long ttl,EventListener<K, V> listeners) {
+	public V put(K key, V value, long ttl,EventListener<K, V> listener) {
 		if (key == null || value == null) throw new NullPointerException();
 		rwLock.writeLock().lock();
 		try {
 			TimedEntry<K,V> entry=new TimedEntry<K,V>(key, value,ttl);
-			entry.setListener(null);
+			entry.setListener(listener);
 			entryMap.put(key,entry);
 		} catch (Exception e) {
 			log.error(e.getMessage(),e);
@@ -457,7 +474,10 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 				TimedEntry<K, V> entry=value.getValue();
 				if(entry!=null)
 				{
-					entry.setLastActiveTime(System.currentTimeMillis());
+					if(iteratorUpdate)
+					{
+						entry.setLastActiveTime(System.currentTimeMillis());
+					}
 				}
 				return entry;
 			}

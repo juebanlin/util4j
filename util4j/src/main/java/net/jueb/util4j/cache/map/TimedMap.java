@@ -16,7 +16,7 @@ public interface TimedMap<K,V> extends Map<K,V>{
 	 */
 	public V put(K key,V value,long ttl);
 	
-	public V put(K key,V value,long ttl,EventListener<K, V> listeners);
+	public V put(K key,V value,long ttl,EventListener<K, V> listener);
 	
 	public V getBy(K key);
 	

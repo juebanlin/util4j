@@ -23,7 +23,7 @@ public abstract class AbstractCallBackCache<KEY,TYPE> {
 	 * @param timeOutExecutor 处理超时事件的执行器
 	 */
 	public AbstractCallBackCache(Executor timeOutExecutor) {
-		 callBacks=new TimedMapImpl<KEY,CallBack<TYPE>>(timeOutExecutor);
+		 callBacks=new TimedMapImpl<KEY,CallBack<TYPE>>(timeOutExecutor,true);
 	}
 	
 	public KEY put(CallBack<TYPE> callBack,long timeOut)
