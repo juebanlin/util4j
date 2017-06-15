@@ -1,9 +1,6 @@
 package net.jueb.util4j.cache.map.btree;
 
 import java.util.AbstractMap;
-import java.util.AbstractSet;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -14,6 +11,10 @@ public class BTreeMap<K,V> extends AbstractMap<K, V> implements BitTreeMap<K,V>{
 
 	private final BTree<V> tree=new BTree<>();
 	
+	static final int hash(Object key) {
+        int h;
+        return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
+    }
 	@Override
 	public V write(int key, V value) {
 		return tree.write(key, value);
@@ -25,13 +26,23 @@ public class BTreeMap<K,V> extends AbstractMap<K, V> implements BitTreeMap<K,V>{
 	}
 	
 	@Override
+	public void forEach(BitConsumer<V> consumer) {
+		tree.forEach(consumer);
+	}
+
+	@Override
 	public V put(K key, V value) {
-		return BitTreeMap.super.write(key, value);
+		return write(key, value);
 	}
 	
 	@Override
 	public V get(Object key) {
-		return BitTreeMap.super.readBy(key);
+		return readBy(key);
+	}
+	
+	@Override
+	public V read(K key) {
+		return readBy(key);
 	}
 
 	@Override
@@ -40,31 +51,22 @@ public class BTreeMap<K,V> extends AbstractMap<K, V> implements BitTreeMap<K,V>{
 	}
 	
 	@Override
+	public int size() {
+		return tree.size();
+	}
+	
+	@Override
 	public Set<java.util.Map.Entry<K, V>> entrySet() {
-		return new AbstractSet<Map.Entry<K,V>>() {
-			@Override
-			public Iterator<java.util.Map.Entry<K, V>> iterator() {
-				return new Iterator<Map.Entry<K,V>>() {
-					@Override
-					public boolean hasNext() {
-						return false;
-					}
-
-					@Override
-					public java.util.Map.Entry<K, V> next() {
-						return null;
-					}
-				};
-			}
-			@Override
-			public int size() {
-				return 0;
-			}
-		};
+		throw new UnsupportedOperationException();
+	}
+	
+	@Override
+	public V write(K key, V value) {
+		return write(hash(key), value);
 	}
 
 	@Override
-	public void forEach(BitConsumer<V> consumer) {
-		tree.forEach(consumer);
+	public V readBy(Object key) {
+		return read(hash(key));
 	}
 }

@@ -1,6 +1,7 @@
 package net.jueb.util4j.cache.map.btree;
 
 import java.util.Iterator;
+import java.util.Map.Entry;
 import java.util.Stack;
 
 /**
@@ -335,7 +336,7 @@ public class BTree<V> implements BitTree<V>{
 		}
 	}
 	
-	public Iterator<V> iterator(){
+	public Iterator<Entry<Integer,V>> iterator(){
 		return new NodeIteratorBeta();
 	}
 	
@@ -344,13 +345,38 @@ public class BTree<V> implements BitTree<V>{
 		return size;
 	}
 	
+	class DataEntry implements Entry<Integer,V>{
+		private final int key;
+		private final V value;
+		public DataEntry(int key, V value) {
+			super();
+			this.key = key;
+			this.value = value;
+		}
+
+		@Override
+		public Integer getKey() {
+			return key;
+		}
+
+		@Override
+		public V getValue() {
+			return value;
+		}
+
+		@Override
+		public V setValue(V value) {
+			return setByNumber(key, value);
+		}
+	}
+	
 	/**
 	 * 迭代器
 	 * @author juebanlin
 	 */
-	class NodeIteratorBeta implements Iterator<V> {
+	class NodeIteratorBeta implements Iterator<Entry<Integer,V>> {
 		final Node<V>[] rootNodeVersion=getRootNode().getSub();
-		V next=null;
+		Entry<Integer,V> next=null;
 		int next_number;
 		class StackContext {
 			Node<V> currentNode;
@@ -380,7 +406,7 @@ public class BTree<V> implements BitTree<V>{
 						{
 							StackContext ctx=stack.pop();
 							if(ctx.layout==0)
-							{
+							{//找到值
 								accept(ctx.number,ctx.currentNode.getData());
 								break;
 							}
@@ -404,19 +430,27 @@ public class BTree<V> implements BitTree<V>{
 
 		public void accept(int number,V value)
 		{
-			this.next=value;
-			this.next_number=number;
+			if(value!=null)
+			{
+				this.next=new DataEntry(number, value);
+			}
 		}
 		
 		@Override
-		public V next() {
-			V result=next;
+		public Entry<Integer,V> next() {
+			Entry<Integer,V> result=next;
 			next=null;
 			return result;
 		}
+		@Override
+		public void remove() {
+			Entry<Integer,V> result=next;
+			if(result!=null)
+			{
+				setByNumber(result.getKey(),null);
+			}
+		}
 	}
-	
-	
 	
 	public static void main(String[] args) {
 		BTree<String> b=new BTree<>();
@@ -424,22 +458,18 @@ public class BTree<V> implements BitTree<V>{
 		{
 			b.write(i,"i="+i);
 		}
-		Iterator<String> it=b.iterator();
-		int i=0;
-		for(;;)
+		Iterator<Entry<Integer,String>> it=b.iterator();
+		while(it.hasNext())
 		{
-			if(it.hasNext())
-			{
-				System.out.println(it.next());
-				i++;
-			}else
-			{
-				break;
-			}
-			if(i>5)
-			{
-				b.clear();
-			}
+			Entry<Integer,String> e=it.next();
+			System.out.println(e.getKey()+":"+e.getValue());
+			e.setValue("null");
+		}
+		it=b.iterator();
+		while(it.hasNext())
+		{
+			Entry<Integer,String> e=it.next();
+			System.out.println(e.getKey()+":"+e.getValue());
 		}
 	}
 }

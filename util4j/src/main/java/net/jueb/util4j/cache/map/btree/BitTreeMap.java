@@ -8,30 +8,19 @@ public interface BitTreeMap<K,V> extends BitTree<V>{
 	 * @param value
 	 * @return
 	 */
-	default V write(K key,V value){
-		return write(hash(key), value);
-	}
+	public V write(K key,V value);
 	
 	/**
 	 * 读取数据
 	 * @param key
 	 * @return
 	 */
-	default V read(K key){
-		return read(hash(key));
-	}
+	public V read(K key);
 	
 	/**
 	 * 读取数据
 	 * @param key
 	 * @return
 	 */
-	default V readBy(Object key){
-		return read(hash(key));
-	}
-	
-	static int hash(Object key) {
-	    int h;
-	    return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
-	}
+	public V readBy(Object key);
 }
