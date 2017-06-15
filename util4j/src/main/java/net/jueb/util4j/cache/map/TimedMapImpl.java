@@ -35,6 +35,21 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 	private volatile boolean iteratorUpdate;//对map集合进行迭代时,是否刷新时间
 	
 	/**
+	 * 默认最大2个线程处理监听器
+	 * 迭代的时候也更新ttl
+	 */
+	public TimedMapImpl(){
+		this(Executors.newFixedThreadPool(2,new NamedThreadFactory("TimedMapLisenterExecutor", true)),true);
+	}
+	
+	/**
+	 * @param iteratorUpdate 是否在迭代的时候也更新ttl
+	 */
+	public TimedMapImpl(boolean iteratorUpdate){
+		this(Executors.newFixedThreadPool(2,new NamedThreadFactory("TimedMapLisenterExecutor", true)), iteratorUpdate);
+	}
+	
+	/**
 	 * 建议线程池固定大小,否则移除事件过多会消耗很多线程资源
 	 * @param lisenterExecutor 指定处理超时监听的executor
 	 * @param iteratorUpdate 是否在迭代的时候也更新ttl
@@ -43,14 +58,6 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		Objects.requireNonNull(lisenterExecutor);
 		this.lisenterExecutor=lisenterExecutor;
 		this.iteratorUpdate=iteratorUpdate;
-	}
-	
-	
-	/**
-	 * 默认最大2个线程处理监听器
-	 */
-	public TimedMapImpl(){
-		this(Executors.newFixedThreadPool(2,new NamedThreadFactory("TimedMapLisenterExecutor", true)),true);
 	}
 	
 	@SuppressWarnings("hiding")
