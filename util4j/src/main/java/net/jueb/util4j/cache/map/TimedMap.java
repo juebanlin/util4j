@@ -73,10 +73,10 @@ public interface TimedMap<K,V> extends Map<K,V>{
 	/**
 	 * 事件监听器
 	 * @author Administrator
-	 *
 	 * @param <K>
 	 * @param <V>
 	 */
+	@FunctionalInterface
 	public static interface EventListener<K,V>{
 		/**
 		 * 移除后调用此方法
