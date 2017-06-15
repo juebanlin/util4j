@@ -26,4 +26,10 @@ public interface QueueExecutor extends Executor{
 	 * @param tasks
 	 */
 	public void execute(List<Runnable> tasks);
+	
+	/**
+	 * 队列大小
+	 * @return
+	 */
+	public int size();
 }

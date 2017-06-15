@@ -30,4 +30,9 @@ public abstract class AbstractQueueExecutorBase extends AbstractQueueExecutor im
 	public final RunnableQueue getQueue() {
 		return queue;
 	}
+	
+	@Override
+	public final int size() {
+		return queue.size();
+	}
 }
