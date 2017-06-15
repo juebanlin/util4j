@@ -326,9 +326,19 @@ public class TimedMapSimpleImpl<K,V> implements TimedMap<K, V>{
 
 	@Override
 	public V put(K key, V value, long ttl) {
+        return put(key, value, ttl, null);
+	}
+	
+	@Override
+	public V put(K key, V value, long ttl,EventListener<K, V> listeners) {
 		if (key == null || value == null) throw new NullPointerException();
 		lock.lock();
 		try {
+			EntryAdapter<K,V> entry=new EntryAdapter<K,V>(key, value,ttl);
+			if(listeners!=null)
+			{
+				entry.getListeners().add(listeners);
+			}
 			entryMap.put(key, new EntryAdapter<K,V>(key, value,ttl));
 		} catch (Exception e) {
 			log.error(e.getMessage(),e);

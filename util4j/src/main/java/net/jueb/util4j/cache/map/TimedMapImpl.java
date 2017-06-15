@@ -8,15 +8,11 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import org.apache.commons.lang.math.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +46,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 	 * 默认最大2个线程处理监听器
 	 */
 	public TimedMapImpl(){
-		this(Executors.newFixedThreadPool(2,new NamedThreadFactory("CacheMapLisenterExecutor", true)));
+		this(Executors.newFixedThreadPool(2,new NamedThreadFactory("TimedMapLisenterExecutor", true)));
 	}
 	
 	@SuppressWarnings("hiding")
@@ -338,10 +334,20 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 
 	@Override
 	public V put(K key, V value, long ttl) {
+        return put(key, value, ttl, null);
+	}
+	
+	@Override
+	public V put(K key, V value, long ttl,EventListener<K, V> listeners) {
 		if (key == null || value == null) throw new NullPointerException();
 		rwLock.writeLock().lock();
 		try {
-			entryMap.put(key, new TimedEntry<K,V>(key, value,ttl));
+			TimedEntry<K,V> entry=new TimedEntry<K,V>(key, value,ttl);
+			if(listeners!=null)
+			{
+				entry.getListeners().add(listeners);
+			}
+			entryMap.put(key,entry);
 		} catch (Exception e) {
 			log.error(e.getMessage(),e);
 		}finally{
@@ -815,102 +821,5 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 			}
 		}
 		return result;
-	}
-
-	
-	public static class Test implements EventListener<String,String>{
-		TimedMapImpl<String,String> map=new TimedMapImpl<String,String>();
-
-		/**
-		 * 当RoleAgent被移除后执行此方法
-		 */
-		@Override
-		public void removed(String key,String value,boolean expire) {
-			System.err.println("玩家断线未重连移除"+value.toString());
-		}
-		
-		public void test()
-		{
-			ScheduledExecutorService s=Executors.newScheduledThreadPool(2);
-			s.scheduleAtFixedRate(map.getCleanTask(),1, 1, TimeUnit.SECONDS);
-			final Logger log=LoggerFactory.getLogger(getClass());
-			int num=1000000;
-			//固化数据
-			for(int i=0;i<num;i++)
-			{
-				String key="StaticKey"+i;
-				String value="StaticValue"+i;
-				map.put(key,value,0);
-			}
-			final int count=5000000;//测试次数
-			//写入线程
-			Thread putThread=new Thread(){
-				public void run() {
-					long times=0;
-					for(int i=0;i<count;i++)
-					{
-						long t=System.currentTimeMillis();
-						String key="TestKey"+i;
-						String value="TestValue"+i;
-						long ttl=TimeUnit.SECONDS.toMillis(RandomUtils.nextInt(300))+1;
-						map.put(key,value,ttl);
-						map.addEventListener(key, new EventListener<String,String>() {
-							@Override
-							public void removed(String key, String value,boolean expire) {
-							}
-						});
-						t=System.currentTimeMillis()-t;
-						log.debug("putTime="+t);
-						times+=t;
-						try {
-							Thread.sleep(100);
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-					}
-					System.err.println("putTimes="+times);//putTimes=2914
-				};
-			};
-			putThread.setName("putThread");
-			putThread.start();
-			try {
-				Thread.sleep(2000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			//读取线程
-			Thread getThread=new Thread(){
-				public void run() {
-					long times=0;
-					for(int i=0;i<count;i++)
-					{
-						long t=System.currentTimeMillis();
-						String key="TestKey"+i;
-						String v=map.get(key);
-						t=System.currentTimeMillis()-t;
-						times+=t;
-						if(v!=null)
-						{
-							log.debug("getTime="+t);
-						}
-						try {
-							Thread.sleep(150);
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-					}
-					System.err.println("getTimes="+times);//getTimes=1054
-				};
-			};
-			getThread.setName("getThread");
-			getThread.start();
-		}
-	}
-	public static void main(String[] args) {
-		Test t=new Test();
-		t.test();
-		Scanner sc=new Scanner(System.in);
-		sc.nextLine();
-		sc.close();
 	}
 }
