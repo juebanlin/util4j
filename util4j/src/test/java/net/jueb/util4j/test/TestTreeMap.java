@@ -1,5 +1,6 @@
 package net.jueb.util4j.test;
 
+import java.util.Map;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
@@ -17,7 +18,7 @@ import net.jueb.util4j.thread.NamedThreadFactory;
 public class TestTreeMap {
 
 	final Logger log=LoggerFactory.getLogger(getClass());
-	BTreeMap<String,Integer> map=new BTreeMap<String,Integer>();
+	Map<String,Integer> map=new BTreeMap<String,Integer>();
 	
 	int testRange=1000000;
 	AtomicLong writeCount=new AtomicLong();//写入次数
