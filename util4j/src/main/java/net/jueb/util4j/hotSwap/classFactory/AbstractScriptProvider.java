@@ -76,6 +76,7 @@ public abstract class AbstractScriptProvider<T extends IScript> extends Abstract
 			scriptSource.addEventListener((event->{
 				switch (event) {
 				case Change:
+					disableReload=false;
 					if(autoReload)
 					{
 						reload();
@@ -88,7 +89,7 @@ public abstract class AbstractScriptProvider<T extends IScript> extends Abstract
 					break;
 				}
 			}));
-			loadAllClass();
+			loadScirptClass();
 			onLoaded();
 		} catch (Exception e) {
 			_log.error(e.getMessage(), e);
@@ -96,14 +97,14 @@ public abstract class AbstractScriptProvider<T extends IScript> extends Abstract
 	}
 
 	/**
-	 * 加载所有的类
+	 * 加载所有的脚本类
 	 * @param jarFiles
 	 * @throws IOException
 	 * @throws ClassNotFoundException
 	 * @throws IllegalAccessException
 	 * @throws InstantiationException
 	 */
-	protected final void loadAllClass() throws Exception 
+	protected final void loadScirptClass() throws Exception 
 	{
 		if (state == State.loading) 
 		{
@@ -112,75 +113,13 @@ public abstract class AbstractScriptProvider<T extends IScript> extends Abstract
 		rwLock.writeLock().lock();
 		try {
 			state = State.loading;
-			Set<Class<?>> allClass = new HashSet<Class<?>>();
-			ScriptClassLoader newClassLoader = new ScriptClassLoader();
-			Set<Class<?>> fileClass=new HashSet<>();
-			for(DirClassFile dcf:scriptSource.getDirClassFiles())
-			{
-				File file=new File(dcf.getRootDir().getFile());
-				if(!file.exists())
-				{
-					continue;
-				}
-				newClassLoader.addURL(dcf.getRootDir());
-				for(String className:dcf.getClassNames())
-				{
-					Class<?> clazz=newClassLoader.loadClass(className);
-					if(clazz!=null)
-					{
-						fileClass.add(clazz);
-					}
-				}
-			}
-			Set<Class<?>> urlClass=new HashSet<>();
-			for(URLClassFile ucf:scriptSource.getUrlClassFiles())
-			{
-				newClassLoader.addURL(ucf.getURL());
-				Class<?> clazz=newClassLoader.loadClass(ucf.getClassName());
-				if(clazz!=null)
-				{
-					urlClass.add(clazz);
-				}
-			}
-			Set<Class<?>> jarClass=new HashSet<>();
-			for(URL jar:scriptSource.getJars())
-			{
-				JarFile jarFile=null;
-				try {
-					File file=new File(jar.getFile());
-					if(!file.exists())
-					{
-						continue;
-					}
-					jarFile=new JarFile(jar.getFile());
-					Map<String, JarEntry>  map=FileUtil.findClassByJar(jarFile);
-					if(!map.isEmpty())
-					{
-						newClassLoader.addURL(jar);
-						for(String className:map.keySet())
-						{
-							Class<?> clazz=newClassLoader.loadClass(className);
-							if(clazz!=null)
-							{
-								jarClass.add(clazz);
-							}
-						}
-					}
-				} finally {
-					if(jarFile!=null)
-					{
-						jarFile.close();
-					}
-				}
-			}
-			allClass.addAll(fileClass);
-			allClass.addAll(urlClass);
-			allClass.addAll(jarClass);
-			_log.debug("load class complete,allClass:"+allClass.size()+",fileClass:" + fileClass.size() + ",urlClass:" + urlClass.size() + ",jarClass:" + jarClass.size());
-			Map<Integer, Class<? extends T>> newCodeMap = findScriptCodeMap(findScriptClass(allClass));
+			ScriptClassLoader loader=loadClassByLoader();
+			Set<Class<?>> allClass = loader.findedClass;
+			Set<Class<? extends T>> scriptClass=findScriptClass(allClass);
+			Map<Integer, Class<? extends T>> newCodeMap = findInstanceAbleScript(scriptClass);
 			this.codeMap.clear();
 			this.codeMap.putAll(newCodeMap);
-			this.classLoader = newClassLoader;
+			this.classLoader = loader;
 			this.classLoader.close();//关闭资源文件引用
 		} finally {
 			state = State.loaded;
@@ -189,49 +128,152 @@ public abstract class AbstractScriptProvider<T extends IScript> extends Abstract
 	}
 
 	/**
+	 * 使用loader加载所有class
+	 * @return
+	 * @throws Exception
+	 */
+	private ScriptClassLoader loadClassByLoader() throws Exception 
+	{
+		ScriptClassLoader newClassLoader = new ScriptClassLoader();
+		Set<Class<?>> allClass = newClassLoader.findedClass;
+		Set<Class<?>> fileClass=new HashSet<>();
+		for(DirClassFile dcf:scriptSource.getDirClassFiles())
+		{
+			File file=new File(dcf.getRootDir().getFile());
+			if(!file.exists())
+			{
+				continue;
+			}
+			newClassLoader.addURL(dcf.getRootDir());
+			for(String className:dcf.getClassNames())
+			{
+				Class<?> clazz=newClassLoader.loadClass(className);
+				if(clazz!=null)
+				{
+					fileClass.add(clazz);
+				}
+			}
+		}
+		Set<Class<?>> urlClass=new HashSet<>();
+		for(URLClassFile ucf:scriptSource.getUrlClassFiles())
+		{
+			newClassLoader.addURL(ucf.getURL());
+			Class<?> clazz=newClassLoader.loadClass(ucf.getClassName());
+			if(clazz!=null)
+			{
+				urlClass.add(clazz);
+			}
+		}
+		Set<Class<?>> jarClass=new HashSet<>();
+		for(URL jar:scriptSource.getJars())
+		{
+			JarFile jarFile=null;
+			try {
+				File file=new File(jar.getFile());
+				if(!file.exists())
+				{
+					continue;
+				}
+				jarFile=new JarFile(jar.getFile());
+				Map<String, JarEntry>  map=FileUtil.findClassByJar(jarFile);
+				if(!map.isEmpty())
+				{
+					newClassLoader.addURL(jar);
+					for(String className:map.keySet())
+					{
+						Class<?> clazz=newClassLoader.loadClass(className);
+						if(clazz!=null)
+						{
+							jarClass.add(clazz);
+						}
+					}
+				}
+			} finally {
+				if(jarFile!=null)
+				{
+					jarFile.close();
+				}
+			}
+		}
+		allClass.addAll(fileClass);
+		allClass.addAll(urlClass);
+		allClass.addAll(jarClass);
+		_log.debug("classloader init complete,allClass:"+allClass.size()+",fileClass:" + fileClass.size() + ",urlClass:" + urlClass.size() + ",jarClass:" + jarClass.size());
+		return newClassLoader;
+	}
+
+	/**
 	 * 找出脚本类
-	 * 
 	 * @param clazzs
 	 * @return
 	 * @throws InstantiationException
 	 * @throws IllegalAccessException
 	 */
 	@SuppressWarnings("unchecked")
-	protected Set<Class<? extends T>> findScriptClass(Set<Class<?>> clazzs)
+	private Set<Class<? extends T>> findScriptClass(Set<Class<?>> clazzs)
 			throws InstantiationException, IllegalAccessException {
 		Set<Class<? extends T>> scriptClazzs = new HashSet<Class<? extends T>>();
 		for (Class<?> clazz : clazzs) {
-			if (IScript.class.isAssignableFrom(clazz)) {
-				Class<T> scriptClazz = (Class<T>) clazz;
+			Class<T> scriptClazz = null;
+			try {
+				scriptClazz=(Class<T>) clazz;
+			}catch (Throwable e) {
+			}
+			if(scriptClazz==null)
+			{
+				continue;
+			}
+			if(acceptClass(scriptClazz))
+			{
 				scriptClazzs.add(scriptClazz);
 			}
+			//如果A接口有B,C实现,B和C之间不能转换,如果T是B,则不能使用A.class.isAssignableFrom(clazz)判断
+//			if (IScript.class.isAssignableFrom(clazz)) {
+//				Class<T> scriptClazz = (Class<T>) clazz;
+//				scriptClazzs.add(scriptClazz);
+//			}
 		}
 		return scriptClazzs;
+	}
+	
+	/**
+	 * 是否接受此类
+	 * @param clazz
+	 * @return
+	 */
+	protected boolean acceptClass(Class<T> clazz)
+	{
+		return true;
 	}
 
 	/**
 	 * 查找可实例化的脚本
-	 * 
 	 * @param scriptClazzs
 	 * @return
 	 * @throws InstantiationException
 	 * @throws IllegalAccessException
 	 */
-	protected Map<Integer, Class<? extends T>> findScriptCodeMap(Set<Class<? extends T>> scriptClazzs)
+	private Map<Integer, Class<? extends T>> findInstanceAbleScript(Set<Class<? extends T>> scriptClazzs)
 			throws InstantiationException, IllegalAccessException {
 		Map<Integer, Class<? extends T>> codeMap = new ConcurrentHashMap<Integer, Class<? extends T>>();
-		for (Class<? extends T> scriptClazz : scriptClazzs) {
-			boolean isAbstractOrInterface = Modifier.isAbstract(scriptClazz.getModifiers())
-					|| Modifier.isInterface(scriptClazz.getModifiers());// 是否是抽象类
+		for (Class<? extends T> scriptClazz : scriptClazzs) 
+		{
+			boolean isAbstractOrInterface = Modifier.isAbstract(scriptClazz.getModifiers())|| Modifier.isInterface(scriptClazz.getModifiers());// 是否是抽象类
 			if (!isAbstractOrInterface) {// 可实例化脚本
-				IScript script = scriptClazz.newInstance();
+				T script = null;
+				try {
+					script=scriptClazz.newInstance();
+				} catch (Exception e) {
+					_log.error("can't newInstance ScriptClass:" + scriptClazz);
+					continue;
+				}
 				int code = script.getMessageCode();
 				if (codeMap.containsKey(script.getMessageCode())) {// 重复脚本code定义
-					_log.error("find Repeat CodeScriptClass,code="+code+",addingScript:" + script.getClass() + ",existScript:"
+					_log.error("find Repeat ScriptClass,code="+code+",addingScript:" + script.getClass() + ",existScript:"
 							+ codeMap.get(code));
 				} else {
 					codeMap.put(code, scriptClazz);
-					_log.info("regist CodeScriptClass:code="+code+",class=" + scriptClazz);
+					_log.info("regist ScriptClass:code="+code+",class=" + scriptClazz);
 				}
 			}
 		}
@@ -239,6 +281,7 @@ public abstract class AbstractScriptProvider<T extends IScript> extends Abstract
 	}
 
 	class ScriptClassLoader extends URLClassLoader {
+		Set<Class<?>> findedClass = new HashSet<Class<?>>();
 		protected Logger log = LoggerFactory.getLogger(getClass());
 
 		public ScriptClassLoader(URL[] urls) {
@@ -309,14 +352,6 @@ public abstract class AbstractScriptProvider<T extends IScript> extends Abstract
 		}
 	}
 
-	public boolean isAutoReload() {
-		return autoReload;
-	}
-
-	public void setAutoReload(boolean autoReload) {
-		this.autoReload = autoReload;
-	}
-
 	protected final Class<? extends T> getScriptClass(int code)
 	{
 		rwLock.readLock().lock();
@@ -370,11 +405,12 @@ public abstract class AbstractScriptProvider<T extends IScript> extends Abstract
 
 	public final void reload() {
 		if(disableReload)
-		{
+		{//脚本源已经删除
 			_log.error("disableReload="+disableReload);
+			return ;
 		}
 		try {
-			loadAllClass();
+			loadScirptClass();
 			onLoaded();
 		} catch (Throwable e) {
 			_log.error(e.getMessage(), e);
@@ -384,6 +420,14 @@ public abstract class AbstractScriptProvider<T extends IScript> extends Abstract
 	public final boolean hasCode(int code)
 	{
 		return getClass(code)!=null;
+	}
+	
+	public boolean isAutoReload() {
+		return autoReload;
+	}
+
+	public void setAutoReload(boolean autoReload) {
+		this.autoReload = autoReload;
 	}
 	
 	/**
