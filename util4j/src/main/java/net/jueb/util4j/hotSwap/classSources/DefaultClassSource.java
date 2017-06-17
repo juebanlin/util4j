@@ -112,7 +112,7 @@ public class DefaultClassSource implements ClassSource,FileAlterationListener{
 			List<ClassSourceInfo> infos=new ArrayList<>();
 			for(URI uri:classDirs)
 			{
-				if(validationDir(uri))
+				if(!validationDir(uri))
 				{
 					continue;
 				}
@@ -124,7 +124,7 @@ public class DefaultClassSource implements ClassSource,FileAlterationListener{
 			Map<URI,JarFile> allJarFiles=new HashMap<>();
 			for(URI uri:jarDirs)
 			{
-				if(validationDir(uri))
+				if(!validationDir(uri))
 				{
 					continue;
 				}
@@ -137,7 +137,7 @@ public class DefaultClassSource implements ClassSource,FileAlterationListener{
 			}
 			for(URI uri:jarFiles)
 			{
-				if(validationJar(uri))
+				if(!validationJar(uri))
 				{
 					continue;
 				}
@@ -203,7 +203,7 @@ public class DefaultClassSource implements ClassSource,FileAlterationListener{
 	
 	public void addClassDir(URI uri)
 	{
-		if(validationDir(uri))
+		if(!validationDir(uri))
 		{
 			log.error("unSupprot uri:"+uri.getPath());
 			return ;
@@ -230,7 +230,7 @@ public class DefaultClassSource implements ClassSource,FileAlterationListener{
 	
 	public void addJarDir(URI uri)
 	{
-		if(validationDir(uri))
+		if(!validationDir(uri))
 		{
 			log.error("unSupprot uri:"+uri);
 			return ;
@@ -257,7 +257,7 @@ public class DefaultClassSource implements ClassSource,FileAlterationListener{
 	
 	public void addJar(URI uri)
 	{
-		if(validationJar(uri))
+		if(!validationJar(uri))
 		{
 			log.error("unSupprot uri:"+uri);
 			return ;
