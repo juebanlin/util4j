@@ -1,16 +1,21 @@
 package net.jueb.util4j.hotSwap.classSources;
 
 import java.io.File;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
@@ -22,185 +27,318 @@ import org.slf4j.LoggerFactory;
 
 import net.jueb.util4j.file.FileUtil;
 
-public class DefaultClassSource implements ClassSource{
+public class DefaultClassSource implements ClassSource,FileAlterationListener{
 
 	protected final Logger log=LoggerFactory.getLogger(getClass());
-	private final Set<ScriptSourceEventListener> listeners=new HashSet<>();
-	private final String scriptDir;
 	public static final long DEFAULT_UPDATE_INTERVAL=TimeUnit.SECONDS.toMillis(10);
+	private final ReentrantReadWriteLock rwLock=new ReentrantReadWriteLock();
 	private final long updateInterval;
-	private ScanFilter scanFilter;
+	private final Set<URI> classDirs=new HashSet<>();
+	private final Set<URI> jarDirs=new HashSet<>();
+	private final Set<URI> jarFiles=new HashSet<>();
+	private final Set<ClassSourceListener> listeners=new HashSet<>();
+	private final List<ClassSourceInfo> classSources=new ArrayList<>();
+	private FileAlterationMonitor monitor;
 	
-	public DefaultClassSource(String scriptDir) throws Exception {
-		this(scriptDir, DEFAULT_UPDATE_INTERVAL, null);
-	}
-	public DefaultClassSource(String scriptDir,long updateInterval) throws Exception {
-		this(scriptDir, updateInterval, null);
-	}
-	
-	public DefaultClassSource(String scriptDir,long updateInterval,ScanFilter scanFilter) throws Exception {
-		Objects.requireNonNull(scriptDir);
-		File file=new File(scriptDir);
-		if(!file.exists() || !file.isDirectory())
-		{
-			throw new IllegalArgumentException("scriptDir not dir:"+scriptDir);
-		}
-		this.scriptDir=scriptDir;
+	public DefaultClassSource(long updateInterval) throws Exception {
 		if(updateInterval<=1000)
 		{
 			throw new IllegalArgumentException("updateInterval low 1000,updateInterval="+updateInterval);
 		}
 		this.updateInterval=updateInterval;
-		this.scanFilter=scanFilter;
 		init();
 	}
 	
-	protected void init() throws Exception
+	private void init() throws Exception
 	{
-		FileAlterationObserver observer=buildFileAlterationObserver(scriptDir);
-		observer.addListener(new FileListener());
-		FileAlterationMonitor monitor=new FileAlterationMonitor(updateInterval);
-		monitor.addObserver(observer);
+		scanClassSources();
+		monitor=new FileAlterationMonitor(updateInterval);
 		monitor.start();
-		scanResources();
 	}
 	
-	protected FileAlterationObserver buildFileAlterationObserver(String directory)
+	protected FileAlterationObserver buildObserverBySuffixs(String directory,String ...suffixs)
 	{
-	    //后缀过滤器
-	    IOFileFilter suffixFileFilter=FileFilterUtils.or(FileFilterUtils.suffixFileFilter(".class"),FileFilterUtils.suffixFileFilter(".jar"));
-	    //子目录变化
-	    IOFileFilter rootAndSubFilefilter=FileFilterUtils.or(FileFilterUtils.directoryFileFilter(),suffixFileFilter);
-	    return new FileAlterationObserver(directory,rootAndSubFilefilter);
+	    IOFileFilter iOFileFilter=FileFilterUtils.directoryFileFilter(); //子目录变化
+		for(String suffix:suffixs)
+		{//后缀过滤器
+			iOFileFilter=FileFilterUtils.or(iOFileFilter,FileFilterUtils.suffixFileFilter(suffix));
+		}
+		FileAlterationObserver observer=new FileAlterationObserver(directory,iOFileFilter);
+		observer.addListener(this);
+	    return observer;
 	}
 	
-	private class FileListener implements FileAlterationListener{
-		@Override
-		public void onDirectoryChange(File paramFile) {
+	protected FileAlterationObserver buildObserverByName(String directory,String ...fileName)
+	{
+	    IOFileFilter iOFileFilter=FileFilterUtils.directoryFileFilter(); //子目录变化
+		for(String name:fileName)
+		{//名字过滤器
+			iOFileFilter=FileFilterUtils.or(iOFileFilter,FileFilterUtils.nameFileFilter(name));
 		}
-		@Override
-		public void onDirectoryCreate(File paramFile) {
-		}
-		@Override
-		public void onDirectoryDelete(File paramFile) {
-			if(paramFile.getPath().equals(scriptDir))
-			{
-				throwEvent(ScriptSourceEvent.Delete);
-			}
-		}
-		@Override
-		public void onFileChange(File paramFile) {
-			scanResources();
-			throwEvent(ScriptSourceEvent.Change);
-		}
-		@Override
-		public void onFileCreate(File paramFile) {
-			scanResources();
-			throwEvent(ScriptSourceEvent.Change);
-		}
-		@Override
-		public void onFileDelete(File paramFile) {
-			scanResources();
-			throwEvent(ScriptSourceEvent.Change);
-		}
-		@Override
-		public void onStart(FileAlterationObserver paramFileAlterationObserver) {
-		}
-		@Override
-		public void onStop(FileAlterationObserver paramFileAlterationObserver) {
-		}
-	}
-	
-	@Override
-	public void addEventListener(ScriptSourceEventListener listener) {
-		Objects.requireNonNull(listener);
-		listeners.add(listener);
+		FileAlterationObserver observer=new FileAlterationObserver(directory,iOFileFilter);
+		observer.addListener(this);
+	    return observer;
 	}
 
-	@Override
-	public Set<ScriptSourceEventListener> getEventListeners() {
-		return listeners;
-	}
-
-	@Override
-	public void throwEvent(ScriptSourceEvent event) {
-		listeners.stream().forEach(a->a.onEvent(event));
-	}
-	
-	/**
-	 * 扫描可用资源到缓存
-	 */
-	protected void scanResources()
+	class ClassSourceInfoImpl implements ClassSourceInfo
 	{
-		try {
-			File scriptDirFile=new File(scriptDir);
-			if(scriptDirFile.exists() && scriptDirFile.isDirectory())
-			{
-				if(scanFilter==null || (scanFilter!=null && scanFilter.accpetJars()))
-				{
-					for(File file:FileUtil.findJarFileByDir(scriptDirFile))
-					{//扫描jar
-						cacheJars.add(file.toURI().toURL());
-					}
-				}
-				if(scanFilter==null || (scanFilter!=null && scanFilter.accpetDirClass()))
-				{
-					HashMap<String, File> map=FileUtil.findClassByDirAndSub(scriptDirFile);
-					if(!map.isEmpty())
-					{//扫描class文件
-						DefaultDirClassFile df=new DefaultDirClassFile(new ArrayList<>(map.keySet()),
-								scriptDirFile.toURI().toURL());
-						cacheDirClassFile.add(df);
-					}
-				}
-			}
-		} catch (Exception e) {
-			log.error(e.getMessage(),e);
-		}
-	}
-	
-	private class DefaultDirClassFile implements DirClassFile{
-		private final List<String> list;
-		private final URL url;
-		
-		public DefaultDirClassFile(List<String> list, URL url) {
+		private final  URL url;
+		List<String> classNames;
+		public ClassSourceInfoImpl(URL url, List<String> classNames) {
 			super();
-			this.list = list;
 			this.url = url;
+			this.classNames = classNames;
+		}
+
+		@Override
+		public URL getUrl() {
+			return url;
 		}
 
 		@Override
 		public List<String> getClassNames() {
-			return list;
-		}
-
-		@Override
-		public URL getRootDir() {
-			return url;
+			return classNames;
 		}
 	}
+	
+	/**
+	 * 扫描类资源到缓存
+	 */
+	public void scanClassSources()
+	{
+		rwLock.writeLock().lock();
+		boolean success=false;
+		try {
+			List<ClassSourceInfo> infos=new ArrayList<>();
+			for(URI uri:classDirs)
+			{
+				if(validationDir(uri))
+				{
+					continue;
+				}
+				File file=new File(uri);
+				HashMap<String, File> map=FileUtil.findClassByDirAndSub(file);
+				ClassSourceInfo info=new ClassSourceInfoImpl(uri.toURL(), new ArrayList<>(map.keySet()));
+				infos.add(info);
+			}
+			Map<URI,JarFile> allJarFiles=new HashMap<>();
+			for(URI uri:jarDirs)
+			{
+				if(validationDir(uri))
+				{
+					continue;
+				}
+				File file=new File(uri);
+				Set<File> jars=FileUtil.findJarFileByDirAndSub(file);
+				for(File f:jars)
+				{
+					allJarFiles.put(f.toURI(), new JarFile(f));
+				}
+			}
+			for(URI uri:jarFiles)
+			{
+				if(validationJar(uri))
+				{
+					continue;
+				}
+				File f=new File(uri);
+				allJarFiles.put(f.toURI(), new JarFile(f));
+			}
+			for(Entry<URI, JarFile> f:allJarFiles.entrySet())
+			{
+				URI uri=f.getKey();
+				JarFile jar=f.getValue();
+				try {
+					Map<String,JarEntry> map=FileUtil.findClassByJar(jar);
+					ClassSourceInfo info=new ClassSourceInfoImpl(uri.toURL(), new ArrayList<>(map.keySet()));
+					infos.add(info);
+				} finally {
+					jar.close();
+				}
+			}
+			classSources.clear();
+			classSources.addAll(infos);
+			success=true;
+		} catch (Exception e) {
+			log.error(e.getMessage(),e);
+		}finally {
+			rwLock.writeLock().unlock();
+		}
+		if(success)
+		{
+			onScaned();
+			for(ClassSourceListener l:listeners)
+			{
+				l.onSourcesFind();
+			}
+		}
+	}
+	
+	protected void onScaned()
+	{
+		
+	}
+	
+	protected boolean validationJar(URI uri)
+	{
+		boolean result=false;
+		try {
+			File file= new File(uri.toURL().getFile());
+			result=file.exists() && file.isFile() && file.getName().endsWith(".jar");
+		} catch (Exception e) {
+		}
+		return result;
+	}
+	
+	protected boolean validationDir(URI uri)
+	{
+		boolean result=false;
+		try {
+			File file=new File(uri.toURL().getFile());
+			result=file.exists() && file.isDirectory();
+		} catch (Exception e) {
+		}
+		return result;
+	}
+	
+	public void addClassDir(URI uri)
+	{
+		if(validationDir(uri))
+		{
+			log.error("unSupprot uri:"+uri.getPath());
+			return ;
+		}
+		rwLock.writeLock().lock();
+		try {
+			if(classDirs.contains(uri))
+			{
+				log.error("repeat add uri:"+uri);
+				return ;
+			}
+			File file=new File(uri.getPath());
+			String dir=file.getPath();
+			String suffix=".class";
+			FileAlterationObserver obs=buildObserverBySuffixs(dir,suffix);
+			monitor.addObserver(obs);
+			classDirs.add(uri);
+		}
+		finally {
+			rwLock.writeLock().unlock();
+		}
+		scanClassSources();
+	}
+	
+	public void addJarDir(URI uri)
+	{
+		if(validationDir(uri))
+		{
+			log.error("unSupprot uri:"+uri);
+			return ;
+		}
+		rwLock.writeLock().lock();
+		try {
+			if(jarDirs.contains(uri))
+			{
+				log.error("repeat add uri:"+uri);
+				return ;
+			}
+			File file=new File(uri.getPath());
+			String dir=file.getPath();
+			String suffix=".jar";
+			FileAlterationObserver obs=buildObserverBySuffixs(dir,suffix);
+			monitor.addObserver(obs);
+			jarDirs.add(uri);
+		}
+		finally {
+			rwLock.writeLock().unlock();
+		}
+		scanClassSources();
+	}
+	
+	public void addJar(URI uri)
+	{
+		if(validationJar(uri))
+		{
+			log.error("unSupprot uri:"+uri);
+			return ;
+		}
+		rwLock.writeLock().lock();
+		try {
+			if(jarFiles.contains(uri))
+			{
+				log.error("repeat add uri:"+uri);
+				return ;
+			}
+			File file=new File(uri.getPath());
+			String dir=file.getParentFile().getPath();
+			String name=file.getName();
+			FileAlterationObserver obs=buildObserverByName(dir,name);
+			monitor.addObserver(obs);
+			jarFiles.add(uri);
+		}
+		finally {
+			rwLock.writeLock().unlock();
+		}
+		scanClassSources();
+	}
 
-	private final List<URL> cacheJars=new CopyOnWriteArrayList<>();
-	private final List<URLClassFile> cacheURLClassFile=new CopyOnWriteArrayList<>();
-	private final List<DirClassFile> cacheDirClassFile=new CopyOnWriteArrayList<>();
+	@Override
+	public List<ClassSourceInfo> getClassSources() {
+		rwLock.readLock().lock();
+		try {
+			return Collections.unmodifiableList(classSources);
+		}finally {
+			rwLock.readLock().unlock();
+		}
+	}
+
+	@Override
+	public void addEventListener(ClassSourceListener listener) {
+		Objects.requireNonNull(listener);
+		rwLock.readLock().lock();
+		try {
+			listeners.add(listener);
+		}finally {
+			rwLock.readLock().unlock();
+		}
+	}
+
+	@Override
+	public void removeEventListener(ClassSourceListener listener) {
+		Objects.requireNonNull(listener);
+		rwLock.readLock().lock();
+		try {
+			listeners.remove(listener);
+		}finally {
+			rwLock.readLock().unlock();
+		}
+	}
 	
 	@Override
-	public List<URL> getJars() {
-		return Collections.unmodifiableList(cacheJars);
+	public void onDirectoryChange(File paramFile) {
 	}
-
 	@Override
-	public List<URLClassFile> getUrlClassFiles() {
-		return Collections.unmodifiableList(cacheURLClassFile);
+	public void onDirectoryCreate(File paramFile) {
 	}
-
 	@Override
-	public List<DirClassFile> getDirClassFiles() {
-		return Collections.unmodifiableList(cacheDirClassFile);
+	public void onDirectoryDelete(File paramFile) {
 	}
-	
-	public static interface ScanFilter{
-		public boolean accpetJars();
-		public boolean accpetDirClass();
+	@Override
+	public void onFileChange(File paramFile) {
+		scanClassSources();
+	}
+	@Override
+	public void onFileCreate(File paramFile) {
+		scanClassSources();
+	}
+	@Override
+	public void onFileDelete(File paramFile) {
+		scanClassSources();
+	}
+	@Override
+	public void onStart(FileAlterationObserver paramFileAlterationObserver) {
+	}
+	@Override
+	public void onStop(FileAlterationObserver paramFileAlterationObserver) {
 	}
 }

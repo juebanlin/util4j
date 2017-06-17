@@ -1,22 +1,16 @@
 package net.jueb.util4j.hotSwap.classProvider;
 
-import java.io.File;
-import java.net.URL;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.jueb.util4j.file.FileUtil;
 import net.jueb.util4j.hotSwap.classSources.ClassSource;
-import net.jueb.util4j.hotSwap.classSources.ClassSource.DirClassFile;
-import net.jueb.util4j.hotSwap.classSources.ClassSource.URLClassFile;
+import net.jueb.util4j.hotSwap.classSources.ClassSource.ClassSourceInfo;
 
 /**
  * 动态类生产
@@ -70,28 +64,21 @@ public class DynamicClassProvider {
 	
 	private void init() {
 		try {
-			classSource.addEventListener((event->{
-				switch (event) {
-				case Change:
-					disableReload=false;
-					if(isAutoReload())
-					{
-						reload();
-					}
-					break;
-				case Delete:
-					disableReload=true;
-					break;
-				default:
-					break;
-				}
-			}));
+			classSource.addEventListener(this::onClassSourceScaned);
 			loadClasses();
 		} catch (Exception e) {
 			_log.error(e.getMessage(), e);
 		}
 	}
 
+	protected void onClassSourceScaned()
+	{
+		if(isAutoReload())
+		{
+			reload();
+		}
+	}
+	
 	
 	@FunctionalInterface
 	public static interface EventListener{
@@ -141,69 +128,24 @@ public class DynamicClassProvider {
 	protected Set<Class<?>> loadClasses(ClassSource soruce,DynamicClassLoader newClassLoader) throws Exception 
 	{
 		Set<Class<?>> allClass = new HashSet<>();
-		Set<Class<?>> fileClass=new HashSet<>();
-		for(DirClassFile dcf:classSource.getDirClassFiles())
+		List<ClassSourceInfo> sources=soruce.getClassSources();
+		if(sources.isEmpty())
 		{
-			File file=new File(dcf.getRootDir().getFile());
-			if(!file.exists())
-			{
-				continue;
-			}
-			newClassLoader.addURL(dcf.getRootDir());
-			for(String className:dcf.getClassNames())
+			return allClass;
+		}
+		for(ClassSourceInfo cs:sources)
+		{
+			newClassLoader.addURL(cs.getUrl());
+			for(String className:cs.getClassNames())
 			{
 				Class<?> clazz=newClassLoader.loadClass(className);
 				if(clazz!=null)
 				{
-					fileClass.add(clazz);
+					allClass.add(clazz);
 				}
 			}
 		}
-		Set<Class<?>> urlClass=new HashSet<>();
-		for(URLClassFile ucf:classSource.getUrlClassFiles())
-		{
-			newClassLoader.addURL(ucf.getURL());
-			Class<?> clazz=newClassLoader.loadClass(ucf.getClassName());
-			if(clazz!=null)
-			{
-				urlClass.add(clazz);
-			}
-		}
-		Set<Class<?>> jarClass=new HashSet<>();
-		for(URL jar:classSource.getJars())
-		{
-			JarFile jarFile=null;
-			try {
-				File file=new File(jar.getFile());
-				if(!file.exists())
-				{
-					continue;
-				}
-				jarFile=new JarFile(jar.getFile());
-				Map<String, JarEntry>  map=FileUtil.findClassByJar(jarFile);
-				if(!map.isEmpty())
-				{
-					newClassLoader.addURL(jar);
-					for(String className:map.keySet())
-					{
-						Class<?> clazz=newClassLoader.loadClass(className);
-						if(clazz!=null)
-						{
-							jarClass.add(clazz);
-						}
-					}
-				}
-			} finally {
-				if(jarFile!=null)
-				{
-					jarFile.close();
-				}
-			}
-		}
-		allClass.addAll(fileClass);
-		allClass.addAll(urlClass);
-		allClass.addAll(jarClass);
-		_log.debug("classloader init complete,allClass:"+allClass.size()+",fileClass:" + fileClass.size() + ",urlClass:" + urlClass.size() + ",jarClass:" + jarClass.size());
+		_log.debug("classloader init complete,find Class:"+allClass.size());
 		return allClass;
 	}
 
