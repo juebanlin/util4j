@@ -1,4 +1,4 @@
-package net.jueb.util4j.hotSwap;
+package net.jueb.util4j.hotSwap.classProvider;
 
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -10,22 +10,22 @@ import org.slf4j.LoggerFactory;
  * 此类加载器可以加载jar,目录下的class文件,http以及ftp等class资源
  * @author juebanlin
  */
-public class CustomClassLoader extends URLClassLoader {
+public class DynamicClassLoader extends URLClassLoader {
 	protected Logger log = LoggerFactory.getLogger(getClass());
 
-	public CustomClassLoader() {
+	public DynamicClassLoader() {
 		this(new URL[] {}, Thread.currentThread().getContextClassLoader());
 	}
 
-	public CustomClassLoader(URL url) {
+	public DynamicClassLoader(URL url) {
 		this(new URL[] { url }, Thread.currentThread().getContextClassLoader());
 	}
 
-	public CustomClassLoader(ClassLoader parent) {
+	public DynamicClassLoader(ClassLoader parent) {
 		this(new URL[] {}, parent);
 	}
 
-	public CustomClassLoader(URL[] urls, ClassLoader parent) {
+	public DynamicClassLoader(URL[] urls, ClassLoader parent) {
 		super(urls, parent);
 	}
 

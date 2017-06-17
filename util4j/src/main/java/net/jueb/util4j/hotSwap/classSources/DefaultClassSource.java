@@ -1,4 +1,4 @@
-package net.jueb.util4j.hotSwap.classFactory;
+package net.jueb.util4j.hotSwap.classSources;
 
 import java.io.File;
 import java.net.URL;
@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import net.jueb.util4j.file.FileUtil;
 
-public class DefaultScriptSource implements ScriptSource{
+public class DefaultClassSource implements ClassSource{
 
 	protected final Logger log=LoggerFactory.getLogger(getClass());
 	private final Set<ScriptSourceEventListener> listeners=new HashSet<>();
@@ -31,14 +31,14 @@ public class DefaultScriptSource implements ScriptSource{
 	private final long updateInterval;
 	private ScanFilter scanFilter;
 	
-	public DefaultScriptSource(String scriptDir) throws Exception {
+	public DefaultClassSource(String scriptDir) throws Exception {
 		this(scriptDir, DEFAULT_UPDATE_INTERVAL, null);
 	}
-	public DefaultScriptSource(String scriptDir,long updateInterval) throws Exception {
+	public DefaultClassSource(String scriptDir,long updateInterval) throws Exception {
 		this(scriptDir, updateInterval, null);
 	}
 	
-	public DefaultScriptSource(String scriptDir,long updateInterval,ScanFilter scanFilter) throws Exception {
+	public DefaultClassSource(String scriptDir,long updateInterval,ScanFilter scanFilter) throws Exception {
 		Objects.requireNonNull(scriptDir);
 		File file=new File(scriptDir);
 		if(!file.exists() || !file.isDirectory())

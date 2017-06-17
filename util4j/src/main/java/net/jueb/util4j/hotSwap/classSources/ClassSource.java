@@ -1,4 +1,4 @@
-package net.jueb.util4j.hotSwap.classFactory;
+package net.jueb.util4j.hotSwap.classSources;
 
 import java.net.URL;
 import java.util.List;
@@ -8,7 +8,7 @@ import java.util.Set;
  *  脚本源
  * @author jaci
  */
-public interface ScriptSource {
+public interface ClassSource {
 
 	/**
 	 * 脚本源事件监听器

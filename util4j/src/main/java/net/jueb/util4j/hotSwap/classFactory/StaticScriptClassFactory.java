@@ -11,16 +11,16 @@ import org.slf4j.LoggerFactory;
  * 当不需要使用到热重载脚本需求时,可直接使用静态脚本注册
  * @author juebanlin
  */
-public abstract class AbstractStaticScriptFactory<T extends IScript> implements IScriptFactory<T>{
+public abstract class StaticScriptClassFactory<T extends IScript> implements IScriptFactory<T>{
 	
 	protected final Logger _log = LoggerFactory.getLogger(this.getClass());
 	protected final Map<Integer, Class<? extends T>> staticCodeMap = new ConcurrentHashMap<Integer, Class<? extends T>>(); 
 	
 	protected class StaticScriptRegister{
 		
-		protected final AbstractStaticScriptFactory<T> factory;
+		protected final StaticScriptClassFactory<T> factory;
 		
-		public StaticScriptRegister(AbstractStaticScriptFactory<T> factory) {
+		public StaticScriptRegister(StaticScriptClassFactory<T> factory) {
 			super();
 			this.factory = factory;
 		}
@@ -34,7 +34,7 @@ public abstract class AbstractStaticScriptFactory<T extends IScript> implements 
 		}
 	}
 	
-	protected AbstractStaticScriptFactory() {
+	protected StaticScriptClassFactory() {
 		init();
 	}
 	

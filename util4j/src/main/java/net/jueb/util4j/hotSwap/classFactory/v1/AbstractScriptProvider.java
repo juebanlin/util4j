@@ -1,4 +1,4 @@
-package net.jueb.util4j.hotSwap.classFactory;
+package net.jueb.util4j.hotSwap.classFactory.v1;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,8 +17,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.jueb.util4j.file.FileUtil;
-import net.jueb.util4j.hotSwap.classFactory.ScriptSource.DirClassFile;
-import net.jueb.util4j.hotSwap.classFactory.ScriptSource.URLClassFile;
+import net.jueb.util4j.hotSwap.classFactory.IScript;
+import net.jueb.util4j.hotSwap.classSources.ClassSource;
+import net.jueb.util4j.hotSwap.classSources.ClassSource.DirClassFile;
+import net.jueb.util4j.hotSwap.classSources.ClassSource.URLClassFile;
 
 /**
  * 动态加载jar内的脚本,支持包含匿名内部类 T不能做为父类加载 T尽量为接口类型,
@@ -32,7 +34,7 @@ public abstract class AbstractScriptProvider<T extends IScript> extends Abstract
 	/**
 	 * 脚本库目录
 	 */
-	protected final ScriptSource scriptSource;
+	protected final ClassSource scriptSource;
 	protected ScriptClassLoader classLoader;
 
 	/**
@@ -59,11 +61,11 @@ public abstract class AbstractScriptProvider<T extends IScript> extends Abstract
 	
 	protected volatile State state = State.ready;
 
-	protected AbstractScriptProvider(ScriptSource scriptSource) {
+	protected AbstractScriptProvider(ClassSource scriptSource) {
 		this(scriptSource, true);
 	}
 
-	protected AbstractScriptProvider(ScriptSource scriptSource, boolean autoReload) {
+	protected AbstractScriptProvider(ClassSource scriptSource, boolean autoReload) {
 		this.scriptSource = scriptSource;
 		this.autoReload = autoReload;
 		init();
