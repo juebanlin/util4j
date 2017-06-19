@@ -168,11 +168,6 @@ public class DynamicClassProvider {
 		return loader;
 	}
 
-	protected void onClassLoaded(Class<?> clazz)
-	{
-		
-	}
-
 	public final State getState() {
 		return state;
 	}
