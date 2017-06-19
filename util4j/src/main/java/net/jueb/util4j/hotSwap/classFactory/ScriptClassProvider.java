@@ -48,9 +48,10 @@ public abstract class ScriptClassProvider<T extends IScript> extends StaticScrip
 	/**
 	 * 加载完成
 	 */
-	protected void onLoaded(Set<Class<?>> classes)
+	protected void onLoaded()
 	{
 		try {
+			Set<Class<?>> classes=classProvider.getLoadedClasses();
 			Set<Class<? extends T>> scriptClass=findScriptClass(classes);
 			Map<Integer, Class<? extends T>> newCodeMap = findInstanceAbleScript(scriptClass);
 			this.codeMap.clear();

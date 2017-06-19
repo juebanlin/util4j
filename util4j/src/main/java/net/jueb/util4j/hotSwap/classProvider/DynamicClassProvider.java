@@ -31,7 +31,7 @@ public class DynamicClassProvider {
 	private final ReentrantReadWriteLock rwLock=new ReentrantReadWriteLock();
 	private final Set<EventListener> listeners=new HashSet<>();
 	
-	protected ClassLoader classLoader;
+	private ProviderClassLoader classLoader;
 	
 	public static enum State {
 		/**
@@ -85,7 +85,7 @@ public class DynamicClassProvider {
 		/**
 		 * 加载完成
 		 */
-		public void onLoaded(Set<Class<?>> classes);
+		public void onLoaded();
 	}
 	
 	/**
@@ -101,16 +101,16 @@ public class DynamicClassProvider {
 		rwLock.writeLock().lock();
 		try {
 			state = State.loading;
-			DynamicClassLoader newClassLoader = new DynamicClassLoader();
-			Set<Class<?>> classes=loadClasses(classSource,newClassLoader);
+			ProviderClassLoader newClassLoader = loadClasses(classSource);
+			Set<Class<?>> classes=newClassLoader.getAllClass();
 			newClassLoader.close();//关闭资源文件引用
-			classes=Collections.unmodifiableSet(classes);
+			newClassLoader.setAllClass(Collections.unmodifiableSet(classes));
 			this.classLoader = newClassLoader;
-			onLoaded(classes);
+			onLoaded();
 			for(EventListener listener:listeners)
 			{
 				try {
-					listener.onLoaded(classes);
+					listener.onLoaded();
 				} catch (Throwable e) {
 				}
 			}
@@ -120,25 +120,39 @@ public class DynamicClassProvider {
 		}
 	}
 	
+	private class ProviderClassLoader extends DynamicClassLoader
+	{
+		private Set<Class<?>> allClass= new HashSet<>();
+
+		public Set<Class<?>> getAllClass() {
+			return allClass;
+		}
+
+		public void setAllClass(Set<Class<?>> allClass) {
+			this.allClass = allClass;
+		}
+	}
+	
 	/**
 	 * 使用loader加载所有class
 	 * @return
 	 * @throws Exception
 	 */
-	protected Set<Class<?>> loadClasses(ClassSource soruce,DynamicClassLoader newClassLoader) throws Exception 
+	private ProviderClassLoader loadClasses(ClassSource soruce) throws Exception 
 	{
-		Set<Class<?>> allClass = new HashSet<>();
+		ProviderClassLoader loader=new ProviderClassLoader();
+		Set<Class<?>> allClass = loader.getAllClass();
 		List<ClassSourceInfo> sources=soruce.getClassSources();
 		if(sources.isEmpty())
 		{
-			return allClass;
+			return loader;
 		}
 		for(ClassSourceInfo cs:sources)
 		{
-			newClassLoader.addURL(cs.getUrl());
+			loader.addURL(cs.getUrl());
 			for(String className:cs.getClassNames())
 			{
-				Class<?> clazz=newClassLoader.loadClass(className);
+				Class<?> clazz=loader.loadClass(className);
 				if(clazz!=null)
 				{
 					allClass.add(clazz);
@@ -146,7 +160,7 @@ public class DynamicClassProvider {
 			}
 		}
 		_log.debug("classloader init complete,find Class:"+allClass.size());
-		return allClass;
+		return loader;
 	}
 
 	protected void onClassLoaded(Class<?> clazz)
@@ -163,6 +177,16 @@ public class DynamicClassProvider {
 		rwLock.readLock().lock();
 		try {
 			return classLoader;
+		} finally {
+			rwLock.readLock().unlock();
+		}
+	}
+	
+	public Set<Class<?>> getLoadedClasses()
+	{
+		rwLock.readLock().lock();
+		try {
+			return classLoader.getAllClass();
 		} finally {
 			rwLock.readLock().unlock();
 		}
@@ -209,7 +233,7 @@ public class DynamicClassProvider {
 		this.autoReload = autoReload;
 	}
 	
-	protected void onLoaded(Set<Class<?>> classes)
+	protected void onLoaded()
 	{
 		
 	}
