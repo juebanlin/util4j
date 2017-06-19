@@ -85,24 +85,13 @@ public abstract class ScriptClassProvider<T extends IScript> extends StaticScrip
 			throws InstantiationException, IllegalAccessException {
 		Set<Class<? extends T>> scriptClazzs = new HashSet<Class<? extends T>>();
 		for (Class<?> clazz : clazzs) {
-			Class<T> scriptClazz = null;
-			try {
-				scriptClazz=(Class<T>) clazz;
-			}catch (Throwable e) {
+			if (IScript.class.isAssignableFrom(clazz)) {
+				Class<T> scriptClazz = (Class<T>) clazz;
+				if(acceptClass(scriptClazz))
+				{
+					scriptClazzs.add(scriptClazz);
+				}
 			}
-			if(scriptClazz==null)
-			{
-				continue;
-			}
-			if(acceptClass(scriptClazz))
-			{
-				scriptClazzs.add(scriptClazz);
-			}
-			//如果A接口有B,C实现,B和C之间不能转换,如果T是B,则不能使用A.class.isAssignableFrom(clazz)判断
-//			if (IScript.class.isAssignableFrom(clazz)) {
-//				Class<T> scriptClazz = (Class<T>) clazz;
-//				scriptClazzs.add(scriptClazz);
-//			}
 		}
 		return scriptClazzs;
 	}
