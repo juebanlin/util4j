@@ -61,8 +61,7 @@ public class DynamicClassLoader extends URLClassLoader {
 				resolveClass(clazz);
 			}
 		}
-		log.debug("loadClass " + (clazz == null) + ":" + className + ",resolve=" + resolve + ",Clazz=" + clazz
-				+ ",ClassLoader=" + ClassLoader);
+		log.trace("loadClass " + (clazz == null) + ":" + className + ",resolve=" + resolve + ",Clazz=" + clazz+ ",ClassLoader=" + ClassLoader);
 		return clazz;
 	}
 

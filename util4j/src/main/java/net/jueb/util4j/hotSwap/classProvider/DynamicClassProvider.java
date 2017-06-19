@@ -64,8 +64,8 @@ public class DynamicClassProvider {
 	
 	private void init() {
 		try {
-			classSource.addEventListener(this::onClassSourceScaned);
-			loadClasses();
+			loadClasses();//主动加载一次
+			classSource.addEventListener(this::onClassSourceScaned);//添加被动加载监听器
 		} catch (Exception e) {
 			_log.error(e.getMessage(), e);
 		}
@@ -99,6 +99,7 @@ public class DynamicClassProvider {
 			return;
 		}
 		rwLock.writeLock().lock();
+		boolean success=false;
 		try {
 			state = State.loading;
 			ProviderClassLoader newClassLoader = loadClasses(classSource);
@@ -106,6 +107,13 @@ public class DynamicClassProvider {
 			newClassLoader.close();//关闭资源文件引用
 			newClassLoader.setAllClass(Collections.unmodifiableSet(classes));
 			this.classLoader = newClassLoader;
+			success=true;
+		} finally {
+			state = State.loaded;
+			rwLock.writeLock().unlock();
+		}
+		if(success)
+		{
 			onLoaded();
 			for(EventListener listener:listeners)
 			{
@@ -114,9 +122,6 @@ public class DynamicClassProvider {
 				} catch (Throwable e) {
 				}
 			}
-		} finally {
-			state = State.loaded;
-			rwLock.writeLock().unlock();
 		}
 	}
 	

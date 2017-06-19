@@ -56,28 +56,37 @@ public class DefaultClassSource implements ClassSource,FileAlterationListener{
 		monitor.start();
 	}
 	
-	protected FileAlterationObserver buildObserverBySuffixs(String directory,String ...suffixs)
+	protected IOFileFilter buildFilterBySuffixs(String directory,String ...suffixs)
 	{
 	    IOFileFilter iOFileFilter=FileFilterUtils.directoryFileFilter(); //子目录变化
 		for(String suffix:suffixs)
 		{//后缀过滤器
 			iOFileFilter=FileFilterUtils.or(iOFileFilter,FileFilterUtils.suffixFileFilter(suffix));
 		}
-		FileAlterationObserver observer=new FileAlterationObserver(directory,iOFileFilter);
-		observer.addListener(this);
-	    return observer;
+	    return iOFileFilter;
 	}
 	
-	protected FileAlterationObserver buildObserverByName(String directory,String ...fileName)
+	protected IOFileFilter buildFilterByNames(String directory,String ...fileName)
 	{
 	    IOFileFilter iOFileFilter=FileFilterUtils.directoryFileFilter(); //子目录变化
 		for(String name:fileName)
 		{//名字过滤器
 			iOFileFilter=FileFilterUtils.or(iOFileFilter,FileFilterUtils.nameFileFilter(name));
 		}
-		FileAlterationObserver observer=new FileAlterationObserver(directory,iOFileFilter);
+	    return iOFileFilter;
+	}
+	
+	/**
+	 * 监视目录
+	 * @param directory
+	 * @param filter
+	 */
+	protected void monitorDir(String directory,IOFileFilter filter)
+	{
+		FileAlterationObserver observer=new FileAlterationObserver(directory,filter);
+		observer.checkAndNotify();//检查一次用于刷新时间戳,否则后加入monitor会出现大量文件创建事件
 		observer.addListener(this);
-	    return observer;
+		monitor.addObserver(observer);
 	}
 
 	class ClassSourceInfoImpl implements ClassSourceInfo
@@ -169,7 +178,10 @@ public class DefaultClassSource implements ClassSource,FileAlterationListener{
 			onScaned();
 			for(ClassSourceListener l:listeners)
 			{
-				l.onSourcesFind();
+				try {
+					l.onSourcesFind();
+				} catch (Exception e) {
+				}
 			}
 		}
 	}
@@ -216,10 +228,9 @@ public class DefaultClassSource implements ClassSource,FileAlterationListener{
 				return ;
 			}
 			File file=new File(uri.getPath());
-			String dir=file.getPath();
+			String directory=file.getPath();
 			String suffix=".class";
-			FileAlterationObserver obs=buildObserverBySuffixs(dir,suffix);
-			monitor.addObserver(obs);
+			monitorDir(directory,buildFilterBySuffixs(directory, suffix));
 			classDirs.add(uri);
 		}
 		finally {
@@ -243,10 +254,9 @@ public class DefaultClassSource implements ClassSource,FileAlterationListener{
 				return ;
 			}
 			File file=new File(uri.getPath());
-			String dir=file.getPath();
+			String directory=file.getPath();
 			String suffix=".jar";
-			FileAlterationObserver obs=buildObserverBySuffixs(dir,suffix);
-			monitor.addObserver(obs);
+			monitorDir(directory,buildFilterBySuffixs(directory, suffix));
 			jarDirs.add(uri);
 		}
 		finally {
@@ -270,10 +280,9 @@ public class DefaultClassSource implements ClassSource,FileAlterationListener{
 				return ;
 			}
 			File file=new File(uri.getPath());
-			String dir=file.getParentFile().getPath();
+			String directory=file.getParentFile().getPath();
 			String name=file.getName();
-			FileAlterationObserver obs=buildObserverByName(dir,name);
-			monitor.addObserver(obs);
+			monitorDir(directory,buildFilterByNames(directory, name));
 			jarFiles.add(uri);
 		}
 		finally {
@@ -325,14 +334,17 @@ public class DefaultClassSource implements ClassSource,FileAlterationListener{
 	}
 	@Override
 	public void onFileChange(File paramFile) {
+		log.debug("onFileChange-->scanClassSources,fileName:"+paramFile.getName());
 		scanClassSources();
 	}
 	@Override
 	public void onFileCreate(File paramFile) {
+		log.debug("onFileCreate-->scanClassSources,fileName:"+paramFile.getName());
 		scanClassSources();
 	}
 	@Override
 	public void onFileDelete(File paramFile) {
+		log.debug("onFileDelete-->scanClassSources,fileName:"+paramFile.getName());
 		scanClassSources();
 	}
 	@Override

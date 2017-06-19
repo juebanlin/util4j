@@ -15,7 +15,6 @@ public abstract class StaticScriptClassFactory<T extends IScript> implements ISc
 	
 	protected final Logger _log = LoggerFactory.getLogger(this.getClass());
 	protected final Map<Integer, Class<? extends T>> staticCodeMap = new ConcurrentHashMap<Integer, Class<? extends T>>(); 
-	
 	protected class StaticScriptRegister{
 		
 		protected final StaticScriptClassFactory<T> factory;
@@ -34,7 +33,8 @@ public abstract class StaticScriptClassFactory<T extends IScript> implements ISc
 		}
 	}
 	
-	protected StaticScriptClassFactory() {
+	public StaticScriptClassFactory() {
+		super();
 		init();
 	}
 	

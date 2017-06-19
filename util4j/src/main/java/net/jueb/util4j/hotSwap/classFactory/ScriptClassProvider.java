@@ -35,14 +35,15 @@ public abstract class ScriptClassProvider<T extends IScript> extends StaticScrip
 	protected ScriptClassProvider(ClassSource classSource,boolean autoReload) {
 		this(new DynamicClassProvider(classSource,autoReload));
 	}
-	
+
 	protected ScriptClassProvider(DynamicClassProvider classProvider) {
 		this.classProvider=classProvider;
 		init();
 	}
 	
 	private void init() {
-		classProvider.addListener(this::onLoaded);
+		reload();//主动加载
+		classProvider.addListener(this::onLoaded);//被动加载监听器
 	}
 
 	/**
@@ -51,17 +52,27 @@ public abstract class ScriptClassProvider<T extends IScript> extends StaticScrip
 	protected void onLoaded()
 	{
 		try {
-			Set<Class<?>> classes=classProvider.getLoadedClasses();
-			Set<Class<? extends T>> scriptClass=findScriptClass(classes);
-			Map<Integer, Class<? extends T>> newCodeMap = findInstanceAbleScript(scriptClass);
-			this.codeMap.clear();
-			this.codeMap.putAll(newCodeMap);
+			loadClasses();
 		} catch (Exception e) {
 			_log.error(e.getMessage(),e);
 		}
 	}
 
 
+	protected final void loadClasses()throws Exception
+	{
+		rwLock.writeLock().lock();
+		try {
+			Set<Class<?>> classes=classProvider.getLoadedClasses();
+			Set<Class<? extends T>> scriptClass=findScriptClass(classes);
+			Map<Integer, Class<? extends T>> newCodeMap = findInstanceAbleScript(scriptClass);
+			this.codeMap.clear();
+			this.codeMap.putAll(newCodeMap);
+		} finally {
+			rwLock.writeLock().unlock();
+		}
+	}
+	
 	/**
 	 * 找出脚本类
 	 * @param clazzs
@@ -193,7 +204,7 @@ public abstract class ScriptClassProvider<T extends IScript> extends StaticScrip
 
 	public final void reload() {
 		try {
-			classProvider.reload();
+			loadClasses();
 		} catch (Throwable e) {
 			_log.error(e.getMessage(), e);
 		}
