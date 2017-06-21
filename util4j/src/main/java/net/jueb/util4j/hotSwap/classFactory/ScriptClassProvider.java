@@ -85,6 +85,7 @@ public abstract class ScriptClassProvider<T extends IScript> extends StaticScrip
 		Map<Integer, Class<? extends T>> newCodeMap = findInstanceAbleScript(scriptClass);
 		this.codeMap.clear();
 		this.codeMap.putAll(newCodeMap);
+		_log.info("loadScriptClass complete,find Class:"+newCodeMap.size());
 	}
 	
 	/**
