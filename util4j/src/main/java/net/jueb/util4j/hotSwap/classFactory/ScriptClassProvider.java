@@ -29,7 +29,7 @@ public abstract class ScriptClassProvider<T extends IScript> extends StaticScrip
 	 */
 	protected volatile boolean autoReload;
 	
-	protected final Map<Integer, Class<? extends T>> codeMap = new ConcurrentHashMap<Integer, Class<? extends T>>();
+	private final Map<Integer, Class<? extends T>> codeMap = new ConcurrentHashMap<Integer, Class<? extends T>>();
 	private final ReentrantReadWriteLock rwLock=new ReentrantReadWriteLock();
 
 	protected ScriptClassProvider(ClassSource classSource,boolean autoReload) {
@@ -43,34 +43,48 @@ public abstract class ScriptClassProvider<T extends IScript> extends StaticScrip
 	
 	private void init() {
 		reload();//主动加载
-		classProvider.addListener(this::onLoaded);//被动加载监听器
+		classProvider.addListener(this::classProviderListener);//被动加载监听器
 	}
 
 	/**
 	 * 加载完成
 	 */
-	protected void onLoaded()
+	private void classProviderListener()
 	{
 		try {
-			loadClasses();
+			load();
 		} catch (Exception e) {
 			_log.error(e.getMessage(),e);
 		}
 	}
-
-
-	protected final void loadClasses()throws Exception
+	
+	/**
+	 * 加载
+	 * @throws Exception
+	 */
+	protected final void load()throws Exception
 	{
 		rwLock.writeLock().lock();
 		try {
 			Set<Class<?>> classes=classProvider.getLoadedClasses();
-			Set<Class<? extends T>> scriptClass=findScriptClass(classes);
-			Map<Integer, Class<? extends T>> newCodeMap = findInstanceAbleScript(scriptClass);
-			this.codeMap.clear();
-			this.codeMap.putAll(newCodeMap);
+			initScriptClasses(classes);
+			onScriptLoaded(classes);
 		} finally {
 			rwLock.writeLock().unlock();
 		}
+	}
+	
+	/**
+	 * 脚本类的加载不交给父类控制
+	 * @param classes
+	 * @throws Exception
+	 */
+	private void initScriptClasses(Set<Class<?>> classes)throws Exception
+	{
+		Set<Class<? extends T>> scriptClass=findScriptClass(classes);
+		Map<Integer, Class<? extends T>> newCodeMap = findInstanceAbleScript(scriptClass);
+		this.codeMap.clear();
+		this.codeMap.putAll(newCodeMap);
 	}
 	
 	/**
@@ -87,25 +101,30 @@ public abstract class ScriptClassProvider<T extends IScript> extends StaticScrip
 		for (Class<?> clazz : clazzs) {
 			if (IScript.class.isAssignableFrom(clazz)) {
 				Class<T> scriptClazz = (Class<T>) clazz;
-				if(acceptClass(scriptClazz))
-				{
-					scriptClazzs.add(scriptClazz);
-				}
+				scriptClazzs.add(scriptClazz);
 			}
 		}
 		return scriptClazzs;
 	}
 	
-	/**
-	 * 是否接受此类
-	 * @param clazz
-	 * @return
-	 */
-	protected boolean acceptClass(Class<T> clazz)
+	protected final boolean isAbstractOrInterface(Class<?> clazz)
 	{
-		return true;
+		return Modifier.isAbstract(clazz.getModifiers())|| Modifier.isInterface(clazz.getModifiers());// 是否是抽象类
 	}
-
+	
+	protected final <C> C getInstacne(Class<C> clazz)
+	{
+		C instacne=null;
+		if (!isAbstractOrInterface(clazz)) {// 可实例化脚本
+			try {
+				instacne=clazz.newInstance();
+			} catch (Exception e) {
+				_log.error("can't newInstance Class:" + clazz);
+			}
+		}
+		return instacne;
+	}
+	
 	/**
 	 * 查找可实例化的脚本
 	 * @param scriptClazzs
@@ -118,28 +137,45 @@ public abstract class ScriptClassProvider<T extends IScript> extends StaticScrip
 		Map<Integer, Class<? extends T>> codeMap = new ConcurrentHashMap<Integer, Class<? extends T>>();
 		for (Class<? extends T> scriptClazz : scriptClazzs) 
 		{
-			boolean isAbstractOrInterface = Modifier.isAbstract(scriptClazz.getModifiers())|| Modifier.isInterface(scriptClazz.getModifiers());// 是否是抽象类
-			if (!isAbstractOrInterface) {// 可实例化脚本
-				T script = null;
-				try {
-					script=scriptClazz.newInstance();
-				} catch (Exception e) {
-					_log.error("can't newInstance ScriptClass:" + scriptClazz);
-					continue;
-				}
-				int code = script.getMessageCode();
-				if (codeMap.containsKey(script.getMessageCode())) {// 重复脚本code定义
-					_log.error("find Repeat ScriptClass,code="+code+",addingScript:" + script.getClass() + ",existScript:"
-							+ codeMap.get(code));
-				} else {
-					codeMap.put(code, scriptClazz);
-					_log.info("regist ScriptClass:code="+code+",class=" + scriptClazz);
-				}
+			T script = getInstacne(scriptClazz);
+			if(script==null)
+			{
+				continue;
+			}
+			int code = script.getMessageCode();
+			if (codeMap.containsKey(script.getMessageCode())) {// 重复脚本code定义
+				_log.error("find Repeat ScriptClass,code="+code+",addingScript:" + script.getClass() + ",existScript:"
+						+ codeMap.get(code));
+			} else {
+				codeMap.put(code, scriptClazz);
+				_log.info("regist ScriptClass:code="+code+",class=" + scriptClazz);
 			}
 		}
 		return codeMap;
 	}
-
+	
+	/**
+	 * 当脚本加载完成后调用此方法,子类可继续过滤查找其它类
+	 * @param classes 
+	 */
+	protected void onScriptLoaded(Set<Class<?>> loadedClasses)throws Exception
+	{
+		
+	}
+	public final State getState() {
+		return classProvider.getState();
+	}
+	
+	public final Set<Integer> getRegistCode()
+	{
+		rwLock.readLock().lock();
+		try {
+			return new HashSet<>(codeMap.keySet());
+		} finally {
+			rwLock.readLock().unlock();
+		}
+	}
+	
 	protected final Class<? extends T> getScriptClass(int code)
 	{
 		rwLock.readLock().lock();
@@ -150,9 +186,6 @@ public abstract class ScriptClassProvider<T extends IScript> extends StaticScrip
 		}
 	}
 
-	public final State getState() {
-		return classProvider.getState();
-	}
 
 	private Class<? extends T> getClass(int code)
 	{
@@ -193,7 +226,7 @@ public abstract class ScriptClassProvider<T extends IScript> extends StaticScrip
 
 	public final void reload() {
 		try {
-			loadClasses();
+			load();
 		} catch (Throwable e) {
 			_log.error(e.getMessage(), e);
 		}
