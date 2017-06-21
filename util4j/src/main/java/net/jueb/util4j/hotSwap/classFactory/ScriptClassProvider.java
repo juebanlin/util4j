@@ -107,6 +107,40 @@ public abstract class ScriptClassProvider<T extends IScript> extends StaticScrip
 		return scriptClazzs;
 	}
 	
+	/**
+	 * 查找可实例化的脚本
+	 * @param scriptClazzs
+	 * @return
+	 * @throws InstantiationException
+	 * @throws IllegalAccessException
+	 */
+	private Map<Integer, Class<? extends T>> findInstanceAbleScript(Set<Class<? extends T>> scriptClazzs)
+			throws InstantiationException, IllegalAccessException {
+		Map<Integer, Class<? extends T>> codeMap = new ConcurrentHashMap<Integer, Class<? extends T>>();
+		for (Class<? extends T> scriptClazz : scriptClazzs) 
+		{
+			T script = getInstacne(scriptClazz);
+			if(script==null)
+			{
+				continue;
+			}
+			if(skipRegistScript(script))
+			{
+				_log.warn("skil regist script,code="+script.getMessageCode()+",class=" + script.getClass());
+				continue;
+			}
+			int code = script.getMessageCode();
+			if (codeMap.containsKey(script.getMessageCode())) {// 重复脚本code定义
+				_log.error("find Repeat ScriptClass,code="+code+",addingScript:" + script.getClass() + ",existScript:"
+						+ codeMap.get(code));
+			} else {
+				codeMap.put(code, scriptClazz);
+				_log.info("regist ScriptClass:code="+code+",class=" + scriptClazz);
+			}
+		}
+		return codeMap;
+	}
+
 	protected final boolean isAbstractOrInterface(Class<?> clazz)
 	{
 		return Modifier.isAbstract(clazz.getModifiers())|| Modifier.isInterface(clazz.getModifiers());// 是否是抽象类
@@ -126,34 +160,15 @@ public abstract class ScriptClassProvider<T extends IScript> extends StaticScrip
 	}
 	
 	/**
-	 * 查找可实例化的脚本
-	 * @param scriptClazzs
+	 * 是否跳过此脚本类的注册
+	 * @param script
 	 * @return
-	 * @throws InstantiationException
-	 * @throws IllegalAccessException
 	 */
-	private Map<Integer, Class<? extends T>> findInstanceAbleScript(Set<Class<? extends T>> scriptClazzs)
-			throws InstantiationException, IllegalAccessException {
-		Map<Integer, Class<? extends T>> codeMap = new ConcurrentHashMap<Integer, Class<? extends T>>();
-		for (Class<? extends T> scriptClazz : scriptClazzs) 
-		{
-			T script = getInstacne(scriptClazz);
-			if(script==null)
-			{
-				continue;
-			}
-			int code = script.getMessageCode();
-			if (codeMap.containsKey(script.getMessageCode())) {// 重复脚本code定义
-				_log.error("find Repeat ScriptClass,code="+code+",addingScript:" + script.getClass() + ",existScript:"
-						+ codeMap.get(code));
-			} else {
-				codeMap.put(code, scriptClazz);
-				_log.info("regist ScriptClass:code="+code+",class=" + scriptClazz);
-			}
-		}
-		return codeMap;
+	protected boolean skipRegistScript(T script)
+	{
+		return false;
 	}
-	
+
 	/**
 	 * 当脚本加载完成后调用此方法,子类可继续过滤查找其它类
 	 * @param classes 
