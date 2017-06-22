@@ -11,7 +11,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.jar.JarEntry;
@@ -26,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.jueb.util4j.file.FileUtil;
+import net.jueb.util4j.thread.NamedThreadFactory;
 
 public class DefaultClassSource implements ClassSource,FileAlterationListener{
 
@@ -39,6 +44,8 @@ public class DefaultClassSource implements ClassSource,FileAlterationListener{
 	private final Set<ClassSourceListener> listeners=new HashSet<>();
 	private final List<ClassSourceInfo> classSources=new ArrayList<>();
 	private FileAlterationMonitor monitor;
+	private static ScheduledExecutorService executor=Executors.newScheduledThreadPool(2, new NamedThreadFactory("ClassSourceExecutor", true));
+	private final Queue<String> changes=new ConcurrentLinkedQueue<>();
 	
 	public DefaultClassSource(long updateInterval) throws Exception {
 		if(updateInterval<=1000)
@@ -54,6 +61,43 @@ public class DefaultClassSource implements ClassSource,FileAlterationListener{
 		scanClassSources();
 		monitor=new FileAlterationMonitor(updateInterval);
 		monitor.start();
+		executor.scheduleAtFixedRate(this::checkChanged,0, updateInterval, TimeUnit.MILLISECONDS);
+	}
+	
+	private void checkChanged()
+	{
+		try {
+			String changeLogs=null;
+			if(changes.isEmpty())
+			{
+				return ;
+			}
+			for(;;)
+			{
+				String log=changes.poll();
+				if(log==null)
+				{
+					break;
+				}
+				if(changeLogs==null)
+				{
+					changeLogs="";
+				}
+				changeLogs+=changes.poll()+"\n";
+			}
+			if(changeLogs!=null)
+			{
+				log.debug("startScanClassSources from events:\n"+changeLogs);
+				scanClassSources();
+			}
+		} catch (Throwable e) {
+			log.error(e.getMessage(),e);
+		}
+	}
+	
+	private void changeLog(String logStr)
+	{
+		changes.add(logStr);
 	}
 	
 	protected IOFileFilter buildFilterBySuffixs(String directory,String ...suffixs)
@@ -334,18 +378,15 @@ public class DefaultClassSource implements ClassSource,FileAlterationListener{
 	}
 	@Override
 	public void onFileChange(File paramFile) {
-		log.debug("onFileChange-->scanClassSources,fileName:"+paramFile.getName());
-		scanClassSources();
+		changeLog("onFileChange-->"+paramFile.getName());
 	}
 	@Override
 	public void onFileCreate(File paramFile) {
-		log.debug("onFileCreate-->scanClassSources,fileName:"+paramFile.getName());
-		scanClassSources();
+		changeLog("onFileCreate-->"+paramFile.getName());
 	}
 	@Override
 	public void onFileDelete(File paramFile) {
-		log.debug("onFileDelete-->scanClassSources,fileName:"+paramFile.getName());
-		scanClassSources();
+		changeLog("onFileDelete-->"+paramFile.getName());
 	}
 	@Override
 	public void onStart(FileAlterationObserver paramFileAlterationObserver) {
