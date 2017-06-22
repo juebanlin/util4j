@@ -83,7 +83,7 @@ public class DefaultClassSource implements ClassSource,FileAlterationListener{
 				{
 					changeLogs="";
 				}
-				changeLogs+=changes.poll()+"\n";
+				changeLogs+=log+"\n";
 			}
 			if(changeLogs!=null)
 			{
