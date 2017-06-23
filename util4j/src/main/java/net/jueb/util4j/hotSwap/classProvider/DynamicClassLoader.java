@@ -2,12 +2,17 @@ package net.jueb.util4j.hotSwap.classProvider;
 
 import java.net.URL;
 import java.net.URLClassLoader;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * 自定义类加载器,默认使用当前线程的类加载器作为父加载器
  * 此类加载器可以加载jar,目录下的class文件,http以及ftp等class资源
+ * 注意:
+ * 1.加载的class如果被引用则不能回收classloader
+ * 2.加载的class如果创建了线程,则线程的AccessControllerContext的ProtectionDomain会持有此class的classLoader,
+ * 导致classLoader不能回收,(比如加载的class创建了mysql连接池)
  * @author juebanlin
  */
 public class DynamicClassLoader extends URLClassLoader {
