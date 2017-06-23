@@ -1,6 +1,5 @@
 package net.jueb.util4j.hotSwap.classProvider;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -31,7 +30,7 @@ public class DynamicClassProvider {
 	private final ReentrantReadWriteLock rwLock=new ReentrantReadWriteLock();
 	private final Set<EventListener> listeners=new HashSet<>();
 	
-	private ProviderClassLoader classLoader=new ProviderClassLoader();
+	private ProviderClassLoader classLoader;
 	
 	public static enum State {
 		/**
@@ -105,8 +104,8 @@ public class DynamicClassProvider {
 			ProviderClassLoader newClassLoader = loadClasses(classSource);
 			Set<Class<?>> classes=newClassLoader.getAllClass();
 			newClassLoader.close();//关闭资源文件引用
-			newClassLoader.setAllClass(Collections.unmodifiableSet(classes));
-			this.classLoader.getAllClass().clear();
+			newClassLoader.setAllClass(classes);
+			this.classLoader.setAllClass(null);
 			this.classLoader = newClassLoader;
 			success=true;
 		} finally {
@@ -187,7 +186,7 @@ public class DynamicClassProvider {
 	{
 		rwLock.readLock().lock();
 		try {
-			return classLoader.getAllClass();
+			return new HashSet<>(classLoader.getAllClass());
 		} finally {
 			rwLock.readLock().unlock();
 		}
