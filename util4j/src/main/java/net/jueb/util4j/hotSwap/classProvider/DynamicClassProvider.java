@@ -30,7 +30,7 @@ public class DynamicClassProvider {
 	private final ReentrantReadWriteLock rwLock=new ReentrantReadWriteLock();
 	private final Set<EventListener> listeners=new HashSet<>();
 	
-	private ProviderClassLoader classLoader;
+	private ProviderClassLoader classLoader=new ProviderClassLoader();
 	
 	public static enum State {
 		/**
