@@ -31,7 +31,7 @@ public class DynamicClassProvider {
 	private final ReentrantReadWriteLock rwLock=new ReentrantReadWriteLock();
 	private final Set<EventListener> listeners=new HashSet<>();
 	
-	private ProviderClassLoader classLoader;
+	private ProviderClassLoader classLoader=new ProviderClassLoader();
 	
 	public static enum State {
 		/**
@@ -106,6 +106,7 @@ public class DynamicClassProvider {
 			Set<Class<?>> classes=newClassLoader.getAllClass();
 			newClassLoader.close();//关闭资源文件引用
 			newClassLoader.setAllClass(Collections.unmodifiableSet(classes));
+			this.classLoader.getAllClass().clear();
 			this.classLoader = newClassLoader;
 			success=true;
 		} finally {
