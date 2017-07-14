@@ -227,7 +227,7 @@ public class TestQueueGroup {
 	public void testMultiProducerTest2() throws InterruptedException {
 		short queueCount=50;
 		int inputCount = 10000 * 100;//任务数量
-		int minThread = 1;
+		int minThread = 4;
 		int maxThread = 8;
 		int producerThread=4;
 		List<Runnable> tasks = new ArrayList<>();

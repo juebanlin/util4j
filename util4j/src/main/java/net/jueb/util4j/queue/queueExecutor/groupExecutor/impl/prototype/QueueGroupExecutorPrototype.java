@@ -16,9 +16,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.jueb.util4j.lock.waitCondition.SleepingWaitConditionStrategy;
-import net.jueb.util4j.lock.waitCondition.WaitCondition;
-import net.jueb.util4j.lock.waitCondition.WaitConditionStrategy;
+import net.jueb.util4j.lock.waiteStrategy.SleepingWaitConditionStrategy;
+import net.jueb.util4j.lock.waiteStrategy.WaitCondition;
+import net.jueb.util4j.lock.waiteStrategy.WaitConditionStrategy;
 import net.jueb.util4j.queue.queueExecutor.RunnableQueue;
 import net.jueb.util4j.queue.queueExecutor.executor.QueueExecutor;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupExecutorBase;
@@ -486,21 +486,18 @@ public final class QueueGroupExecutorPrototype implements QueueGroupExecutorBase
         	}
         	
         	@Override
-			public Runnable result() {
+			public Runnable getAttach() {
 				return task;
 			}
 
 			@Override
 			public boolean isComplete() {//验证条件是否通过
-				return task!=null || System.nanoTime()>=endTime;
-			}
-
-			@Override
-			public void doComplete() {//输出条件结果
-				if(task==null)
+				if(task!=null || System.nanoTime()>=endTime)
 				{
-		        	task= findTask();
+					return true;
 				}
+				task= findTask();
+				return task!=null;
 			}
         }
     }

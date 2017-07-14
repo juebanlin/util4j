@@ -14,9 +14,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.jueb.util4j.lock.waitCondition.SleepingWaitConditionStrategy;
-import net.jueb.util4j.lock.waitCondition.WaitCondition;
-import net.jueb.util4j.lock.waitCondition.WaitConditionStrategy;
+import net.jueb.util4j.lock.waiteStrategy.SleepingWaitConditionStrategy;
+import net.jueb.util4j.lock.waiteStrategy.WaitCondition;
+import net.jueb.util4j.lock.waiteStrategy.WaitConditionStrategy;
 import net.jueb.util4j.queue.queueExecutor.executor.QueueExecutor;
 import net.jueb.util4j.queue.queueExecutor.executor.impl.RunnableQueueExecutorEventWrapper;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.IndexQueueGroupManager;
@@ -389,8 +389,13 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
             try {
                 for (;;) 
                 {
-                	//徘徊获取一个任务
-                	Runnable task = loopFetchTask();
+                	Runnable task=null;
+                	//等待任务
+                	try {
+                		workerWaitCondition.init();
+                		task=waitConditionStrategy.waitFor(workerWaitCondition, getKeepAliveTime(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
+					} catch (InterruptedException e) {
+					}
                 	if(task==null)
                 	{//如果没有任务
                 		long freeTime=System.currentTimeMillis()-lastRunTaskTime;//空闲时间
@@ -401,7 +406,6 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
                                 if (workers.size() > getCorePoolSize()) 
                                 {
                                     workers.remove(this);
-                                    log.debug("核心线程数超标,空闲线程退出");
                                     break;//退出线程
                                 }
                             }
@@ -438,66 +442,8 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 		 */
 		private Runnable findTask()
 		{
-        	//执行系统任务
-        	return systemQueue.poll();
+        	return systemQueue.poll();//执行系统任务
 		}
-		
-        /**
-         * 循环获取任务
-         * @return
-         */
-        private Runnable loopFetchTask()
-        {
-        	Runnable task = null;
-            long currentTime = System.currentTimeMillis();
-            long maxFreeTime=getKeepAliveTime(TimeUnit.MILLISECONDS);//最大徘徊时间
-            long deadline = currentTime +maxFreeTime; //退出获取的时间点
-            for (;;) {
-                try {
-                    long waitTime = deadline - currentTime;
-                    if (waitTime <= 0) 
-                    {
-                        break;
-                    }
-                    try {
-                    	long t=System.currentTimeMillis();
-                    	task = waitingTask(waitTime, TimeUnit.MILLISECONDS);//取出待执行的队列,阻塞waitTime
-                    	t=System.currentTimeMillis()-t;
-                    	if(task==null)
-                    	{
-                    		log.trace("空闲等待时间结束,实际等待时间"+t+"/"+waitTime+",task="+task);
-                    	}
-                        if(task!=null)
-                        { //TODO 如果waitingTask方法没有达到最长等待时间,却返回了null,则循环继续;waitTime会计算实际超时时间并退出循环
-                        	break;
-                        }
-                    } 
-                    finally {
-                        if (task == null) {
-                            currentTime = System.currentTimeMillis();
-                        }
-                    }
-                } catch (Exception e) {
-                	log.error(e.getMessage(),e);
-                    // Ignore.
-                    continue;
-                }
-            }
-            return task;
-        }
-        
-        /**
-         * 等待获取一个任务
-         * @param waiteTime
-         * @param unit
-         * @return
-         * @throws InterruptedException
-         */
-        private Runnable waitingTask(long waiteTime,TimeUnit unit) throws InterruptedException
-        {
-        	workerWaitCondition.init(waiteTime, unit);
-        	return waitConditionStrategy.waitFor(workerWaitCondition,waiteTime,unit);
-        }
         
         WorkerWaitCondition workerWaitCondition=new WorkerWaitCondition();
         /**
@@ -507,30 +453,24 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
         private class WorkerWaitCondition implements WaitCondition<Runnable>
         {
         	private volatile Runnable task;
-        	private volatile long  endTime;
         	
-        	public void init(long waiteTime,TimeUnit unit)
+        	public void init()
         	{
         		task=null;
-        		endTime=System.nanoTime()+unit.toNanos(waiteTime);
         	}
         	
         	@Override
-			public Runnable result() {
+			public Runnable getAttach() {
 				return task;
 			}
 
 			@Override
 			public boolean isComplete() {
-				return task!=null ||System.nanoTime()>=endTime;
-			}
-
-			@Override
-			public void doComplete() {
 				if(task==null)
 				{
 		        	task= findTask();
 				}
+				return task!=null;
 			}
         }
     }

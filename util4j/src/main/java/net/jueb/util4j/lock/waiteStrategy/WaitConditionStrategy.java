@@ -1,4 +1,4 @@
-package net.jueb.util4j.lock.waitCondition;
+package net.jueb.util4j.lock.waiteStrategy;
 
 import java.util.concurrent.TimeUnit;
 
@@ -24,7 +24,7 @@ public interface WaitConditionStrategy
     <T> T waitFor(WaitCondition<T> waitCondition,long timeOut,TimeUnit unit) throws InterruptedException;
     
     /**
-     * 阻塞释放信号
+     * 释放解除阻塞信号
      */
     void signalAllWhenBlocking();
 }

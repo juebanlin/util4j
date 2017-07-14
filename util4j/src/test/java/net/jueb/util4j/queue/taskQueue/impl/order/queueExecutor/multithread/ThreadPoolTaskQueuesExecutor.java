@@ -18,9 +18,9 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.lang.NullArgumentException;
 
-import net.jueb.util4j.lock.waitCondition.SleepingWaitConditionStrategy;
-import net.jueb.util4j.lock.waitCondition.WaitCondition;
-import net.jueb.util4j.lock.waitCondition.WaitConditionStrategy;
+import net.jueb.util4j.lock.waiteStrategy.SleepingWaitConditionStrategy;
+import net.jueb.util4j.lock.waiteStrategy.WaitCondition;
+import net.jueb.util4j.lock.waiteStrategy.WaitConditionStrategy;
 import net.jueb.util4j.queue.taskQueue.Task;
 import net.jueb.util4j.queue.taskQueue.TaskConvert;
 import net.jueb.util4j.queue.taskQueue.TaskQueue;
@@ -504,21 +504,17 @@ public class ThreadPoolTaskQueuesExecutor extends AbstractThreadPoolTaskQueuesEx
         	}
         	
         	@Override
-			public String result() {
+			public String getAttach() {
 				return queueName;
 			}
 
 			@Override
 			public boolean isComplete() {
-				return queueName!=null ||System.nanoTime()>=endTime;
-			}
-
-			@Override
-			public void doComplete() {
 				if(queueName==null)
 				{
 					queueName=waitingQueuePoll();
 				}
+				return queueName!=null ||System.nanoTime()>=endTime;
 			}
         }
        
