@@ -290,6 +290,9 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 	    }
 	}
 
+	/**
+	 * 使用WorkerExitTask结束任务,防止之前的任务因停止而丢失
+	 */
 	public void shutdown() {
 	    if (shutdown) 
 	    {
@@ -302,6 +305,7 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 	        {
 	        	systemExecute(exitTask);
 	        }
+	        waitConditionStrategy.signalAllWhenBlocking();
 	    }
 	}
 
