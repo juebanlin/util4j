@@ -36,11 +36,17 @@ public class TestQueueGroup3 {
 		KeyQueueGroupManager kqm=new DefaultKeyQueueManager(qf);
 		DefaultQueueGroupExecutor.Builder b=new DefaultQueueGroupExecutor.Builder();
 		b.setAssistExecutor(Executors.newSingleThreadExecutor());
-		return b.setMaxPoolSize(max).setCorePoolSize(min).setBossQueue(bossQueue).setIndexQueueGroupManager(iqm).setKeyQueueGroupManagerr(kqm).build();
+		DefaultQueueGroupExecutor e= b.setMaxPoolSize(max).setCorePoolSize(min).setBossQueue(bossQueue).setIndexQueueGroupManager(iqm).setKeyQueueGroupManagerr(kqm).build();
+		for(int i=0;i<max;i++)
+		{
+			e.wakeUpWorkerIfNecessary();
+		}
+		return e;
 	}
 	
 	public static void main(String[] args) {
 		QueueGroupExecutor qe=buildByMpMc(4, 4, 10000);
+		
 		qe.execute((short)0,new Runnable() {
 			@Override
 			public void run() {

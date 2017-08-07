@@ -701,9 +701,9 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
         	return this;
         }
         
-        public QueueGroupExecutor build()
+        public DefaultQueueGroupExecutor build()
 		{
-			QueueGroupExecutor qe=new DefaultQueueGroupExecutor(corePoolSize, 
+        	DefaultQueueGroupExecutor qe=new DefaultQueueGroupExecutor(corePoolSize, 
 					maximumPoolSize, 
 					keepAliveTime, 
 					unit, 
