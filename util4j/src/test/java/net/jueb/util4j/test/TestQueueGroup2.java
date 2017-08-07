@@ -2,6 +2,7 @@ package net.jueb.util4j.test;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Executors;
 
 import org.jctools.queues.MpscLinkedQueue;
 import org.jctools.queues.atomic.MpmcAtomicArrayQueue;
@@ -35,6 +36,7 @@ public class TestQueueGroup2 {
 		IndexQueueGroupManager iqm=new DefaultIndexQueueManager(qf);
 		KeyQueueGroupManager kqm=new DefaultKeyQueueManager(qf);
 		DefaultQueueGroupExecutor.Builder b=new DefaultQueueGroupExecutor.Builder();
+		b.setAssistExecutor(Executors.newSingleThreadExecutor());
 		return b.setMaxPoolSize(max).setCorePoolSize(min).setBossQueue(bossQueue).setIndexQueueGroupManager(iqm).setKeyQueueGroupManagerr(kqm).build();
 	}
 	
@@ -54,6 +56,7 @@ public class TestQueueGroup2 {
 		IndexQueueGroupManager iqm=new DefaultIndexQueueManager(qf,false);
 		KeyQueueGroupManager kqm=new DefaultKeyQueueManager(qf);
 		DefaultQueueGroupExecutor.Builder b=new DefaultQueueGroupExecutor.Builder();
+		b.setAssistExecutor(Executors.newSingleThreadExecutor());
 		return b.setMaxPoolSize(max).setCorePoolSize(min).setBossQueue(bossQueue).setIndexQueueGroupManager(iqm).setKeyQueueGroupManagerr(kqm).build();
 	}
 }

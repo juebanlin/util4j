@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -80,7 +81,7 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
     private final Set<Worker> workers = new HashSet<Worker>();
 
     /**
-     * 活动线程数量
+     * 待命线程数量
      */
     private final AtomicInteger idleWorkers = new AtomicInteger();
 
@@ -89,6 +90,12 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
     private final WaitConditionStrategy waitConditionStrategy;
     private final IndexQueueGroupManager iqm;
     private final KeyQueueGroupManager kqm;
+    
+    /**
+     * 辅助执行器
+     * 用于启动工作线程或者其它逻辑处理
+     */
+    private final Executor assistExecutor;
     
     public DefaultQueueGroupExecutor() {
         this(DEFAULT_INITIAL_THREAD_POOL_SIZE, DEFAULT_MAX_THREAD_POOL);
@@ -101,21 +108,21 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
     protected DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize,Queue<Runnable> bossQueue) {
             this(corePoolSize, maximumPoolSize, DEFAULT_KEEP_ALIVE_SEC, TimeUnit.SECONDS, 
             		Executors.defaultThreadFactory(),DEFAULT_waitConditionStrategy,
-            		bossQueue,DEFAULT_IndexQueueGroupManager,DEFAULT_KeyQueueGroupManager);
+            		bossQueue,DEFAULT_IndexQueueGroupManager,DEFAULT_KeyQueueGroupManager,null);
         }
     
     protected DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize,
         	Queue<Runnable> bossQueue,IndexQueueGroupManager indexQM,KeyQueueGroupManager keyQM) {
             this(corePoolSize, maximumPoolSize, DEFAULT_KEEP_ALIVE_SEC, TimeUnit.SECONDS, 
             		Executors.defaultThreadFactory(),DEFAULT_waitConditionStrategy,
-            		bossQueue,indexQM,keyQM);
+            		bossQueue,indexQM,keyQM,null);
         }
     
     protected DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize,
     	Queue<Runnable> bossQueue,IndexQueueGroupManager indexQM,KeyQueueGroupManager keyQM,WaitConditionStrategy waitConditionStrategy) {
         this(corePoolSize, maximumPoolSize, DEFAULT_KEEP_ALIVE_SEC, TimeUnit.SECONDS, 
         		Executors.defaultThreadFactory(),waitConditionStrategy,
-        		bossQueue,indexQM,keyQM);
+        		bossQueue,indexQM,keyQM,null);
     }
     
     /**
@@ -129,11 +136,12 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
      * @param bossQueue 主队列
      * @param iqm 索引队列管理器
      * @param kqm 键值队列管理器
+     * @param assistExecutor 辅助执行器,用于启动工作线程或处理其它逻辑
      */
     public DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize, 
     		long keepAliveTime, TimeUnit unit,ThreadFactory threadFactory,
             WaitConditionStrategy waitConditionStrategy,Queue<Runnable> bossQueue,
-            IndexQueueGroupManager iqm,KeyQueueGroupManager kqm) {
+            IndexQueueGroupManager iqm,KeyQueueGroupManager kqm,Executor assistExecutor) {
 		if (corePoolSize < 0 
 				||maximumPoolSize <= 0 
 				||maximumPoolSize < corePoolSize 
@@ -151,6 +159,7 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 		this.keepAliveNanoTime = unit.toNanos(keepAliveTime);
 		this.threadFactory=threadFactory;
         this.waitConditionStrategy=waitConditionStrategy;
+        this.assistExecutor=assistExecutor;
         this.iqm=iqm;
         this.iqm.setGroupEventListener(new IndexGroupEventListener() {
 			@Override
@@ -182,8 +191,12 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 		}
 		this.threadFactory = threadFactory;
 	}
-    
-    public long getKeepAliveTime(TimeUnit unit) {
+	
+	public Executor getAssistExecutor() {
+		return assistExecutor;
+	}
+
+	public long getKeepAliveTime(TimeUnit unit) {
     	return unit.convert(keepAliveNanoTime,TimeUnit.NANOSECONDS);
 	}
 
@@ -332,6 +345,34 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 	    }
 	}
 
+	/**
+	 * 唤醒工作线程(如果还没超过最大工作线程)
+	 */
+	public void wakeUpWorkerIfNecessary(){
+		if(assistExecutor==null)
+		{
+			doWakeUpWorker();
+			return ;
+		}
+		assistExecutor.execute(this::doWakeUpWorker);
+	}
+	
+	/**
+     * 如果活动的线程数量=0则添加线程
+     */
+    private void doWakeUpWorker() {
+        if (idleWorkers.get() == 0) {
+            synchronized (workers) {
+            	if (workers.size() >= getMaximumPoolSize()) {
+                    return;
+                }
+                if (workers.isEmpty() || (idleWorkers.get() == 0)) {
+                	addWorkerUnsafe();
+                }
+            }
+        }
+    }
+	
 	private void addWorkerUnsafe() {
          Worker worker = new Worker();
          Thread thread = getThreadFactory().newThread(worker);
@@ -341,22 +382,6 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
          if (workers.size() > getLargestPoolSize()) {
              setLargestPoolSize(workers.size());
          }
-    }
-
-    /**
-     * 如果活动的线程数量=0则添加线程
-     */
-    private void addWorkerIfNecessary() {
-        if (idleWorkers.get() == 0) {
-            synchronized (workers) {
-            	if (workers.size() >= getMaximumPoolSize()) {
-                    return;
-                }
-                if (workers.isEmpty() || (idleWorkers.get() == 0)) {
-                    addWorkerUnsafe();
-                }
-            }
-        }
     }
 
     private void removeWorker() {
@@ -418,7 +443,7 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
                 	}
                 	idleWorkers.decrementAndGet();//活动线程-1
 					try {
-						addWorkerIfNecessary();//预备一个线程,如果有新任务则可立马执行
+						wakeUpWorkerIfNecessary();//预备一个线程,如果有新任务则可立马执行
 						lastRunTaskTime=System.currentTimeMillis();
 						task.run();
 					} finally {
@@ -519,7 +544,7 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
      */
     protected void systemTaskOfferAfter(SystemQueue queue)
     {
-	    addWorkerIfNecessary();
+    	wakeUpWorkerIfNecessary();
 	    //如果有线程阻塞等待,则释放阻塞去处理任务
 	    waitConditionStrategy.signalAllWhenBlocking();
     }
@@ -619,6 +644,7 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
         Queue<Runnable> bossQueue=DEFAULT_BossQueue;
         IndexQueueGroupManager iqm=DEFAULT_IndexQueueGroupManager;
         KeyQueueGroupManager kqm=DEFAULT_KeyQueueGroupManager;
+        Executor assistExecutor;
 		
         public Builder setCorePoolSize(int corePoolSize)
         {
@@ -629,6 +655,12 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
         public Builder setMaxPoolSize(int maximumPoolSize)
         {
         	this.maximumPoolSize=maximumPoolSize;
+        	return this;
+        }
+        
+        public Builder setAssistExecutor(Executor assistExecutor)
+        {
+        	this.assistExecutor=assistExecutor;
         	return this;
         }
         
@@ -679,7 +711,7 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 					waitConditionStrategy, 
 					bossQueue, 
 					iqm, 
-					kqm);
+					kqm,assistExecutor);
 			return qe;
 		}
 	}
