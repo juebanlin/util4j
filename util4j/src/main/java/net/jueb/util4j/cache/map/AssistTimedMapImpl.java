@@ -39,24 +39,24 @@ public class AssistTimedMapImpl<K,V> implements AssistTimedMap<K, V>{
 	 * 迭代的时候也更新ttl
 	 */
 	public AssistTimedMapImpl(){
-		this(Executors.newFixedThreadPool(2,new NamedThreadFactory("TimedMapLisenterExecutor", true)),true);
+		this(Executors.newFixedThreadPool(2,new NamedThreadFactory("TimedMapCleanExecutor", true)),true);
 	}
 	
 	/**
 	 * @param iteratorUpdate 是否在迭代的时候也更新ttl
 	 */
 	public AssistTimedMapImpl(boolean iteratorUpdate){
-		this(Executors.newFixedThreadPool(2,new NamedThreadFactory("TimedMapLisenterExecutor", true)), iteratorUpdate);
+		this(Executors.newFixedThreadPool(2,new NamedThreadFactory("TimedMapCleanExecutor", true)), iteratorUpdate);
 	}
 	
 	/**
 	 * 建议线程池固定大小,否则移除事件过多会消耗很多线程资源
-	 * @param lisenterExecutor 指定处理超时监听的executor
+	 * @param cleanExecutor 指定处理超时监听的executor
 	 * @param iteratorUpdate 是否在迭代的时候也更新ttl
 	 */
-	public AssistTimedMapImpl(Executor lisenterExecutor,boolean iteratorUpdate){
-		Objects.requireNonNull(lisenterExecutor);
-		this.lisenterExecutor=lisenterExecutor;
+	public AssistTimedMapImpl(Executor cleanExecutor,boolean iteratorUpdate){
+		Objects.requireNonNull(cleanExecutor);
+		this.lisenterExecutor=cleanExecutor;
 		this.iteratorUpdate=iteratorUpdate;
 	}
 	
