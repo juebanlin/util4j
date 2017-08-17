@@ -9,8 +9,8 @@ import org.slf4j.LoggerFactory;
 
 import net.jueb.util4j.cache.callBack.CallBack;
 import net.jueb.util4j.cache.map.TimedMap;
-import net.jueb.util4j.cache.map.TimedMap.EventListener;
 import net.jueb.util4j.cache.map.TimedMapImpl;
+import net.jueb.util4j.cache.map.TimedMap.EventListener;
 
 public abstract class AbstractCallBackCache<KEY,TYPE> {
 	protected Logger _log = LoggerFactory.getLogger(this.getClass());

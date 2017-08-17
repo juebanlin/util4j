@@ -27,25 +27,25 @@ import net.jueb.util4j.thread.NamedThreadFactory;
  * @param <K> 
  * @param <V>
  */
-public class TimedMapImpl<K,V> implements TimedMap<K, V>{
+public class AssistTimedMapImpl<K,V> implements AssistTimedMap<K, V>{
 	protected Logger log=LoggerFactory.getLogger(getClass());
 	private final Executor lisenterExecutor;
 	private final ReentrantReadWriteLock rwLock=new ReentrantReadWriteLock();
-	private final Map<K,TimedEntry<K,V>> entryMap=new HashMap<>();
+	private final Map<K,AssistTimedEntry<K,V>> entryMap=new HashMap<>();
 	private volatile boolean iteratorUpdate;//对map集合进行迭代时,是否刷新时间
 	
 	/**
 	 * 默认最大2个线程处理监听器
 	 * 迭代的时候也更新ttl
 	 */
-	public TimedMapImpl(){
+	public AssistTimedMapImpl(){
 		this(Executors.newFixedThreadPool(2,new NamedThreadFactory("TimedMapLisenterExecutor", true)),true);
 	}
 	
 	/**
 	 * @param iteratorUpdate 是否在迭代的时候也更新ttl
 	 */
-	public TimedMapImpl(boolean iteratorUpdate){
+	public AssistTimedMapImpl(boolean iteratorUpdate){
 		this(Executors.newFixedThreadPool(2,new NamedThreadFactory("TimedMapLisenterExecutor", true)), iteratorUpdate);
 	}
 	
@@ -54,15 +54,21 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 	 * @param lisenterExecutor 指定处理超时监听的executor
 	 * @param iteratorUpdate 是否在迭代的时候也更新ttl
 	 */
-	public TimedMapImpl(Executor lisenterExecutor,boolean iteratorUpdate){
+	public AssistTimedMapImpl(Executor lisenterExecutor,boolean iteratorUpdate){
 		Objects.requireNonNull(lisenterExecutor);
 		this.lisenterExecutor=lisenterExecutor;
 		this.iteratorUpdate=iteratorUpdate;
 	}
 	
 	@SuppressWarnings("hiding")
-	class TimedEntry<K,V> implements Entry<K, V>{
-	
+	class AssistTimedEntry<K,V> implements Entry<K, V>{
+		/**
+		 *缓存对象
+		 */
+		private final K key;
+		
+		private V value;
+		
 		/**
 		 * 创建时间
 		 */
@@ -73,36 +79,16 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		 */
 		private long lastActiveTime;
 		
-		/**
-		 * 最大不活动间隔时间,毫秒
-		 * <=0则表示永不过期
-		 */
-		private long ttl;
-		
-		/**
-		 *缓存对象
-		 */
-		private final K key;
-		
-		private V value;
-		/**
-		 * 监听器
-		 */
-		private EventListener<K,V> listener; 
+		private TimeOutAssister<K,V> tAssister; 
+		private RemoveAssister<K,V> rAssister; 
 	
-		TimedEntry(K key, V value) {
+		AssistTimedEntry(K key, V value,TimeOutAssister<K,V> tAssister,RemoveAssister<K,V> rAssister) {
 			super();
 			this.key = key;
 			this.value = value;
 			this.lastActiveTime=createTime;
-		}
-		
-		TimedEntry(K key, V value,long ttl) {
-			super();
-			this.key = key;
-			this.value = value;
-			this.ttl=ttl;
-			this.lastActiveTime=createTime;
+			this.tAssister=tAssister;
+			this.rAssister=rAssister;
 		}
 	
 		public long getLastActiveTime() {
@@ -111,14 +97,6 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 	
 		public void setLastActiveTime(long lastActiveTime) {
 			this.lastActiveTime = lastActiveTime;
-		}
-		
-		public long getTtl() {
-			return ttl;
-		}
-
-		public void setTtl(long ttl) {
-			this.ttl = ttl;
 		}
 
 		public long getCreateTime() {
@@ -137,25 +115,10 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 			this.value = value;
 			return value;
 		}
-
+		
 		public boolean isTimeOut()
 		{
-			long now=System.currentTimeMillis();
-			if(getTtl()>0)
-			{
-				return now>getLastActiveTime()+getTtl();
-			}else
-			{//永不过期
-				return false;
-			}
-		}
-
-		public EventListener<K, V> getListener() {
-			return listener;
-		}
-
-		public void setListener(EventListener<K, V> listener) {
-			this.listener = listener;
+			return tAssister!=null && tAssister.isTimeOut(key, value,createTime,lastActiveTime);
 		}
 		
 		private boolean eqOrBothNull(Object a, Object b)
@@ -173,7 +136,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		    {
 			if (o instanceof Map.Entry)
 			    {
-				TimedEntry<K,V> other = (TimedEntry<K,V>)o;
+				AssistTimedEntry<K,V> other = (AssistTimedEntry<K,V>)o;
 				return
 				    eqOrBothNull( this.getKey(), other.getKey() ) &&
 				    eqOrBothNull( this.getValue(), other.getValue() );
@@ -191,8 +154,9 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 
 		@Override
 		public String toString() {
-			return "TimedEntry [createTime=" + createTime + ", lastActiveTime=" + lastActiveTime + ", ttl=" + ttl
-					+ ", key=" + key + ", value=" + value + ", listener=" + listener + "]";
+			return "TimedEntry [createTime=" + createTime + ", lastActiveTime=" + lastActiveTime
+					+ ", key=" + key + ", value=" + value + ", tAssister=" + tAssister + ", rAssister=" + rAssister
+					+ "]";
 		}
 	}
 
@@ -228,7 +192,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		Map<K,V> map=new HashMap<>();
 		Set<K> removeKeys=new HashSet<K>();
 		try {
-			for(java.util.Map.Entry<K, TimedMapImpl<K, V>.TimedEntry<K, V>> entry:entryMap.entrySet())
+			for(java.util.Map.Entry<K, AssistTimedMapImpl<K, V>.AssistTimedEntry<K, V>> entry:entryMap.entrySet())
 			{
 				if(entry.getValue().isTimeOut())
 				{
@@ -246,7 +210,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 			try {
 				for(Object key:removeKeys)
 				{
-					TimedEntry<K, V> entry=removeAndListener(key,true);
+					AssistTimedEntry<K, V> entry=removeAndListener(key,true);
 					if(entry!=null)
 					{
 						map.put(entry.key, entry.value);
@@ -268,14 +232,13 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 	 * @param expire 是否超时才执行的移除
 	 * @return
 	 */
-	protected TimedEntry<K, V> removeAndListener(Object key,final boolean expire)
+	protected AssistTimedEntry<K, V> removeAndListener(Object key,final boolean expire)
 	{
-		final TimedEntry<K, V> entry=entryMap.remove(key);
+		final AssistTimedEntry<K, V> entry=entryMap.remove(key);
 		try {
 			if(entry!=null)
 			{//通知被移除
-				final EventListener<K, V> listener=entry.listener;
-				entry.setListener(null);
+				final RemoveAssister<K, V> listener=entry.rAssister;
 				if(listener!=null)
 				{
 					lisenterExecutor.execute(new Runnable() {
@@ -363,12 +326,11 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 	}
 	
 	@Override
-	public V put(K key, V value, long ttl,EventListener<K, V> listener) {
+	public V put(K key, V value,TimeOutAssister<K, V> tAssister,RemoveAssister<K, V> rAssister) {
 		if (key == null || value == null) throw new NullPointerException();
 		rwLock.writeLock().lock();
 		try {
-			TimedEntry<K,V> entry=new TimedEntry<K,V>(key, value,ttl);
-			entry.setListener(listener);
+			AssistTimedEntry<K,V> entry=new AssistTimedEntry<K,V>(key, value,tAssister,rAssister);
 			entryMap.put(key,entry);
 		} catch (Exception e) {
 			log.error(e.getMessage(),e);
@@ -384,10 +346,12 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		V result=null;
 		boolean remove=false;
 		try {
-			TimedEntry<K, V> e=entryMap.get(key);
+			AssistTimedEntry<K, V> e=entryMap.get(key);
 			if(e!=null)
 			{
 				e.setLastActiveTime(System.currentTimeMillis());
+				
+				
 				if(e.isTimeOut())
 				{
 					remove=true;
@@ -423,7 +387,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 	@Override
 	public V remove(Object key) {
 		rwLock.writeLock().lock();
-		TimedEntry<K,V> value=null;
+		AssistTimedEntry<K,V> value=null;
 		try {
 			value=removeAndListener(key,false);
 		} catch (Exception e) {
@@ -447,13 +411,13 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 		try {
 			for(java.util.Map.Entry<? extends K, ? extends V> e:m.entrySet())
 			{
-				TimedEntry<K,V> addEntry;
-				if(e instanceof TimedEntry)
+				AssistTimedEntry<K,V> addEntry;
+				if(e instanceof AssistTimedEntry)
 				{
-					addEntry=(TimedEntry<K, V>) e;
+					addEntry=(AssistTimedEntry<K, V>) e;
 				}else
 				{
-					addEntry=new TimedEntry<K,V>(e.getKey(), e.getValue());
+					addEntry=new AssistTimedEntry<K,V>(e.getKey(), e.getValue(),null,null);
 				}
 				entryMap.put(e.getKey(), addEntry);
 			}
@@ -477,17 +441,17 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 	}
 
 	class EntryIterator implements Iterator<Entry<K,V>>{
-		Iterator<java.util.Map.Entry<K, TimedMapImpl<K, V>.TimedEntry<K, V>>> it=entryMap.entrySet().iterator();
+		Iterator<java.util.Map.Entry<K, AssistTimedMapImpl<K, V>.AssistTimedEntry<K, V>>> it=entryMap.entrySet().iterator();
 		@Override
 		public boolean hasNext() {
 			return it.hasNext();
 		}
 		@Override
 		public Entry<K,V> next() {
-			Entry<K, TimedMapImpl<K, V>.TimedEntry<K, V>> value=it.next();
+			Entry<K, AssistTimedMapImpl<K, V>.AssistTimedEntry<K, V>> value=it.next();
 			if(value!=null)
 			{
-				TimedEntry<K, V> entry=value.getValue();
+				AssistTimedEntry<K, V> entry=value.getValue();
 				if(entry!=null)
 				{
 					if(iteratorUpdate)
@@ -561,19 +525,19 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 
 		@Override
 		public int size() {
-			return TimedMapImpl.this.size();
+			return AssistTimedMapImpl.this.size();
 		}
 		
 		public boolean isEmpty() {
-            return TimedMapImpl.this.isEmpty();
+            return AssistTimedMapImpl.this.isEmpty();
         }
 
         public void clear() {
-        	TimedMapImpl.this.clear();
+        	AssistTimedMapImpl.this.clear();
         }
 
         public boolean contains(Object k) {
-            return TimedMapImpl.this.containsKey(k);
+            return AssistTimedMapImpl.this.containsKey(k);
         }
 	}
 	
@@ -586,19 +550,19 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 
 		@Override
 		public int size() {
-			return TimedMapImpl.this.size();
+			return AssistTimedMapImpl.this.size();
 		}
 		
 		public boolean isEmpty() {
-            return TimedMapImpl.this.isEmpty();
+            return AssistTimedMapImpl.this.isEmpty();
         }
 
         public void clear() {
-        	TimedMapImpl.this.clear();
+        	AssistTimedMapImpl.this.clear();
         }
 
         public boolean contains(Object k) {
-            return TimedMapImpl.this.containsKey(k);
+            return AssistTimedMapImpl.this.containsKey(k);
         }
 	}
 	
@@ -611,14 +575,14 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 	
 		@Override
 		public int size() {
-			return TimedMapImpl.this.size();
+			return AssistTimedMapImpl.this.size();
 		}
 		public boolean isEmpty() {
-            return TimedMapImpl.this.isEmpty();
+            return AssistTimedMapImpl.this.isEmpty();
         }
 
         public void clear() {
-        	TimedMapImpl.this.clear();
+        	AssistTimedMapImpl.this.clear();
         }
 		
 		public final boolean contains(Object o) {
@@ -626,13 +590,13 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
                 return false;
             Map.Entry<?,?> e = (Map.Entry<?,?>) o;
             Object key = e.getKey();
-            return TimedMapImpl.this.containsKey(key);
+            return AssistTimedMapImpl.this.containsKey(key);
         }
         public final boolean remove(Object o) {
             if (o instanceof Map.Entry) {
                 Map.Entry<?,?> e = (Map.Entry<?,?>) o;
                 Object key = e.getKey();
-                return  TimedMapImpl.this.remove(key)!= null;
+                return  AssistTimedMapImpl.this.remove(key)!= null;
             }
             return false;
         }
@@ -664,114 +628,5 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 			entrySet=new TimedEntrySet();
 		}
 		return entrySet;
-	}
-
-	@Override
-	public V updateTTL(K key, long ttl) {
-		rwLock.writeLock().lock();
-		V result=null;
-		try {
-			TimedEntry<K, V> e=entryMap.get(key);
-			if(e!=null)
-			{
-				e.setLastActiveTime(System.currentTimeMillis());
-				if(e.isTimeOut())
-				{//已过期
-					removeAndListener(key,true);
-				}else
-				{
-					e.setLastActiveTime(System.currentTimeMillis());
-					e.setTtl(ttl);
-					result=e.getValue();
-				}
-			}
-		} catch (Exception e) {
-			log.error(e.getMessage(),e);
-		}finally{
-			rwLock.writeLock().unlock();
-		}
-		return result;
-	}
-
-	/**
-	 * 获取过期时间,此访问不会更新活动时间
-	 */
-	@Override
-	public long getExpireTime(K key) {
-		rwLock.readLock().lock();
-		boolean remove=false;
-		long result=-1;//过期移除
-		try {
-			TimedEntry<K, V> e=entryMap.get(key);
-			if(e!=null)
-			{//未过期
-				if(e.getTtl()>0)
-				{//有过期时间
-					if(e.isTimeOut())
-					{//过期移除
-						remove=true;
-					}
-					result= e.getLastActiveTime()+e.getTtl()-System.currentTimeMillis();
-				}else
-				{//永不过期
-					result= 0;
-				}
-			}
-		} catch (Exception e) {
-			log.error(e.getMessage(),e);
-		}finally {
-			rwLock.readLock().unlock();
-		}
-		if(remove)
-		{
-			rwLock.writeLock().lock();
-			try {
-				removeAndListener(key,true);
-				result= -1;
-			} catch (Exception e) {
-				log.error(e.getMessage(),e);
-			}finally {
-				rwLock.writeLock().unlock();
-			}
-		}
-		return result;
-	}
-	
-	@Override
-	public V setEventListener(K key,EventListener<K, V> lisnener) {
-		rwLock.readLock().lock();
-		V result=null;
-		boolean remove=false;
-		try {
-			TimedEntry<K, V> e=entryMap.get(key);
-			if(e!=null)
-			{
-				e.setLastActiveTime(System.currentTimeMillis());
-				if(e.isTimeOut())
-				{
-					remove=true;
-				}else
-				{
-					e.setListener(lisnener);
-					result= e.getValue();
-				}
-			}
-		} catch (Exception e) {
-			log.error(e.getMessage(),e);
-		}finally {
-			rwLock.readLock().unlock();
-		}
-		if(remove)
-		{
-			rwLock.writeLock().lock();
-			try {
-				removeAndListener(key,true);
-			} catch (Exception e) {
-				log.error(e.getMessage(),e);
-			}finally {
-				rwLock.writeLock().unlock();
-			}
-		}
-		return result;
 	}
 }
