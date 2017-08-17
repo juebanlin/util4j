@@ -44,16 +44,24 @@ public class CallBackCache {
 	}
 	
 	/**
-	 * 不支持泛型嵌套
+	 * 支持泛型嵌套
+	 * @param type 可为null
+	 * @param callKey
+	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public final <TYPE> CallBack<TYPE> poll(Class<TYPE> type,long callKey)
+	public final <TYPE> CallBack<TYPE> poll(TYPE type,long callKey)
 	{
 		return (CallBack<TYPE>) caches.poll(callKey);
 	}
 	
+	/**
+	 * 支持泛型嵌套,根据接收类型强转
+	 * @param callKey
+	 * @return
+	 */
 	@SuppressWarnings("unchecked")
-	public final <TYPE> CallBack<TYPE> poll(TYPE type,long callKey)
+	public final <TYPE> CallBack<TYPE> poll(long callKey)
 	{
 		return (CallBack<TYPE>) caches.poll(callKey);
 	}

@@ -22,7 +22,7 @@ public class TestCallBackCache {
 		long key=cb.put(cbs, 100000);
 		AtomicLong a=null;
 		Class<AtomicLong> ac=null;
-		CallBack<AtomicLong> cc=cb.poll(ac, key);
+		CallBack<AtomicLong> cc=cb.poll(key);
 		System.out.println(cc);
 	}
 }
