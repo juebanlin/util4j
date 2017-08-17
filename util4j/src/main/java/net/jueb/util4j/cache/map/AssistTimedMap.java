@@ -85,7 +85,7 @@ public interface AssistTimedMap<K,V> extends Map<K,V>{
 			long now=System.currentTimeMillis();
 			if(ttl>0)
 			{
-				return now>lastActiveTimeMills+lastActiveTimeMills;
+				return now>=lastActiveTimeMills+ttl;
 			}else
 			{//永不过期
 				return false;
@@ -126,6 +126,6 @@ public interface AssistTimedMap<K,V> extends Map<K,V>{
 		 * @param value
 		 * @param timeOutRemove 是否是超时移除
 		 */
-		public boolean removed(K key,V value,boolean timeOutRemove);
+		public void removed(K key,V value,boolean timeOutRemove);
 	}
 }

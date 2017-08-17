@@ -143,7 +143,7 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 			long now=System.currentTimeMillis();
 			if(getTtl()>0)
 			{
-				return now>getLastActiveTime()+getTtl();
+				return now>=getLastActiveTime()+getTtl();
 			}else
 			{//永不过期
 				return false;
