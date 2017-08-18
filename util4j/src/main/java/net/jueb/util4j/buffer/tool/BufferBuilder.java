@@ -1,4 +1,4 @@
-package net.jueb.util4j.buffer;
+package net.jueb.util4j.buffer.tool;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -32,18 +32,20 @@ public class BufferBuilder{
 		this.writeMethodName = writeMethodName;
 		this.readMethodName = readMethodName;
 	}
-
-	public BufferBuilder() {
-		bufferClass="net.jueb.util4j.buffer.BytesBuff";
-		writeMethodName="writeTo";
-		readMethodName="readFrom";
-	}
 	
+	/**
+	 * 增加属性过滤器
+	 * @param filter
+	 */
 	public void addFieldSkipFilter(Predicate<Field> filter)
 	{
 		fieldFilter.add(filter);
 	}
 	
+	/**
+	 * 增加类型处理
+	 * @param typeHandler
+	 */
 	public void addTypeHandler(TypeHandler typeHandler)
 	{
 		this.typeHandler.add(typeHandler);
@@ -51,12 +53,13 @@ public class BufferBuilder{
 	
 	public void build(Class<?> clazz,StringBuilder writesb,StringBuilder readsb)throws Exception
 	{
+		Class<?> buffClass=Thread.currentThread().getContextClassLoader().loadClass(bufferClass);
+		String buffClassSimpleName=buffClass.getSimpleName();
 		writesb.append("\t").append("@Override").append("\n");
-		writesb.append("\t").append("public void "+writeMethodName+"(ByteBuffer buffer) {").append("\n");
+		writesb.append("\t").append("public void "+writeMethodName+"("+buffClassSimpleName+" buffer) {").append("\n");
 		readsb.append("\t").append("@Override").append("\n");
-		readsb.append("\t").append("public void "+readMethodName+"(ByteBuffer buffer) {").append("\n");
+		readsb.append("\t").append("public void "+readMethodName+"("+buffClassSimpleName+" buffer) {").append("\n");
 		if (clazz.getSuperclass() != null) {
-			Class<?> buffClass=Thread.currentThread().getContextClassLoader().loadClass(bufferClass);
 			try {
 				clazz.getSuperclass().getMethod(writeMethodName,buffClass);
 				writesb.append("\t").append("super."+writeMethodName+"(buffer);").append("\n");
