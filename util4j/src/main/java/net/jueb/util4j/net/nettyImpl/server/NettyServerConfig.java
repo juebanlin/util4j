@@ -2,6 +2,9 @@ package net.jueb.util4j.net.nettyImpl.server;
 
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.ServerChannel;
+import io.netty.channel.epoll.Epoll;
+import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
@@ -23,18 +26,32 @@ public class NettyServerConfig {
 	 */
 	protected LogLevel level;
 	
+	public NettyServerConfig() {
+		this(0, 0);
+	}
+	
+	public NettyServerConfig(int bossThreads,int ioThreads) {
+		EventLoopGroup bossGroup;
+		EventLoopGroup workerGroup;
+		Class<? extends ServerChannel> channelClass;
+		if (Epoll.isAvailable()) {
+			channelClass = EpollServerSocketChannel.class;
+			bossGroup = new EpollEventLoopGroup(bossThreads,new NamedThreadFactory("ServerConfig-boss",true));
+			workerGroup = new EpollEventLoopGroup(ioThreads,new NamedThreadFactory("ServerConfig-ioWorkers",true));
+		} else {
+			channelClass = NioServerSocketChannel.class;
+			bossGroup = new NioEventLoopGroup(bossThreads,new NamedThreadFactory("ServerConfig-boss",true));
+			workerGroup = new NioEventLoopGroup(ioThreads,new NamedThreadFactory("ServerConfig-ioWorkers",true));
+		}
+		this.channelClass = channelClass;
+		this.boss = bossGroup;
+		this.ioWorkers = workerGroup;
+	}
+	
 	public NettyServerConfig(Class<? extends ServerChannel> channelClass, EventLoopGroup boss,EventLoopGroup ioworkers) {
 		this.channelClass = channelClass;
 		this.boss = boss;
 		this.ioWorkers = ioworkers;
-	}
-	
-	public NettyServerConfig() {
-		this(NioServerSocketChannel.class,new NioEventLoopGroup(0,new NamedThreadFactory("ServerConfig-boss",true)),new NioEventLoopGroup(0,new NamedThreadFactory("ServerConfig-ioWorkers",true)));
-	}
-	
-	public NettyServerConfig(int bossThreads,int ioThreads) {
-		this(NioServerSocketChannel.class,new NioEventLoopGroup(bossThreads,new NamedThreadFactory("ServerConfig-boss", true)),new NioEventLoopGroup(ioThreads,new NamedThreadFactory("ServerConfig-ioWorkers", true)));
 	}
 	
 	public Class<? extends ServerChannel> getChannelClass() {

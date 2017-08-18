@@ -12,6 +12,9 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.Epoll;
+import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -47,17 +50,26 @@ public class NettyClientConfig {
 		this.ioWorkers = ioWorkers;
 	}
 	public NettyClientConfig() {
-		this.channelClass = NioSocketChannel.class;
-		this.ioWorkers = new NioEventLoopGroup(0,new NamedThreadFactory("ClientConfig-ioWorkers",true));
+		this(0);
 	}
 	public NettyClientConfig(int ioThreads) {
 		if(ioThreads<0)
 		{
 			ioThreads=0;
 		}
-		this.channelClass = NioSocketChannel.class;
-		this.ioWorkers = new NioEventLoopGroup(ioThreads,new NamedThreadFactory("ClientConfig-ioWorkers",true));
+		EventLoopGroup workerGroup;
+		Class<? extends SocketChannel> channelClass;
+		if (Epoll.isAvailable()) {
+			channelClass = EpollSocketChannel.class;
+			workerGroup = new EpollEventLoopGroup(ioThreads,new NamedThreadFactory("ClientConfig-ioWorkers",true));
+		} else {
+			channelClass = NioSocketChannel.class;
+			workerGroup = new NioEventLoopGroup(ioThreads,new NamedThreadFactory("ClientConfig-ioWorkers",true));
+		}
+		this.channelClass = channelClass;
+		this.ioWorkers = workerGroup;
 	}
+	
 	public Class<? extends SocketChannel> getChannelClass() {
 		return channelClass;
 	}
