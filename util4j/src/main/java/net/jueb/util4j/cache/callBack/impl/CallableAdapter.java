@@ -33,7 +33,7 @@ public abstract class CallableAdapter<C,T> implements Callable<C>,CallBack<T>{
 
 		@Override
 		public final C call() throws Exception {
-			if(doAsycn())
+			if(doAsync())
 			{
 				latch.await(getTimeOutMills(), TimeUnit.MILLISECONDS);//等待CallBack的回调或者超时解锁
 			}
@@ -44,7 +44,9 @@ public abstract class CallableAdapter<C,T> implements Callable<C>,CallBack<T>{
 		 * 阻塞超时时间
 		 * @return
 		 */
-		protected abstract long getTimeOutMills();
+		protected long getTimeOutMills() {
+			return DEFAULT_TIMEOUT;
+		}
 		
 		protected abstract C doCall(Optional<T> result,boolean isTimeOut);
 		
@@ -52,5 +54,5 @@ public abstract class CallableAdapter<C,T> implements Callable<C>,CallBack<T>{
 		 * 执行异步,返回是否必须执行
 		 * @return
 		 */
-		protected abstract boolean doAsycn();
+		protected abstract boolean doAsync();
 	}
