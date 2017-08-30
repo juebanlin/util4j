@@ -39,34 +39,36 @@ public class DynamicClassLoader extends URLClassLoader {
 	 */
 	@Override
 	protected Class<?> loadClass(String className, boolean resolve) throws ClassNotFoundException {
-		Class<?> clazz = null;
-		// 查找当前类加载中已加载的
-		if (clazz == null) {
-			clazz = findLoadedClass(className);
-		}
-		// 当前jar中加载
-		if (clazz == null) {
-			// 查找当前类加载器urls或者当前类加载器所属线程类加载器
-			try {
-				clazz = findClass(className);
-			} catch (Exception e) {
-			}
+		Class<?> clazz= null;
+		try {
+			clazz = findClass(className);//查找已经加载过的类或者待加载的类
+		} catch (Exception e) {
 		}
 		if (clazz == null) {// 系统类加载
 			try {
 				clazz = findSystemClass(className);
-			} catch (Exception e) {
-
+			} catch (ClassNotFoundException e) {
 			}
 		}
-		String ClassLoader = null;
-		if (clazz != null) {// 解析类结构
-			ClassLoader = "" + clazz.getClassLoader();
-			if (resolve) {
-				resolveClass(clazz);
+		if (clazz == null) {// 上层加载器加载
+			ClassLoader parent=getParent();
+			if(parent!=null)
+			{
+				try {
+					clazz = parent.loadClass(className);
+				} catch (Exception e) {
+				}
 			}
 		}
-		log.trace("loadClass " + (clazz == null) + ":" + className + ",resolve=" + resolve + ",Clazz=" + clazz+ ",ClassLoader=" + ClassLoader);
+		// 查找当前类加载中已加载的
+		if (clazz == null) {
+			throw new ClassNotFoundException("className:"+className+",resolve:"+resolve);
+		}
+		String classLoader = "" + clazz.getClassLoader();
+		if (resolve) {// 解析类结构
+			resolveClass(clazz);
+		}
+		log.trace("loadClass " + (clazz == null) + ":" + className + ",resolve=" + resolve + ",Clazz=" + clazz+ ",ClassLoader=" + classLoader);
 		return clazz;
 	}
 

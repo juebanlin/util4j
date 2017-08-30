@@ -4,10 +4,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import net.jueb.util4j.hotSwap.classSources.ClassSource;
 import net.jueb.util4j.hotSwap.classSources.ClassSource.ClassSourceInfo;
 import sun.misc.ClassLoaderUtil;
@@ -31,7 +29,8 @@ public class DynamicClassProvider {
 	private final ReentrantReadWriteLock rwLock=new ReentrantReadWriteLock();
 	private final Set<EventListener> listeners=new HashSet<>();
 	
-	private ProviderClassLoader classLoader=new ProviderClassLoader();
+	private ProviderClassLoader classLoader;
+	private ClassLoader parentClassLoader; 
 	
 	public static enum State {
 		/**
@@ -53,10 +52,19 @@ public class DynamicClassProvider {
 	public DynamicClassProvider(ClassSource classSource) {
 		this(classSource, true);
 	}
+	
+	public DynamicClassProvider(ClassSource classSource,boolean autoReload) {
+		this(classSource, autoReload,Thread.currentThread().getContextClassLoader());
+	}
+	
+	public DynamicClassProvider(ClassSource classSource,ClassLoader parentClassLoader) {
+		this(classSource, true,parentClassLoader);
+	}
 
-	public DynamicClassProvider(ClassSource classSource, boolean autoReload) {
+	public DynamicClassProvider(ClassSource classSource, boolean autoReload,ClassLoader parentClassLoader) {
 		this.classSource = classSource;
 		this.autoReload = autoReload;
+		this.parentClassLoader=parentClassLoader;
 		init();
 	}
 	
@@ -102,14 +110,18 @@ public class DynamicClassProvider {
 		boolean success=false;
 		try {
 			state = State.loading;
+			ProviderClassLoader oldClassLoader=this.classLoader;
 			ProviderClassLoader newClassLoader = loadClasses(classSource);
 			Set<Class<?>> classes=newClassLoader.getAllClass();
 			newClassLoader.close();//关闭资源文件引用
 			ClassLoaderUtil.releaseLoader(newClassLoader);
 			newClassLoader.setAllClass(classes);
-			this.classLoader.setAllClass(null);
 			this.classLoader = newClassLoader;
 			success=true;
+			if(oldClassLoader!=null)
+			{
+				oldClassLoader.setAllClass(null);
+			}
 		} finally {
 			state = State.loaded;
 			rwLock.writeLock().unlock();
@@ -127,8 +139,16 @@ public class DynamicClassProvider {
 		}
 	}
 	
-	private class ProviderClassLoader extends DynamicClassLoader
+	protected class ProviderClassLoader extends DynamicClassLoader
 	{
+		protected ProviderClassLoader() {
+			super();
+		}
+
+		protected ProviderClassLoader(ClassLoader parent) {
+			super(parent);
+		}
+
 		private Set<Class<?>> allClass= new HashSet<>();
 
 		public Set<Class<?>> getAllClass() {
@@ -147,7 +167,7 @@ public class DynamicClassProvider {
 	 */
 	private ProviderClassLoader loadClasses(ClassSource soruce) throws Exception 
 	{
-		ProviderClassLoader loader=new ProviderClassLoader();
+		ProviderClassLoader loader=new ProviderClassLoader(parentClassLoader);
 		Set<Class<?>> allClass = loader.getAllClass();
 		List<ClassSourceInfo> sources=soruce.getClassSources();
 		if(sources.isEmpty())
