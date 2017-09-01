@@ -73,6 +73,7 @@ public class HttpUtil {
 			return InputStreamUtils.getBytes(conn.getInputStream());
 		} finally {
 			conn.getInputStream().close();
+			conn.disconnect();
 		}
 	}
 	
@@ -110,6 +111,7 @@ public class HttpUtil {
 			return InputStreamUtils.getBytes(conn.getInputStream());
 		} finally {
 			conn.getInputStream().close();
+			conn.disconnect();
 		}
 	}
 	
@@ -125,6 +127,7 @@ public class HttpUtil {
 			return InputStreamUtils.getBytes(conn.getInputStream());
 		} finally {
 			conn.getInputStream().close();
+			conn.disconnect();
 		}
 	}
 	
@@ -141,6 +144,7 @@ public class HttpUtil {
 			return InputStreamUtils.getBytes(conn.getInputStream());
 		} finally {
 			conn.getInputStream().close();
+			conn.disconnect();
 		}
 	}
 }
