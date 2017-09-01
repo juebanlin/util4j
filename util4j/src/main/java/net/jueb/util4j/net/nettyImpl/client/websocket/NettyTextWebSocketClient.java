@@ -1,6 +1,7 @@
 package net.jueb.util4j.net.nettyImpl.client.websocket;
 import java.net.URI;
 
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -14,6 +15,7 @@ import io.netty.handler.codec.http.websocketx.WebSocketClientProtocolHandler;
 import io.netty.handler.codec.http.websocketx.WebSocketVersion;
 import net.jueb.util4j.net.nettyImpl.client.NettyClient;
 import net.jueb.util4j.net.nettyImpl.client.NettyClientConfig;
+import net.jueb.util4j.net.nettyImpl.handler.ShareableChannelInboundHandler;
 import net.jueb.util4j.net.nettyImpl.handler.websocket.text.codec.WebSocketTextFrameByteBufAdapter;
 
 /**
@@ -42,15 +44,27 @@ public class NettyTextWebSocketClient extends NettyClient {
 	 */
 	@Override
 	protected ChannelHandler fixHandlerBeforeConnect(final ChannelHandler handler) {
-		ChannelInitializer<SocketChannel> result=new ChannelInitializer<SocketChannel>() {
-            @Override
-            protected void initChannel(SocketChannel ch) {
-            	ch.pipeline().addLast(new HttpClientCodec());
+		ChannelHandler result=new ShareableChannelInboundHandler() {
+			@Override
+			public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+				Channel ch=ctx.channel();
+				ch.pipeline().addLast(new HttpClientCodec());
             	ch.pipeline().addLast(new HttpObjectAggregator(64*1024));
             	ch.pipeline().addLast(new WebSocketClientProtocolHandler(WebSocketClientHandshakerFactory.newHandshaker(uri, WebSocketVersion.V13, null, false, new DefaultHttpHeaders())));
             	ch.pipeline().addLast(new WebSocketConnectedClientHandler(handler));
-            }
-        };
+				ctx.pipeline().remove(this);//移除当前handler
+				ctx.pipeline().fireChannelRegistered();//重新从第一个handler抛出事件
+			}
+		};
+//		ChannelInitializer<SocketChannel> result=new ChannelInitializer<SocketChannel>() {
+//            @Override
+//            protected void initChannel(SocketChannel ch) {
+//            	ch.pipeline().addLast(new HttpClientCodec());
+//            	ch.pipeline().addLast(new HttpObjectAggregator(64*1024));
+//            	ch.pipeline().addLast(new WebSocketClientProtocolHandler(WebSocketClientHandshakerFactory.newHandshaker(uri, WebSocketVersion.V13, null, false, new DefaultHttpHeaders())));
+//            	ch.pipeline().addLast(new WebSocketConnectedClientHandler(handler));
+//            }
+//        };
         return result;
 	}	
 	

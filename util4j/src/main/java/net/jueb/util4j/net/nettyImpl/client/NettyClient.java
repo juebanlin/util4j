@@ -1,11 +1,13 @@
 package net.jueb.util4j.net.nettyImpl.client;
 
 import java.net.InetSocketAddress;
-
 import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.EventLoopGroup;
+import net.jueb.util4j.net.nettyImpl.handler.ShareableChannelInboundHandler;
 
 public class NettyClient extends AbstractNettyClient{
 	
@@ -48,9 +50,28 @@ public class NettyClient extends AbstractNettyClient{
 	 */
 	protected final ChannelFuture doConnect(InetSocketAddress target)
 	{
-		//修正handler
-		ChannelHandler fixHandler=fixHandlerBeforeConnect(handler);
+		ChannelHandler fixHandler=fixHandlerBeforeConnect(channelInitFix(handler));//修正handler
 		return doBooterConnect(target, fixHandler);
+	}
+	
+	/**
+	 * 包装一个初始化父类channel的handler
+	 * @param handler 业务handler
+	 * @return
+	 */
+	private ChannelHandler channelInitFix(final ChannelHandler handler)
+	{
+		ChannelHandler fixedHandler=new ShareableChannelInboundHandler() {
+			@Override
+			public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+				Channel ch=ctx.channel();
+				setChannel(ch);
+				ctx.pipeline().addLast(handler);
+				ctx.pipeline().remove(this);//移除当前handler
+				ctx.fireChannelRegistered();//从当前handler往后抛出事件
+			}
+		};
+		return fixedHandler;
 	}
 
 	/**

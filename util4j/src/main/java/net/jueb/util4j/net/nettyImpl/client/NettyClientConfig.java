@@ -3,13 +3,12 @@ package net.jueb.util4j.net.nettyImpl.client;
 import java.net.InetSocketAddress;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.Epoll;
@@ -22,8 +21,8 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.util.internal.logging.InternalLogger;
 import net.jueb.util4j.net.nettyImpl.NetLogFactory;
 import net.jueb.util4j.net.nettyImpl.OptionConfiger;
-import net.jueb.util4j.net.nettyImpl.config.BootstrapConfiger;
 import net.jueb.util4j.net.nettyImpl.handler.LoggerHandler;
+import net.jueb.util4j.net.nettyImpl.handler.ShareableChannelInboundHandler;
 import net.jueb.util4j.thread.NamedThreadFactory;
 
 /**
@@ -110,18 +109,7 @@ public class NettyClientConfig {
 	{
 		booter.group(ioWorkers);
 		booter.channel(channelClass);
-		initBooterOptions(new BootstrapConfiger(booter));
 		initBooterOptions(optionConfig());
-	}
-	
-	/**
-	 * 初始化客户端配置
-	 */
-	@Deprecated
-	protected void initBooterOptions(BootstrapConfiger configer)
-	{
-		configer.option(ChannelOption.SO_KEEPALIVE, true);
-		configer.option(ChannelOption.TCP_NODELAY, true);
 	}
 	
 	/**
@@ -146,6 +134,55 @@ public class NettyClientConfig {
 	
 	
 	/**
+	 * 初始化handler适配包装
+	 * @param init
+	 * @return
+	 */
+	protected ChannelHandler initHandlerAdapter(ChannelHandler init)
+	{
+		ChannelHandler handler=new ShareableChannelInboundHandler() {
+			@Override
+			public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+				Channel ch=ctx.channel();
+				LogLevel level=getLevel();
+				if(level!=null)
+				{
+					ch.pipeline().addLast(new LoggerHandler(level));
+				}
+				ch.pipeline().addLast(init);
+				ctx.pipeline().remove(this);//移除当前handler
+				ctx.fireChannelRegistered();//从当前handler往后抛出事件
+			}
+		};
+//		ChannelHandler handler=new ChannelInitializer<Channel>() {
+//			@Override
+//			protected void initChannel(Channel ch) throws Exception {
+//				LogLevel level=getLevel();
+//				if(level!=null)
+//				{
+//					ch.pipeline().addLast(new LoggerHandler(level));
+//				}
+//				ch.pipeline().addLast(init);
+//			}
+//		};
+		/*
+		 * 如果init里面后续有ChannelInitializer则会触发2次channelRegistered
+		 * 导致LoggerHandler会打印2次channelRegistered无法避免,触发玩家自己的init不使用ChannelInitializer
+		ChannelInboundHandlerAdapter handler=new ChannelInboundHandlerAdapter(){
+			@Override
+			public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+				ctx.pipeline().addLast(new LoggerHandler(getLevel()));
+				ctx.pipeline().addLast(init);
+				ctx.pipeline().remove(this);
+				super.channelRegistered(ctx);
+				
+			}
+		};
+		 */
+		return handler;
+	}
+	
+	/**
 	 * 因为每次连接执行都会init都会被remove,所以每次调用booter都会用新的handler来进行连接配置
 	 * @param address
 	 * @param init
@@ -160,31 +197,7 @@ public class NettyClientConfig {
 				booterInit();
 			}
 			final CountDownLatch latch=new CountDownLatch(1);
-			ChannelHandler handler=new ChannelInitializer<Channel>() {
-				@Override
-				protected void initChannel(Channel ch) throws Exception {
-					LogLevel level=getLevel();
-					if(level!=null)
-					{
-						ch.pipeline().addLast(new LoggerHandler(level));
-					}
-					ch.pipeline().addLast(init);
-				}
-			};
-			/*
-			 * 如果init里面后续有ChannelInitializer则会触发2次channelRegistered
-			 * 导致LoggerHandler会打印2次channelRegistered无法避免,触发玩家自己的init不使用ChannelInitializer
-			ChannelInboundHandlerAdapter handler=new ChannelInboundHandlerAdapter(){
-				@Override
-				public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
-					ctx.pipeline().addLast(new LoggerHandler(getLevel()));
-					ctx.pipeline().addLast(init);
-					ctx.pipeline().remove(this);
-					super.channelRegistered(ctx);
-					
-				}
-			};
-			 */
+			ChannelHandler handler=initHandlerAdapter(init);
 			booter.handler(handler);
 			cf=booter.connect(address);
 			cf.addListener(new ChannelFutureListener() {

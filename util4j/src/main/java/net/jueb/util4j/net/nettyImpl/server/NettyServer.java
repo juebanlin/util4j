@@ -12,7 +12,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
@@ -24,8 +24,8 @@ import net.jueb.util4j.net.JConnection;
 import net.jueb.util4j.net.nettyImpl.NetLogFactory;
 import net.jueb.util4j.net.nettyImpl.NettyConnection;
 import net.jueb.util4j.net.nettyImpl.ServerOptionConfiger;
-import net.jueb.util4j.net.nettyImpl.config.ServerBootstrapConfiger;
 import net.jueb.util4j.net.nettyImpl.handler.LoggerHandler;
+import net.jueb.util4j.net.nettyImpl.handler.ShareableChannelInboundHandler;
 
 public class NettyServer extends AbstractNettyServer{
 
@@ -61,13 +61,6 @@ public class NettyServer extends AbstractNettyServer{
 		booter.channel(config.getChannelClass());
 	}
 	
-	@Deprecated
-	protected void initServerOptions(ServerBootstrapConfiger configer){
-		configer.option(ChannelOption.SO_BACKLOG, 1024);//设置连接等待最大队列
-		configer.option(ChannelOption.TCP_NODELAY,true);
-		configer.option(ChannelOption.SO_KEEPALIVE, true);//设置保持连接
-	}
-	
 	protected void initServerOptions(ServerOptionConfiger configer){
 		configer.option(ChannelOption.SO_BACKLOG, 1024);//设置连接等待最大队列
 		configer.option(ChannelOption.TCP_NODELAY,true);
@@ -92,6 +85,43 @@ public class NettyServer extends AbstractNettyServer{
 	}
 	
 	/**
+	 * 初始化handler适配包装
+	 * @param init
+	 * @return
+	 */
+	protected ChannelHandler initLogHandlerAdapter(ChannelHandler init)
+	{
+		ChannelHandler handler=new  ShareableChannelInboundHandler() {
+			@Override
+			public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+				Channel ch=ctx.channel();
+				channelGroup.add(ch);
+				LogLevel level=config.getChannelLevel();
+				if(level!=null)
+				{
+					ch.pipeline().addLast(new LoggerHandler(config.getLevel()));
+				}
+				ch.pipeline().addLast(init);
+				ctx.pipeline().remove(this);//移除当前handler
+				ctx.fireChannelRegistered();//从当前handler往后抛出事件
+			}
+		};
+//		ChannelHandler handler=new ChannelInitializer<Channel>() {
+//			@Override
+//			protected void initChannel(Channel ch) throws Exception {
+//				channelGroup.add(ch);
+//				LogLevel level=config.getLevel();
+//				if(level!=null)
+//				{
+//					ch.pipeline().addLast(new LoggerHandler(config.getLevel()));
+//				}
+//				ch.pipeline().addLast(init);
+//			}
+//		};
+		return handler;
+	}
+	
+	/**
 	 * 执行启动绑定之前修正handler,子类可进行二次修改
 	 * @param handler
 	 * @return
@@ -104,7 +134,6 @@ public class NettyServer extends AbstractNettyServer{
 	@Override
 	protected final ChannelFuture doBind(InetSocketAddress local) {
 		booter.localAddress(local);
-		initServerOptions(new ServerBootstrapConfiger(booter));//初始化服务器配置
 		initServerOptions(optionConfig());
 		ChannelHandler fixedHandler=fixHandlerBeforeDoBooterBind(handler);//修正handler
 		return doBooterBind(local,fixedHandler);//启动端口绑定
@@ -114,18 +143,15 @@ public class NettyServer extends AbstractNettyServer{
 		ChannelFuture cf;
 		synchronized (booter) {
 			final CountDownLatch latch=new CountDownLatch(1);
-			booter.handler(new LoggerHandler(LogLevel.DEBUG)).childHandler(new ChannelInitializer<Channel>() {
-			@Override
-			protected void initChannel(Channel ch) throws Exception {
-				channelGroup.add(ch);
-				LogLevel level=config.getLevel();
-				if(level!=null)
-				{
-					ch.pipeline().addLast(new LoggerHandler(config.getLevel()));
-				}
-				ch.pipeline().addLast(fixedHandler);
+			LogLevel level=config.getLevel();
+			if(level==null)
+			{
+				level=LogLevel.DEBUG;
 			}
-			});
+			LoggerHandler loggerHandler=new LoggerHandler(level);
+			ChannelHandler childHandler=initLogHandlerAdapter(fixedHandler);
+			booter.handler(loggerHandler)
+			.childHandler(childHandler);
 			cf=booter.bind(local);
 			cf.addListener(new ChannelFutureListener() {
 				@Override

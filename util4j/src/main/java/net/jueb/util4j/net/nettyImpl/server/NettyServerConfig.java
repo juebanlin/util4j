@@ -26,6 +26,11 @@ public class NettyServerConfig {
 	 */
 	protected LogLevel level;
 	
+	/**
+	 * 链路日志级别
+	 */
+	protected LogLevel channelLevel;
+	
 	public NettyServerConfig() {
 		this(0, 0);
 	}
@@ -70,6 +75,14 @@ public class NettyServerConfig {
 
 	public void setLevel(LogLevel level) {
 		this.level = level;
+	}
+
+	public LogLevel getChannelLevel() {
+		return channelLevel;
+	}
+
+	public void setChannelLevel(LogLevel channelLevel) {
+		this.channelLevel = channelLevel;
 	}
 
 	public void destory()

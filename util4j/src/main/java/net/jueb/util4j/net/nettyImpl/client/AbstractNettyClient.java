@@ -100,17 +100,10 @@ public abstract class AbstractNettyClient implements JNetClient{
 				if(isConnect)
 				{//连接成功
 					log.log(logLevel,getName()+"连接成功("+target+")!"+cf.channel());
-					this.channel=cf.channel();
+//					this.channel=cf.channel();//子类去设置,通过initHandler的channelRegistered去设置更及时
 					//给通道加上断线重连监听器
-					this.channel.closeFuture().removeListener(reconectListener);
-					this.channel.closeFuture().addListener(reconectListener);
-					{
-						/**
-						如果在channel.active后调用当前client.send可能channel还没有赋值不能发送数据,
-						则通过赋值成功后抛出事件来代替channel.active比较保守一点
-					 */
-//						this.channel.pipeline().fireUserEventTriggered(event);
-					}
+					cf.channel().closeFuture().removeListener(reconectListener);
+					cf.channel().closeFuture().addListener(reconectListener);
 				}else
 				{//连接不成功则10秒再执行一次连接
 					log.log(logLevel,getName()+"连接失败("+target+")!"+cf.channel());
@@ -128,12 +121,15 @@ public abstract class AbstractNettyClient implements JNetClient{
 	 * @return 链接后的ChannelFuture
 	 */
 	protected abstract ChannelFuture doConnect(InetSocketAddress target);
-
-	public final Channel getCurrentChannel()
-	{
+	
+	public final Channel getChannel() {
 		return channel;
 	}
-	
+
+	protected final void setChannel(Channel channel) {
+		this.channel = channel;
+	}
+
 	/**
 	 * 执行重连 timer.schedule(new ReConnectTask(), reconectTimeOut);
 	 * 执行多次会把channel顶掉
