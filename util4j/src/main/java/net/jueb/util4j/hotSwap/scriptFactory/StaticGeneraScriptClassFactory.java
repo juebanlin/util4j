@@ -63,24 +63,24 @@ public abstract class StaticGeneraScriptClassFactory<K,T extends IGeneralScript<
 				throw new UnsupportedOperationException(scriptClass +"can not newInstance");
 			}
 			T script = scriptClass.newInstance();
-			K code=script.getScriptKey();
-			Class<? extends T> old=staticCodeMap.get(code);
-			staticCodeMap.put(code,scriptClass);
+			K key=script.getScriptKey();
+			Class<? extends T> old=staticCodeMap.get(key);
+			staticCodeMap.put(key,scriptClass);
 			if(old==null)
 			{
-				_log.info("regist Static codeScript,code="+code+",class="+scriptClass);
+				_log.info("regist Static Script,key="+key+",class="+scriptClass);
 			}else
 			{
-				_log.info("regist Static codeScript,code="+code+",class="+scriptClass+",Override script="+old);
+				_log.info("regist Static Script,key="+key+",class="+scriptClass+",Override script="+old);
 			}
 		} catch (Exception e) {
 			_log.error(e.getMessage(),e);
 		}
 	}
 	
-	protected final Class<? extends T> getStaticScriptClass(int code)
+	protected final Class<? extends T> getStaticScriptClass(K key)
 	{
-		return staticCodeMap.get(code);
+		return staticCodeMap.get(key);
 	}
 	
 	protected final T newInstance(Class<? extends T> c,Object... args) {
@@ -109,12 +109,12 @@ public abstract class StaticGeneraScriptClassFactory<K,T extends IGeneralScript<
 	}
 	
 	@Override
-	public T buildInstance(int code) {
+	public T buildInstance(K key) {
 		T result=null;
-		Class<? extends T> c = getStaticScriptClass(code);
+		Class<? extends T> c = getStaticScriptClass(key);
 		if(c==null)
 		{
-			_log.error("not found script,code=" + code+"(0x"+Integer.toHexString(code)+")");
+			_log.error("not found script,key=" + key);
 		}else
 		{
 			result=newInstance(c);
@@ -123,11 +123,11 @@ public abstract class StaticGeneraScriptClassFactory<K,T extends IGeneralScript<
 	}
 
 	@Override
-	public T buildInstance(int code,Object ...args) {
+	public T buildInstance(K key,Object ...args) {
 		T result = null;
-		Class<? extends T> c = getStaticScriptClass(code);
+		Class<? extends T> c = getStaticScriptClass(key);
 		if (c == null) {
-			_log.error("not found script,code=" + code + "(0x" + Integer.toHexString(code) + ")");
+			_log.error("not found script,key=" + key);
 		} else 
 		{
 			result=newInstance(c,args);

@@ -12,7 +12,7 @@ public interface IGeneraScriptFactory<K,T extends IGeneralScript<K>> {
 	 * @param code
 	 * @return
 	 */
-	public T buildInstance(int code);
+	public T buildInstance(K key);
 	
 	/**
 	 * 创建一个脚本实例 
@@ -20,7 +20,7 @@ public interface IGeneraScriptFactory<K,T extends IGeneralScript<K>> {
 	 * @param args 脚本构造参数
 	 * @return
 	 */
-	public T buildInstance(int code,Object ...args);
+	public T buildInstance(K key,Object ...args);
 	
 	/**
 	 * 重新加载脚本

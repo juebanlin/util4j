@@ -17,7 +17,7 @@ import net.jueb.util4j.hotSwap.classSources.ClassSource;
  * 此类提供的脚本最好不要长期保持引用,由其是热重载后,原来的脚本要GC必须保证引用不存在
  * 通过监听脚本源实现代码的加载
  */
-public abstract class GeneraScriptClassProvider<K,T extends IGeneralScript<K>> extends StaticGeneraScriptClassFactory<K,T> {
+public abstract class GeneralScriptClassProvider<K,T extends IGeneralScript<K>> extends StaticGeneraScriptClassFactory<K,T> {
 
 	/**
 	 * 脚本库目录
@@ -32,11 +32,11 @@ public abstract class GeneraScriptClassProvider<K,T extends IGeneralScript<K>> e
 	private final Map<K, Class<? extends T>> codeMap = new ConcurrentHashMap<K, Class<? extends T>>();
 	private final ReentrantReadWriteLock rwLock=new ReentrantReadWriteLock();
 
-	protected GeneraScriptClassProvider(ClassSource classSource,boolean autoReload) {
+	protected GeneralScriptClassProvider(ClassSource classSource,boolean autoReload) {
 		this(new DynamicClassProvider(classSource,autoReload));
 	}
 
-	protected GeneraScriptClassProvider(DynamicClassProvider classProvider) {
+	protected GeneralScriptClassProvider(DynamicClassProvider classProvider) {
 		this.classProvider=classProvider;
 		init();
 	}
@@ -125,18 +125,18 @@ public abstract class GeneraScriptClassProvider<K,T extends IGeneralScript<K>> e
 			{
 				continue;
 			}
-			K code = script.getScriptKey();
+			K key = script.getScriptKey();
 			if(skipRegistScript(script))
 			{
-				_log.warn("skil regist script,code="+code+",class=" + script.getClass());
+				_log.warn("skil regist script,key="+key+",class=" + script.getClass());
 				continue;
 			}
-			if (codeMap.containsKey(code)) {// 重复脚本code定义
-				_log.error("find Repeat ScriptClass,code="+code+",addingScript:" + script.getClass() + ",existScript:"
-						+ codeMap.get(code));
+			if (codeMap.containsKey(key)) {// 重复脚本code定义
+				_log.error("find Repeat ScriptClass,key="+key+",addingScript:" + script.getClass() + ",existScript:"
+						+ codeMap.get(key));
 			} else {
-				codeMap.put(code, scriptClazz);
-				_log.info("regist ScriptClass:code="+code+",class=" + scriptClazz);
+				codeMap.put(key, scriptClazz);
+				_log.info("regist ScriptClass:key="+key+",class=" + scriptClazz);
 			}
 		}
 		return codeMap;
@@ -192,33 +192,33 @@ public abstract class GeneraScriptClassProvider<K,T extends IGeneralScript<K>> e
 		}
 	}
 	
-	protected final Class<? extends T> getScriptClass(int code)
+	protected final Class<? extends T> getScriptClass(K key)
 	{
 		rwLock.readLock().lock();
 		try {
-			return codeMap.get(code);
+			return codeMap.get(key);
 		} finally {
 			rwLock.readLock().unlock();
 		}
 	}
 
 
-	private Class<? extends T> getClass(int code)
+	private Class<? extends T> getClass(K key)
 	{
-		Class<? extends T> c = getStaticScriptClass(code);
+		Class<? extends T> c = getStaticScriptClass(key);
 		if(c==null)
 		{
-			c = getScriptClass(code);
+			c = getScriptClass(key);
 		}
 		return c;
 	}
 	
-	public final T buildInstance(int code) {
+	public final T buildInstance(K key) {
 		T result=null;
-		Class<? extends T> c = getClass(code);
+		Class<? extends T> c = getClass(key);
 		if (c == null) 
 		{
-			_log.error("not found script,code=" + code + "(0x" + Integer.toHexString(code) + ")");
+			_log.error("not found script,key=" + key);
 		} else 
 		{
 			result = newInstance(c);
@@ -227,12 +227,12 @@ public abstract class GeneraScriptClassProvider<K,T extends IGeneralScript<K>> e
 	}
 	
 	@Override
-	public final T buildInstance(int code, Object... args) {
+	public final T buildInstance(K key, Object... args) {
 		T result=null;
-		Class<? extends T> c = getClass(code);
+		Class<? extends T> c = getClass(key);
 		if (c == null) 
 		{
-			_log.error("not found script,code=" + code + "(0x" + Integer.toHexString(code) + ")");
+			_log.error("not found script,key=" + key );
 		} else 
 		{
 			result = newInstance(c,args);
@@ -248,9 +248,9 @@ public abstract class GeneraScriptClassProvider<K,T extends IGeneralScript<K>> e
 		}
 	}
 	
-	public final boolean hasCode(int code)
+	public final boolean hasKey(K key)
 	{
-		return getClass(code)!=null;
+		return getClass(key)!=null;
 	}
 	
 	public boolean isAutoReload() {
