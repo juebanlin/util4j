@@ -5,7 +5,7 @@ package net.jueb.util4j.hotSwap.scriptFactory;
  * T不能做为父类加载
  * T尽量为接口类型,因为只有接口类型的类才没有逻辑,才可以不热加载,并且子类可选择实现
  */
-public interface IGeneraScriptFactory<K,T extends IGeneralScript<K>> {
+public interface IGeneralScriptFactory<K,T extends IGeneralScript<K>> {
 		
 	/**
 	 * 创建一个脚本实例

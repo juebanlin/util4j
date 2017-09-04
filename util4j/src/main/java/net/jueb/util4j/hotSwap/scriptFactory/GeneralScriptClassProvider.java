@@ -17,7 +17,7 @@ import net.jueb.util4j.hotSwap.classSources.ClassSource;
  * 此类提供的脚本最好不要长期保持引用,由其是热重载后,原来的脚本要GC必须保证引用不存在
  * 通过监听脚本源实现代码的加载
  */
-public abstract class GeneralScriptClassProvider<K,T extends IGeneralScript<K>> extends StaticGeneraScriptClassFactory<K,T> {
+public abstract class GeneralScriptClassProvider<K,T extends IGeneralScript<K>> extends StaticGeneralScriptClassFactory<K,T> {
 
 	/**
 	 * 脚本库目录
