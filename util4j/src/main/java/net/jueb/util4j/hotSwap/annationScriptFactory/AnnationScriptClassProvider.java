@@ -104,6 +104,7 @@ public abstract class AnnationScriptClassProvider<S extends IAnnotationScript> i
 					}else
 					{
 						idMap.put(id, clazz);
+						_log.info("regist id mapping ScriptClass:id="+id+",class=" + clazz);
 					}
 				}
 				if(name!=null && name.trim().length()>0)
@@ -115,6 +116,7 @@ public abstract class AnnationScriptClassProvider<S extends IAnnotationScript> i
 					}else
 					{
 						nameMap.put(name, clazz);
+						_log.info("regist name mapping ScriptClass:name="+name+",class=" + clazz);
 					}
 				}
 			}else
