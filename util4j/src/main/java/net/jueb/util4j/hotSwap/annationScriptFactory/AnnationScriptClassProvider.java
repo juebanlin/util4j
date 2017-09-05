@@ -106,12 +106,12 @@ public abstract class AnnationScriptClassProvider<S extends IAnnotationScript> i
 						idMap.put(id, clazz);
 					}
 				}
-				if(name!=null && name.trim().length()>=0)
+				if(name!=null && name.trim().length()>0)
 				{
 					Class<? extends S> old=nameMap.getOrDefault(name,null);
 					if(old!=null)
 					{
-						_log.error("find Repeat name ScriptClass,id="+id+",addingScript:" + clazz + ",existScript:"+ old);
+						_log.error("find Repeat name ScriptClass,name="+name+",addingScript:" + clazz + ",existScript:"+ old);
 					}else
 					{
 						nameMap.put(name, clazz);
