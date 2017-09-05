@@ -6,9 +6,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 import net.jueb.util4j.hotSwap.classProvider.DynamicClassProvider;
-import net.jueb.util4j.hotSwap.classProvider.DynamicClassProvider.State;
+import net.jueb.util4j.hotSwap.classProvider.IClassProvider;
+import net.jueb.util4j.hotSwap.classProvider.IClassProvider.State;
 import net.jueb.util4j.hotSwap.classSources.ClassSource;
 
 /**
@@ -22,7 +22,7 @@ public abstract class ScriptClassProvider<T extends IScript> extends StaticScrip
 	/**
 	 * 脚本库目录
 	 */
-	protected final DynamicClassProvider classProvider;
+	protected final IClassProvider classProvider;
 
 	/**
 	 * 是否自动重载变更代码
@@ -36,7 +36,7 @@ public abstract class ScriptClassProvider<T extends IScript> extends StaticScrip
 		this(new DynamicClassProvider(classSource,autoReload));
 	}
 
-	protected ScriptClassProvider(DynamicClassProvider classProvider) {
+	protected ScriptClassProvider(IClassProvider classProvider) {
 		this.classProvider=classProvider;
 		init();
 	}

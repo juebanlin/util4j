@@ -1,4 +1,4 @@
-package net.jueb.util4j.hotSwap.scriptFactory;
+package net.jueb.util4j.hotSwap.generalScriptFactory;
 
 /**
  * 通用脚本

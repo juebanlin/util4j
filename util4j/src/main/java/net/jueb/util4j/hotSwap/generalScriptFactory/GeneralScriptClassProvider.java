@@ -1,4 +1,4 @@
-package net.jueb.util4j.hotSwap.scriptFactory;
+package net.jueb.util4j.hotSwap.generalScriptFactory;
 
 import java.lang.reflect.Modifier;
 import java.util.HashSet;
@@ -6,9 +6,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 import net.jueb.util4j.hotSwap.classProvider.DynamicClassProvider;
-import net.jueb.util4j.hotSwap.classProvider.DynamicClassProvider.State;
+import net.jueb.util4j.hotSwap.classProvider.IClassProvider;
+import net.jueb.util4j.hotSwap.classProvider.IClassProvider.State;
 import net.jueb.util4j.hotSwap.classSources.ClassSource;
 
 /**
@@ -22,7 +22,7 @@ public abstract class GeneralScriptClassProvider<K,T extends IGeneralScript<K>> 
 	/**
 	 * 脚本库目录
 	 */
-	protected final DynamicClassProvider classProvider;
+	protected final IClassProvider classProvider;
 
 	/**
 	 * 是否自动重载变更代码
@@ -36,7 +36,7 @@ public abstract class GeneralScriptClassProvider<K,T extends IGeneralScript<K>> 
 		this(new DynamicClassProvider(classSource,autoReload));
 	}
 
-	protected GeneralScriptClassProvider(DynamicClassProvider classProvider) {
+	protected GeneralScriptClassProvider(IClassProvider classProvider) {
 		this.classProvider=classProvider;
 		init();
 	}

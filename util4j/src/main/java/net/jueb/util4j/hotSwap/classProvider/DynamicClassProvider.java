@@ -14,7 +14,7 @@ import sun.misc.ClassLoaderUtil;
  * 动态类生产
  * @author juebanlin
  */
-public class DynamicClassProvider {
+public class DynamicClassProvider implements IClassProvider{
 
 	protected final Logger _log = LoggerFactory.getLogger(this.getClass());
 
@@ -31,21 +31,6 @@ public class DynamicClassProvider {
 	
 	private ProviderClassLoader classLoader;
 	private ClassLoader parentClassLoader; 
-	
-	public static enum State {
-		/**
-		 * 脚本未加载
-		 */
-		ready,
-		/**
-		 * 脚本加载中
-		 */
-		loading,
-		/**
-		 * 脚本加载完成
-		 */
-		loaded,
-	}
 	
 	protected volatile State state = State.ready;
 
@@ -85,15 +70,6 @@ public class DynamicClassProvider {
 		{
 			reload();
 		}
-	}
-	
-	
-	@FunctionalInterface
-	public static interface EventListener{
-		/**
-		 * 加载完成
-		 */
-		public void onLoaded();
 	}
 	
 	/**
