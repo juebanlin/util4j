@@ -166,7 +166,7 @@ public abstract class AnnationScriptClassProvider<S extends IAnnotationScript> i
 			}
 			if(skipRegistScript(script))
 			{
-				_log.warn("skil regist script,class=" + script.getClass());
+				_log.warn("skip regist script,class=" + script.getClass());
 				continue;
 			}
 			result.add(scriptClazz);
