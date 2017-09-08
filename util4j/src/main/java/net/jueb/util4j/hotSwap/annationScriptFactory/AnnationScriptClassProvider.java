@@ -90,7 +90,7 @@ public abstract class AnnationScriptClassProvider<S extends IAnnotationScript> i
 		for(Class<? extends S> clazz:instanceAbleScript)
 		{
 			AnnationScript[] key=clazz.getDeclaredAnnotationsByType(AnnationScript.class);
-			if(key!=null)
+			if(key!=null && key.length>0)
 			{
 				AnnationScript mapper=key[0];
 				int id=mapper.id();
@@ -186,7 +186,7 @@ public abstract class AnnationScriptClassProvider<S extends IAnnotationScript> i
 			try {
 				instacne=clazz.newInstance();
 			} catch (Exception e) {
-				_log.error("can't newInstance Class:" + clazz);
+				_log.error("can't newInstance Class:" + clazz,e);
 			}
 		}
 		return instacne;
