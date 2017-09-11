@@ -27,7 +27,7 @@ public class NettyServerConfig {
 	protected LogLevel level;
 	
 	/**
-	 * 链路日志级别
+	 * 链路日志级别,可打印字节信息
 	 */
 	protected LogLevel channelLevel;
 	

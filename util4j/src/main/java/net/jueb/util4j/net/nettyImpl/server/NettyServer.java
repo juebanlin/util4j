@@ -143,15 +143,14 @@ public class NettyServer extends AbstractNettyServer{
 		ChannelFuture cf;
 		synchronized (booter) {
 			final CountDownLatch latch=new CountDownLatch(1);
+			LoggerHandler loggerHandler=null;
 			LogLevel level=config.getLevel();
-			if(level==null)
+			if(level!=null)
 			{
-				level=LogLevel.DEBUG;
+				loggerHandler=new LoggerHandler(level);
 			}
-			LoggerHandler loggerHandler=new LoggerHandler(level);
 			ChannelHandler childHandler=initLogHandlerAdapter(fixedHandler);
-			booter.handler(loggerHandler)
-			.childHandler(childHandler);
+			booter.handler(loggerHandler).childHandler(childHandler);
 			cf=booter.bind(local);
 			cf.addListener(new ChannelFutureListener() {
 				@Override
