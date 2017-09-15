@@ -14,7 +14,7 @@ import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Executors;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -24,54 +24,68 @@ import java.util.jar.JarFile;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.monitor.FileAlterationListener;
-import org.apache.commons.io.monitor.FileAlterationMonitor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.jueb.util4j.file.FileUtil;
-import net.jueb.util4j.thread.NamedThreadFactory;
 
-public class DefaultClassSource implements ClassSource,FileAlterationListener{
+public class DefaultClassSource implements ClassSource{
 
 	protected final Logger log=LoggerFactory.getLogger(getClass());
 	public static final long DEFAULT_UPDATE_INTERVAL=TimeUnit.SECONDS.toMillis(10);
 	private final ReentrantReadWriteLock rwLock=new ReentrantReadWriteLock();
-	private final long updateInterval;
 	private final Set<URI> classDirs=new HashSet<>();
 	private final Set<URI> jarDirs=new HashSet<>();
 	private final Set<URI> jarFiles=new HashSet<>();
 	private final Set<ClassSourceListener> listeners=new HashSet<>();
 	private final List<ClassSourceInfo> classSources=new ArrayList<>();
-	private FileAlterationMonitor monitor;
-	private static ScheduledExecutorService executor=Executors.newScheduledThreadPool(2, new NamedThreadFactory("ClassSourceExecutor", true));
+	private final List<FileAlterationObserver> observers = new CopyOnWriteArrayList<FileAlterationObserver>();
 	private final Queue<String> changes=new ConcurrentLinkedQueue<>();
 	
-	public DefaultClassSource(long updateInterval) throws Exception {
-		if(updateInterval<=1000)
-		{
-			throw new IllegalArgumentException("updateInterval low 1000,updateInterval="+updateInterval);
-		}
-		this.updateInterval=updateInterval;
+	public DefaultClassSource() throws Exception {
 		init();
 	}
 	
 	private void init() throws Exception
 	{
 		scanClassSources();
-		monitor=new FileAlterationMonitor(updateInterval);
-		monitor.start();
-		executor.scheduleAtFixedRate(this::checkChanged,0, updateInterval, TimeUnit.MILLISECONDS);
 	}
 	
-	private void checkChanged()
+	private void checkFileChange()
 	{
+		for (int i=0;i<observers.size();i++) {
+			 FileAlterationObserver observer =observers.get(i);
+			 observer.checkAndNotify();
+	     }
+	}
+	
+	private final Runnable updateTask=this::update;
+	
+	/**
+	 * 自动更新
+	 * @param executor
+	 * @param unit
+	 * @param time
+	 */
+	public void updateAttach(ScheduledExecutorService executor,TimeUnit unit,long time)
+	{
+		executor.scheduleAtFixedRate(updateTask,time, time, unit);
+	}
+	
+	/**
+	 *扫描文件变化
+	 */
+	public void update()
+	{
+		rwLock.writeLock().lock();
 		try {
-			String changeLogs=null;
+			checkFileChange();
 			if(changes.isEmpty())
 			{
 				return ;
 			}
+			String changeLogs=null;
 			for(;;)
 			{
 				String log=changes.poll();
@@ -92,6 +106,8 @@ public class DefaultClassSource implements ClassSource,FileAlterationListener{
 			}
 		} catch (Throwable e) {
 			log.error(e.getMessage(),e);
+		}finally {
+			rwLock.writeLock().unlock();
 		}
 	}
 	
@@ -124,13 +140,14 @@ public class DefaultClassSource implements ClassSource,FileAlterationListener{
 	 * 监视目录
 	 * @param directory
 	 * @param filter
+	 * @throws Exception 
 	 */
-	protected void monitorDir(String directory,IOFileFilter filter)
+	protected void monitorDir(String directory,IOFileFilter filter) throws Exception
 	{
 		FileAlterationObserver observer=new FileAlterationObserver(directory,filter);
-		observer.checkAndNotify();//检查一次用于刷新时间戳,否则后加入monitor会出现大量文件创建事件
-		observer.addListener(this);
-		monitor.addObserver(observer);
+		observer.initialize();
+		observer.addListener(fileListener);
+		observers.add(observer);
 	}
 
 	class ClassSourceInfoImpl implements ClassSourceInfo
@@ -257,7 +274,7 @@ public class DefaultClassSource implements ClassSource,FileAlterationListener{
 		return result;
 	}
 	
-	public void addClassDir(URI uri)
+	public void addClassDir(URI uri) throws Exception
 	{
 		if(!validationDir(uri))
 		{
@@ -283,7 +300,7 @@ public class DefaultClassSource implements ClassSource,FileAlterationListener{
 		scanClassSources();
 	}
 	
-	public void addJarDir(URI uri)
+	public void addJarDir(URI uri) throws Exception
 	{
 		if(!validationDir(uri))
 		{
@@ -309,7 +326,7 @@ public class DefaultClassSource implements ClassSource,FileAlterationListener{
 		scanClassSources();
 	}
 	
-	public void addJar(URI uri)
+	public void addJar(URI uri) throws Exception
 	{
 		if(!validationJar(uri))
 		{
@@ -367,31 +384,35 @@ public class DefaultClassSource implements ClassSource,FileAlterationListener{
 		}
 	}
 	
-	@Override
-	public void onDirectoryChange(File paramFile) {
-	}
-	@Override
-	public void onDirectoryCreate(File paramFile) {
-	}
-	@Override
-	public void onDirectoryDelete(File paramFile) {
-	}
-	@Override
-	public void onFileChange(File paramFile) {
-		changeLog("onFileChange-->"+paramFile.getName());
-	}
-	@Override
-	public void onFileCreate(File paramFile) {
-		changeLog("onFileCreate-->"+paramFile.getName());
-	}
-	@Override
-	public void onFileDelete(File paramFile) {
-		changeLog("onFileDelete-->"+paramFile.getName());
-	}
-	@Override
-	public void onStart(FileAlterationObserver paramFileAlterationObserver) {
-	}
-	@Override
-	public void onStop(FileAlterationObserver paramFileAlterationObserver) {
+	final FileListener fileListener=new FileListener();
+	
+	class FileListener implements FileAlterationListener{
+		@Override
+		public void onDirectoryChange(File paramFile) {
+		}
+		@Override
+		public void onDirectoryCreate(File paramFile) {
+		}
+		@Override
+		public void onDirectoryDelete(File paramFile) {
+		}
+		@Override
+		public void onFileChange(File paramFile) {
+			changeLog("onFileChange-->"+paramFile.getName());
+		}
+		@Override
+		public void onFileCreate(File paramFile) {
+			changeLog("onFileCreate-->"+paramFile.getName());
+		}
+		@Override
+		public void onFileDelete(File paramFile) {
+			changeLog("onFileDelete-->"+paramFile.getName());
+		}
+		@Override
+		public void onStart(FileAlterationObserver paramFileAlterationObserver) {
+		}
+		@Override
+		public void onStop(FileAlterationObserver paramFileAlterationObserver) {
+		}
 	}
 }
