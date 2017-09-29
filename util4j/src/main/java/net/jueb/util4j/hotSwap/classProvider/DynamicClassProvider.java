@@ -89,14 +89,12 @@ public class DynamicClassProvider implements IClassProvider{
 			state = State.loading;
 			ProviderClassLoader oldClassLoader=this.classLoader;
 			ProviderClassLoader newClassLoader = loadClasses(classSource);
-			Set<Class<?>> classes=newClassLoader.getAllClass();
 			newClassLoader.close();//关闭资源文件引用
-			newClassLoader.setAllClass(classes);
 			this.classLoader = newClassLoader;
 			success=true;
 			if(oldClassLoader!=null)
 			{
-				oldClassLoader.setAllClass(null);
+				oldClassLoader.getAllClass().clear();
 			}
 		} finally {
 			state = State.loaded;
@@ -125,14 +123,10 @@ public class DynamicClassProvider implements IClassProvider{
 			super(parent);
 		}
 
-		private Set<Class<?>> allClass= new HashSet<>();
+		private final Set<Class<?>> allClass= new HashSet<>();
 
 		public Set<Class<?>> getAllClass() {
 			return allClass;
-		}
-
-		public void setAllClass(Set<Class<?>> allClass) {
-			this.allClass = allClass;
 		}
 	}
 	
