@@ -1,14 +1,12 @@
 package net.jueb.util4j.test;
 
 import java.net.InetSocketAddress;
+
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelInitializer;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import net.jueb.util4j.net.JConnection;
-import net.jueb.util4j.net.JConnectionFactory;
-import net.jueb.util4j.net.nettyImpl.NettyConnectionFactory;
-import net.jueb.util4j.net.nettyImpl.handler.listenerHandler.adapter.IdleListenerHandlerAdapter;
+import net.jueb.util4j.net.nettyImpl.handler.listenerHandler.DefaultIdleListenerHandler;
 import net.jueb.util4j.net.nettyImpl.listener.HeartAbleConnectionListener;
 import net.jueb.util4j.net.nettyImpl.server.NettyServer;
 import net.jueb.util4j.net.nettyImpl.server.NettyServerConfig;
@@ -28,16 +26,12 @@ public class TestServer {
 	public static void main(String[] args) {
 		final QueueGroupExecutor qe=new DefaultQueueGroupExecutor();
 		final short mainQueue=1;
-		final ChannelHandler logicHandler=new IdleListenerHandlerAdapter<GameMsg>(new HeartAbleConnectionListener<GameMsg>(){
+		final ChannelHandler logicHandler=new DefaultIdleListenerHandler<GameMsg>(new HeartAbleConnectionListener<GameMsg>(){
 			@Override
 			public void connectionOpened(JConnection connection) {//连接打开
 			}
 			@Override
 			public void connectionClosed(JConnection connection) {//连接关闭
-			}
-			@Override
-			public JConnectionFactory getConnectionFactory() {
-				return new NettyConnectionFactory();
 			}
 			@Override
 			protected void sendHeartReq(JConnection connection) {//发送心跳

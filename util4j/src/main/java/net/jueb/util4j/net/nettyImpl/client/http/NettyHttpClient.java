@@ -19,9 +19,7 @@ import io.netty.util.CharsetUtil;
 import io.netty.util.ReferenceCountUtil;
 import net.jueb.util4j.cache.callBack.CallBack;
 import net.jueb.util4j.net.JConnection;
-import net.jueb.util4j.net.JConnectionFactory;
 import net.jueb.util4j.net.JConnectionListener;
-import net.jueb.util4j.net.nettyImpl.NettyConnectionFactory;
 import net.jueb.util4j.net.nettyImpl.client.NettyClient;
 import net.jueb.util4j.net.nettyImpl.client.NettyClientConfig;
 import net.jueb.util4j.net.nettyImpl.handler.http.HttpClientInitHandler;
@@ -181,12 +179,6 @@ public class NettyHttpClient{
 				e.printStackTrace();
 			}
 			return response;
-		}
-
-		JConnectionFactory factory=new NettyConnectionFactory();
-		@Override
-		public JConnectionFactory getConnectionFactory() {
-			return factory;
 		}
 	}
 	

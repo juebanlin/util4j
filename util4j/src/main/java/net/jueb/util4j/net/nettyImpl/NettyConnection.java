@@ -26,11 +26,22 @@ public class NettyConnection implements JConnection{
 
 	public NettyConnection(Channel channel) {
 		this.channel=channel;
-		this.id=channel.hashCode();
+		this.id=getChannelId(channel);
+		channel.attr(CHANNEL_KEY).set(this);
 	}
 	
 	public Channel getChannel() {
 		return channel;
+	}
+	
+	public static int getChannelId(Channel channel)
+	{
+		return channel.hashCode();
+	}
+	
+	public static NettyConnection findConnection(Channel channel)
+	{
+		return channel.attr(CHANNEL_KEY).get();
 	}
 	
 	@Override

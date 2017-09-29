@@ -13,7 +13,7 @@ import io.netty.util.internal.logging.InternalLogger;
 import net.jueb.util4j.net.JConnectionListener;
 import net.jueb.util4j.net.nettyImpl.NetLogFactory;
 import net.jueb.util4j.net.nettyImpl.NettyConnection;
-import net.jueb.util4j.net.nettyImpl.handler.listenerHandler.adapter.ListenerHandlerAdapter;
+import net.jueb.util4j.net.nettyImpl.handler.listenerHandler.DefaultListenerHandler;
 
 public class HttpClientInitHandler extends ChannelInitializer<SocketChannel> {
 	protected InternalLogger log=NetLogFactory.getLogger(NettyConnection.class);
@@ -47,6 +47,6 @@ public class HttpClientInitHandler extends ChannelInitializer<SocketChannel> {
 		p.addLast(new HttpRequestEncoder());
 		//大文件传输处理
 //		p.addLast(new ChunkedWriteHandler());
-		p.addLast(new ListenerHandlerAdapter<HttpResponse>(listener));
+		p.addLast(new DefaultListenerHandler<HttpResponse>(listener));
 	}
 }

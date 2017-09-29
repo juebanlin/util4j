@@ -7,10 +7,4 @@ public interface JConnectionListener<M> {
 	public void connectionOpened(JConnection connection);
 
 	public void connectionClosed(JConnection connection);
-	
-	 /**
-     * 链接实例工厂
-     * @return
-     */
-    public JConnectionFactory getConnectionFactory();
 }

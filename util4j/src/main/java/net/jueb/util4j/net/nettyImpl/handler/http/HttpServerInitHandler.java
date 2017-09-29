@@ -16,7 +16,7 @@ import io.netty.util.internal.logging.InternalLogger;
 import net.jueb.util4j.net.JConnectionListener;
 import net.jueb.util4j.net.nettyImpl.NetLogFactory;
 import net.jueb.util4j.net.nettyImpl.NettyConnection;
-import net.jueb.util4j.net.nettyImpl.handler.listenerHandler.adapter.ListenerHandlerAdapter;
+import net.jueb.util4j.net.nettyImpl.handler.listenerHandler.DefaultListenerHandler;
 
 public class HttpServerInitHandler extends ChannelInitializer<SocketChannel> {
 	protected InternalLogger log=NetLogFactory.getLogger(NettyConnection.class);
@@ -53,6 +53,6 @@ public class HttpServerInitHandler extends ChannelInitializer<SocketChannel> {
 		//跨域配置
 		CorsConfig corsConfig = CorsConfigBuilder.forAnyOrigin().allowNullOrigin().allowCredentials().build();
 		p.addLast(new CorsHandler(corsConfig));
-		p.addLast(new ListenerHandlerAdapter<HttpRequest>(listener));
+		p.addLast(new DefaultListenerHandler<HttpRequest>(listener));
 	}
 }

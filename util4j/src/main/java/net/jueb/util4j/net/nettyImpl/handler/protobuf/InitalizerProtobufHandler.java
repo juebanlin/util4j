@@ -10,7 +10,7 @@ import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import net.jueb.util4j.net.JConnectionIdleListener;
-import net.jueb.util4j.net.nettyImpl.handler.listenerHandler.adapter.IdleListenerHandlerAdapter;
+import net.jueb.util4j.net.nettyImpl.handler.listenerHandler.DefaultIdleListenerHandler;
 
 /**
  * protobuf协议handler
@@ -34,6 +34,6 @@ public class InitalizerProtobufHandler<T extends ExtendableMessage<T>> extends C
 		p.addLast(new ProtobufDecoder(prototype,extensionRegistry));
 		p.addLast(new ProtobufVarint32LengthFieldPrepender());
 		p.addLast(new ProtobufEncoder());
-		p.addLast(new IdleListenerHandlerAdapter<T>(listener));
+		p.addLast(new DefaultIdleListenerHandler<T>(listener));
 	}
 }

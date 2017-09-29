@@ -84,6 +84,17 @@ public class NettyServer extends AbstractNettyServer{
 		};
 	}
 	
+	protected void manageChannel(Channel channel)
+	{
+		channelGroup.add(channel);
+		channel.closeFuture().addListener(new ChannelFutureListener(){
+			@Override
+			public void operationComplete(ChannelFuture future) throws Exception {
+				channelGroup.remove(future.channel());
+			}
+		});
+	}
+	
 	/**
 	 * 初始化handler适配包装
 	 * @param init
@@ -95,11 +106,11 @@ public class NettyServer extends AbstractNettyServer{
 			@Override
 			public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
 				Channel ch=ctx.channel();
-				channelGroup.add(ch);
+				manageChannel(ch);
 				LogLevel level=config.getChannelLevel();
 				if(level!=null)
-				{
-					ch.pipeline().addLast(new LoggerHandler(config.getLevel()));
+				{//单个链路的日志记录器
+					ch.pipeline().addLast(new LoggerHandler(level));
 				}
 				ch.pipeline().addLast(init);
 				ctx.pipeline().remove(this);//移除当前handler
@@ -143,7 +154,7 @@ public class NettyServer extends AbstractNettyServer{
 		ChannelFuture cf;
 		synchronized (booter) {
 			final CountDownLatch latch=new CountDownLatch(1);
-			LoggerHandler loggerHandler=null;
+			LoggerHandler loggerHandler=null;//server接收处理链路的日志记录器
 			LogLevel level=config.getLevel();
 			if(level!=null)
 			{
@@ -195,9 +206,9 @@ public class NettyServer extends AbstractNettyServer{
 			while(it.hasNext())
 			{
 				Channel channel=it.next();
-				if(channel.hashCode()==id)
+				if(NettyConnection.getChannelId(channel)==id)
 				{
-					return channel.attr(NettyConnection.CHANNEL_KEY).get();
+					return NettyConnection.findConnection(channel);
 				}
 			}
 		}
@@ -213,7 +224,11 @@ public class NettyServer extends AbstractNettyServer{
 			while(it.hasNext())
 			{
 				Channel channel=it.next();
-				connections.add(channel.attr(NettyConnection.CHANNEL_KEY).get());
+				NettyConnection conn=NettyConnection.findConnection(channel);
+				if(conn!=null)
+				{
+					connections.add(conn);
+				}
 			}
 		}
 		return connections;

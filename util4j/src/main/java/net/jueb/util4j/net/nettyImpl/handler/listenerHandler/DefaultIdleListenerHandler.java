@@ -1,4 +1,4 @@
-package net.jueb.util4j.net.nettyImpl.handler.listenerHandler.adapter;
+package net.jueb.util4j.net.nettyImpl.handler.listenerHandler;
 
 import java.util.concurrent.TimeUnit;
 
@@ -17,9 +17,9 @@ import net.jueb.util4j.net.JConnectionIdleListener;
  * @param <M>
  */
 @Sharable
-public class IdleListenerHandlerAdapter<M> extends AbstractListenerHandlerAdapter<M,JConnectionIdleListener<M>>{
+public class DefaultIdleListenerHandler<M> extends AbstractListenerHandler<M,JConnectionIdleListener<M>>{
 
-	public IdleListenerHandlerAdapter(JConnectionIdleListener<M> listener) {
+	public DefaultIdleListenerHandler(JConnectionIdleListener<M> listener) {
 		super(listener);
 	}
 	
