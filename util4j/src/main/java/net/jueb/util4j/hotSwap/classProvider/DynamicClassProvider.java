@@ -4,11 +4,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import net.jueb.util4j.hotSwap.classSources.ClassSource;
 import net.jueb.util4j.hotSwap.classSources.ClassSource.ClassSourceInfo;
-import sun.misc.ClassLoaderUtil;
 
 /**
  * 动态类生产
@@ -90,7 +91,6 @@ public class DynamicClassProvider implements IClassProvider{
 			ProviderClassLoader newClassLoader = loadClasses(classSource);
 			Set<Class<?>> classes=newClassLoader.getAllClass();
 			newClassLoader.close();//关闭资源文件引用
-			ClassLoaderUtil.releaseLoader(newClassLoader);
 			newClassLoader.setAllClass(classes);
 			this.classLoader = newClassLoader;
 			success=true;
