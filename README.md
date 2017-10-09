@@ -15,17 +15,16 @@
 * 加密解密
 
 ### Maven
-在项目的pom.xml的dependencies中加入以下内容:
 
 ```xml
 <dependency>
     <groupId>net.jueb</groupId>
     <artifactId>util4j</artifactId>
-    <version>4.1.1</version>
+    <version>VERSION</version>
 </dependency>
 ```
 
 ### Gradle
 ```
-compile 'net.jueb:util4j-all:4.1.1'
+compile 'net.jueb:util4j-all:VERSION'
 ```
