@@ -17,8 +17,30 @@ public interface JConnection {
 	 */
 	public boolean isActive();
 	
+	public void write(Object obj);
+
+	public void write(byte[] bytes);
+
+	public void writeAndFlush(Object obj);
+
+	public void writeAndFlush(byte[] bytes);
+
+	public void flush();
+
 	public void close();
 	
+	/**
+	 * 获取连接远程地址
+	 * @return
+	 */
+	public InetSocketAddress getRemoteAddress();
+
+	/**
+	 * 获取连接本地地址
+	 * @return
+	 */
+	public InetSocketAddress getLocalAddress();
+
 	/**
 	 * 是否有属性
 	 * @param key
@@ -66,21 +88,4 @@ public interface JConnection {
 	 * @param attachment
 	 */
 	public <T> void setAttachment(T attachment);
-	
-	/**
-	 * 获取连接远程地址
-	 * @return
-	 */
-	public InetSocketAddress getRemoteAddress();
-	/**
-	 * 获取连接本地地址
-	 * @return
-	 */
-	public InetSocketAddress getLocalAddress();
-	
-	public void write(Object obj);
-	public void write(byte[] bytes);
-	public void writeAndFlush(Object obj);
-	public void writeAndFlush(byte[] bytes);
-	public void flush();
 }

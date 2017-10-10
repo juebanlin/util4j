@@ -3,6 +3,7 @@ package net.jueb.util4j.net.nettyImpl.handler.listenerHandler;
 import java.io.IOException;
 import java.util.Objects;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -32,6 +33,11 @@ abstract class AbstractListenerHandler<M,L extends JConnectionListener<M>> exten
 	@Override
 	public final void channelRegistered(ChannelHandlerContext ctx)throws Exception {
 		super.channelRegistered(ctx);
+		//TODO 手动初始化ThreadDeathWatcher的监视线程,不让业务线程去创建,避免热更新框架持有该监视线程
+		ByteBuf initBuf=null;
+		initBuf=ctx.alloc().buffer(1);
+//		initBuf=PooledByteBufAllocator.DEFAULT.buffer(1);
+		ReferenceCountUtil.release(initBuf);
 	}
 	
 	@Override
@@ -44,8 +50,7 @@ abstract class AbstractListenerHandler<M,L extends JConnectionListener<M>> exten
 	 */
 	@Override
 	public final void channelActive(ChannelHandlerContext ctx) throws Exception {
-		Channel channel=ctx.channel();
-		JConnection connection=buildConnection(channel);
+		JConnection connection=buildConnection(ctx);
 		listener.connectionOpened(connection);
 		super.channelActive(ctx);
 	}
@@ -117,8 +122,8 @@ abstract class AbstractListenerHandler<M,L extends JConnectionListener<M>> exten
 	 * 创建一个链接实例
 	 * @return
 	 */
-	protected JConnection buildConnection(Channel channel){
-		JConnection connection=new NettyConnection(channel);
+	protected JConnection buildConnection(ChannelHandlerContext ctx){
+		JConnection connection=new NettyConnection(ctx);
 		return connection;
 	}
 
