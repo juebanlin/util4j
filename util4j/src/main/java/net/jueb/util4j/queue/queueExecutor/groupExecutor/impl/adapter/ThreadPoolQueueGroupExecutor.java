@@ -19,26 +19,27 @@ public class ThreadPoolQueueGroupExecutor extends ThreadPoolExecutor implements 
     
 	public static final int DEFAULT_KEEP_ALIVE = 30;
     
-	 private final IndexQueueGroupManager iqm;
-	    private final KeyQueueGroupManager kqm;
+	private final IndexQueueGroupManager iqm;
+	private final KeyQueueGroupManager kqm;
+	
+	protected void init()
+    {
+    	this.iqm.setGroupEventListener(new IndexGroupEventListener() {
+			@Override
+			public void onQueueHandleTask(short index, Runnable handleTask) {
+				//当sqm有可以处理某队列的任务产生时,丢到系统队列,当系统队列
+				execute(handleTask);
+			}
+		});
+    	this.kqm.setGroupEventListener(new KeyGroupEventListener() {
+			@Override
+			public void onQueueHandleTask(String key, Runnable handleTask) {
+				//当sqm有可以处理某队列的任务产生时,丢到系统队列,当系统队列
+				execute(handleTask);
+			}
+		});
+    }    
 	    
-	    protected void init()
-	    {
-	    	this.iqm.setGroupEventListener(new IndexGroupEventListener() {
-				@Override
-				public void onQueueHandleTask(short index, Runnable handleTask) {
-					//当sqm有可以处理某队列的任务产生时,丢到系统队列,当系统队列
-					execute(handleTask);
-				}
-			});
-	    	this.kqm.setGroupEventListener(new KeyGroupEventListener() {
-				@Override
-				public void onQueueHandleTask(String key, Runnable handleTask) {
-					//当sqm有可以处理某队列的任务产生时,丢到系统队列,当系统队列
-					execute(handleTask);
-				}
-			});
-	    }
     
     public ThreadPoolQueueGroupExecutor(int corePoolSize, int maximumPoolSize,BlockingQueue<Runnable> workQueue,
     		IndexQueueGroupManager iqm,KeyQueueGroupManager kqm) {

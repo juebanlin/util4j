@@ -1,11 +1,13 @@
 package net.jueb.util4j.queue.queueExecutor.groupExecutor.impl;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -27,7 +29,7 @@ import net.jueb.util4j.queue.queueExecutor.groupExecutor.KeyQueueGroupManager;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.KeyQueueGroupManager.KeyGroupEventListener;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupExecutor;
 
-public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
+public class QueuesExecutorService extends AbstractExecutorService implements QueueGroupExecutor{
     
 	protected Logger log=LoggerFactory.getLogger(getClass());
 	
@@ -98,28 +100,28 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
      */
     private final Executor assistExecutor;
     
-    public DefaultQueueGroupExecutor() {
+    public QueuesExecutorService() {
         this(DEFAULT_INITIAL_THREAD_POOL_SIZE, DEFAULT_MAX_THREAD_POOL);
     }
 
-    public DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize) {
+    public QueuesExecutorService(int corePoolSize, int maximumPoolSize) {
         this(corePoolSize, maximumPoolSize,DEFAULT_BossQueue);
     }
     
-    protected DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize,Queue<Runnable> bossQueue) {
+    protected QueuesExecutorService(int corePoolSize, int maximumPoolSize,Queue<Runnable> bossQueue) {
             this(corePoolSize, maximumPoolSize, DEFAULT_KEEP_ALIVE_SEC, TimeUnit.SECONDS, 
             		Executors.defaultThreadFactory(),DEFAULT_waitConditionStrategy,
             		bossQueue,DEFAULT_IndexQueueGroupManager,DEFAULT_KeyQueueGroupManager,null);
         }
     
-    protected DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize,
+    protected QueuesExecutorService(int corePoolSize, int maximumPoolSize,
         	Queue<Runnable> bossQueue,IndexQueueGroupManager indexQM,KeyQueueGroupManager keyQM) {
             this(corePoolSize, maximumPoolSize, DEFAULT_KEEP_ALIVE_SEC, TimeUnit.SECONDS, 
             		Executors.defaultThreadFactory(),DEFAULT_waitConditionStrategy,
             		bossQueue,indexQM,keyQM,new DirectExecutor());
         }
     
-    protected DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize,
+    protected QueuesExecutorService(int corePoolSize, int maximumPoolSize,
     	Queue<Runnable> bossQueue,IndexQueueGroupManager indexQM,KeyQueueGroupManager keyQM,WaitConditionStrategy waitConditionStrategy) {
         this(corePoolSize, maximumPoolSize, DEFAULT_KEEP_ALIVE_SEC, TimeUnit.SECONDS, 
         		Executors.defaultThreadFactory(),waitConditionStrategy,
@@ -139,7 +141,7 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
      * @param kqm 键值队列管理器
      * @param assistExecutor 辅助执行器,用于启动工作线程或处理其它逻辑
      */
-    public DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize, 
+    public QueuesExecutorService(int corePoolSize, int maximumPoolSize, 
     		long keepAliveTime, TimeUnit unit,ThreadFactory threadFactory,
             WaitConditionStrategy waitConditionStrategy,Queue<Runnable> bossQueue,
             IndexQueueGroupManager iqm,KeyQueueGroupManager kqm,Executor assistExecutor) {
@@ -703,9 +705,9 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
         	return this;
         }
         
-        public DefaultQueueGroupExecutor build()
+        public QueuesExecutorService build()
 		{
-        	DefaultQueueGroupExecutor qe=new DefaultQueueGroupExecutor(corePoolSize, 
+        	QueuesExecutorService qe=new QueuesExecutorService(corePoolSize, 
 					maximumPoolSize, 
 					keepAliveTime, 
 					unit, 
@@ -716,5 +718,16 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 					kqm,assistExecutor);
 			return qe;
 		}
+	}
+
+	@Override
+	public List<Runnable> shutdownNow() {
+		shutdown();
+		return new ArrayList<>(systemQueue);
+	}
+
+	@Override
+	public void execute(Runnable command) {
+		systemExecute(command);
 	}
 }
