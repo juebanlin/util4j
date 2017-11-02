@@ -1,6 +1,7 @@
 package net.jueb.util4j.hotSwap.annationScriptFactory;
 
 import java.lang.reflect.Modifier;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
@@ -66,9 +67,9 @@ public abstract class AnnationScriptClassProvider<S extends IAnnotationScript> i
 	 */
 	protected final void load()throws Exception
 	{
+		Set<Class<?>> classes=classProvider.getLoadedClasses();
 		rwLock.writeLock().lock();
 		try {
-			Set<Class<?>> classes=classProvider.getLoadedClasses();
 			initScriptClasses(classes);
 			onScriptLoaded(classes);
 		} finally {
@@ -85,8 +86,8 @@ public abstract class AnnationScriptClassProvider<S extends IAnnotationScript> i
 	{
 		Set<Class<? extends S>> scriptClass=findScriptClass(classes);
 		Set<Class<? extends S>> instanceAbleScript = findInstanceAbleScript(scriptClass);
-		this.idMap.clear();
-		this.nameMap.clear();
+		Map<String, Class<? extends S>> nameMap_ = new HashMap<String, Class<? extends S>>();
+		Map<Integer, Class<? extends S>> idMap_ = new HashMap<Integer, Class<? extends S>>();
 		for(Class<? extends S> clazz:instanceAbleScript)
 		{
 			AnnationScript[] key=clazz.getDeclaredAnnotationsByType(AnnationScript.class);
@@ -97,25 +98,25 @@ public abstract class AnnationScriptClassProvider<S extends IAnnotationScript> i
 				String name=mapper.name();
 				if(id!=0)
 				{
-					Class<? extends S> old=idMap.getOrDefault(id,null);
+					Class<? extends S> old=idMap_.getOrDefault(id,null);
 					if(old!=null)
 					{
 						_log.error("find Repeat Id ScriptClass,id="+id+",addingScript:" + clazz + ",existScript:"+ old);
 					}else
 					{
-						idMap.put(id, clazz);
+						idMap_.put(id, clazz);
 						_log.info("regist id mapping ScriptClass:id="+id+",class=" + clazz);
 					}
 				}
 				if(name!=null && name.trim().length()>0)
 				{
-					Class<? extends S> old=nameMap.getOrDefault(name,null);
+					Class<? extends S> old=nameMap_.getOrDefault(name,null);
 					if(old!=null)
 					{
 						_log.error("find Repeat name ScriptClass,name="+name+",addingScript:" + clazz + ",existScript:"+ old);
 					}else
 					{
-						nameMap.put(name, clazz);
+						nameMap_.put(name, clazz);
 						_log.info("regist name mapping ScriptClass:name="+name+",class=" + clazz);
 					}
 				}
@@ -124,6 +125,10 @@ public abstract class AnnationScriptClassProvider<S extends IAnnotationScript> i
 				_log.error("find no mapping ScriptClass:"+clazz);
 			}
 		}
+		this.idMap.clear();
+		this.nameMap.clear();
+		this.idMap.putAll(idMap_);
+		this.nameMap.putAll(nameMap_);
 		_log.info("loadScriptClass complete,id mapping size:"+idMap.size()+",name mapping size:"+nameMap.size());
 	}
 	

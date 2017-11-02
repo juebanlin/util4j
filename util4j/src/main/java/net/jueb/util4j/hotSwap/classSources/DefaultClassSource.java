@@ -17,7 +17,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -34,7 +33,7 @@ public class DefaultClassSource implements ClassSource{
 
 	protected final Logger log=LoggerFactory.getLogger(getClass());
 	public static final long DEFAULT_UPDATE_INTERVAL=TimeUnit.SECONDS.toMillis(10);
-	private final ReentrantReadWriteLock rwLock=new ReentrantReadWriteLock();
+	private final Object lock=new Object();
 	private final Set<URI> classDirs=new HashSet<>();
 	private final Set<URI> jarDirs=new HashSet<>();
 	private final Set<URI> jarFiles=new HashSet<>();
@@ -76,16 +75,17 @@ public class DefaultClassSource implements ClassSource{
 	/**
 	 *扫描文件变化
 	 */
-	public void update()
+	private void update()
 	{
-		rwLock.writeLock().lock();
+		String changeLogs=null;
 		try {
-			checkFileChange();
+			synchronized (lock) {
+				checkFileChange();
+			}
 			if(changes.isEmpty())
 			{
 				return ;
 			}
-			String changeLogs=null;
 			for(;;)
 			{
 				String log=changes.poll();
@@ -99,15 +99,13 @@ public class DefaultClassSource implements ClassSource{
 				}
 				changeLogs+=log+"\n";
 			}
-			if(changeLogs!=null)
-			{
-				log.debug("startScanClassSources from events:\n"+changeLogs);
-				scanClassSources();
-			}
 		} catch (Throwable e) {
 			log.error(e.getMessage(),e);
-		}finally {
-			rwLock.writeLock().unlock();
+		}
+		if(changeLogs!=null)
+		{
+			log.debug("startScanClassSources from events:\n"+changeLogs);
+			scanClassSources();
 		}
 	}
 	
@@ -176,72 +174,71 @@ public class DefaultClassSource implements ClassSource{
 	 */
 	public void scanClassSources()
 	{
-		rwLock.writeLock().lock();
-		boolean success=false;
-		try {
-			List<ClassSourceInfo> infos=new ArrayList<>();
-			for(URI uri:classDirs)
-			{
-				if(!validationDir(uri))
+		synchronized (lock) {
+			boolean success=false;
+			try {
+				List<ClassSourceInfo> infos=new ArrayList<>();
+				for(URI uri:classDirs)
 				{
-					continue;
-				}
-				File file=new File(uri);
-				HashMap<String, File> map=FileUtil.findClassByDirAndSub(file);
-				ClassSourceInfo info=new ClassSourceInfoImpl(uri.toURL(), new ArrayList<>(map.keySet()));
-				infos.add(info);
-			}
-			Map<URI,JarFile> allJarFiles=new HashMap<>();
-			for(URI uri:jarDirs)
-			{
-				if(!validationDir(uri))
-				{
-					continue;
-				}
-				File file=new File(uri);
-				Set<File> jars=FileUtil.findJarFileByDirAndSub(file);
-				for(File f:jars)
-				{
-					allJarFiles.put(f.toURI(), new JarFile(f));
-				}
-			}
-			for(URI uri:jarFiles)
-			{
-				if(!validationJar(uri))
-				{
-					continue;
-				}
-				File f=new File(uri);
-				allJarFiles.put(f.toURI(), new JarFile(f));
-			}
-			for(Entry<URI, JarFile> f:allJarFiles.entrySet())
-			{
-				URI uri=f.getKey();
-				JarFile jar=f.getValue();
-				try {
-					Map<String,JarEntry> map=FileUtil.findClassByJar(jar);
+					if(!validationDir(uri))
+					{
+						continue;
+					}
+					File file=new File(uri);
+					HashMap<String, File> map=FileUtil.findClassByDirAndSub(file);
 					ClassSourceInfo info=new ClassSourceInfoImpl(uri.toURL(), new ArrayList<>(map.keySet()));
 					infos.add(info);
-				} finally {
-					jar.close();
 				}
+				Map<URI,JarFile> allJarFiles=new HashMap<>();
+				for(URI uri:jarDirs)
+				{
+					if(!validationDir(uri))
+					{
+						continue;
+					}
+					File file=new File(uri);
+					Set<File> jars=FileUtil.findJarFileByDirAndSub(file);
+					for(File f:jars)
+					{
+						allJarFiles.put(f.toURI(), new JarFile(f));
+					}
+				}
+				for(URI uri:jarFiles)
+				{
+					if(!validationJar(uri))
+					{
+						continue;
+					}
+					File f=new File(uri);
+					allJarFiles.put(f.toURI(), new JarFile(f));
+				}
+				for(Entry<URI, JarFile> f:allJarFiles.entrySet())
+				{
+					URI uri=f.getKey();
+					JarFile jar=f.getValue();
+					try {
+						Map<String,JarEntry> map=FileUtil.findClassByJar(jar);
+						ClassSourceInfo info=new ClassSourceInfoImpl(uri.toURL(), new ArrayList<>(map.keySet()));
+						infos.add(info);
+					} finally {
+						jar.close();
+					}
+				}
+				classSources.clear();
+				classSources.addAll(infos);
+				success=true;
+			} catch (Exception e) {
+				log.error(e.getMessage(),e);
 			}
-			classSources.clear();
-			classSources.addAll(infos);
-			success=true;
-		} catch (Exception e) {
-			log.error(e.getMessage(),e);
-		}finally {
-			rwLock.writeLock().unlock();
-		}
-		if(success)
-		{
-			onScaned();
-			for(ClassSourceListener l:listeners)
+			if(success)
 			{
-				try {
-					l.onSourcesFind();
-				} catch (Exception e) {
+				onScaned();
+				for(ClassSourceListener l:listeners)
+				{
+					try {
+						l.onSourcesFind();
+					} catch (Exception e) {
+					}
 				}
 			}
 		}
@@ -281,8 +278,7 @@ public class DefaultClassSource implements ClassSource{
 			log.error("unSupprot uri:"+uri.getPath());
 			return ;
 		}
-		rwLock.writeLock().lock();
-		try {
+		synchronized (lock) {
 			if(classDirs.contains(uri))
 			{
 				log.error("repeat add uri:"+uri);
@@ -294,9 +290,6 @@ public class DefaultClassSource implements ClassSource{
 			monitorDir(directory,buildFilterBySuffixs(directory, suffix));
 			classDirs.add(uri);
 		}
-		finally {
-			rwLock.writeLock().unlock();
-		}
 		scanClassSources();
 	}
 	
@@ -307,8 +300,7 @@ public class DefaultClassSource implements ClassSource{
 			log.error("unSupprot uri:"+uri);
 			return ;
 		}
-		rwLock.writeLock().lock();
-		try {
+		synchronized (lock) {
 			if(jarDirs.contains(uri))
 			{
 				log.error("repeat add uri:"+uri);
@@ -320,9 +312,6 @@ public class DefaultClassSource implements ClassSource{
 			monitorDir(directory,buildFilterBySuffixs(directory, suffix));
 			jarDirs.add(uri);
 		}
-		finally {
-			rwLock.writeLock().unlock();
-		}
 		scanClassSources();
 	}
 	
@@ -333,8 +322,7 @@ public class DefaultClassSource implements ClassSource{
 			log.error("unSupprot uri:"+uri);
 			return ;
 		}
-		rwLock.writeLock().lock();
-		try {
+		synchronized (lock) {
 			if(jarFiles.contains(uri))
 			{
 				log.error("repeat add uri:"+uri);
@@ -346,41 +334,29 @@ public class DefaultClassSource implements ClassSource{
 			monitorDir(directory,buildFilterByNames(directory, name));
 			jarFiles.add(uri);
 		}
-		finally {
-			rwLock.writeLock().unlock();
-		}
 		scanClassSources();
 	}
 
 	@Override
 	public List<ClassSourceInfo> getClassSources() {
-		rwLock.readLock().lock();
-		try {
+		synchronized (lock) {
 			return Collections.unmodifiableList(classSources);
-		}finally {
-			rwLock.readLock().unlock();
 		}
 	}
 
 	@Override
 	public void addEventListener(ClassSourceListener listener) {
 		Objects.requireNonNull(listener);
-		rwLock.readLock().lock();
-		try {
+		synchronized (lock) {
 			listeners.add(listener);
-		}finally {
-			rwLock.readLock().unlock();
 		}
 	}
 
 	@Override
 	public void removeEventListener(ClassSourceListener listener) {
 		Objects.requireNonNull(listener);
-		rwLock.readLock().lock();
-		try {
+		synchronized (lock) {
 			listeners.remove(listener);
-		}finally {
-			rwLock.readLock().unlock();
 		}
 	}
 	
