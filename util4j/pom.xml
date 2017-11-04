@@ -4,7 +4,7 @@
 
 	<groupId>net.jueb</groupId>
 	<artifactId>util4j</artifactId>
-	<version>4.1.5</version>
+	<version>4.1.6</version>
 	<packaging>jar</packaging>
 
 	<name>${project.groupId}:${project.artifactId}</name>
@@ -161,6 +161,12 @@
 			<artifactId>quartz-jobs</artifactId>
 			<version>2.2.3</version>
 			<optional>true</optional>
+		</dependency>
+		<dependency>
+		  <groupId>com.squareup</groupId>
+		  <artifactId>javapoet</artifactId>
+		  <version>1.9.0</version>
+		  <optional>true</optional>
 		</dependency>
 	</dependencies>
 	<build>
