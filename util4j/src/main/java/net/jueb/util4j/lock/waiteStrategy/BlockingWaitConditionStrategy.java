@@ -27,7 +27,6 @@ public final class BlockingWaitConditionStrategy implements WaitConditionStrateg
 		this.lock.lock();
 		try {
 			this.processorNotifyCondition.signalAll();
-			this.lock.unlock();
 		} finally {
 			this.lock.unlock();
 		}
