@@ -36,7 +36,12 @@ public interface IClassProvider {
 	public ClassLoader getClassLoader();
 	
 	public Set<Class<?>> getLoadedClasses();
-
+	/**
+	 * 重载class
+	 * if(getClassLoader()==getClass().getClassLoader())
+	 * 注意,调用此方法的实例的classLoader不能等于当前的classLoader,
+	 * 否则会造成classLoader内存泄漏
+	 */
 	public void reload();
 	
 	public void addListener(EventListener listener);
