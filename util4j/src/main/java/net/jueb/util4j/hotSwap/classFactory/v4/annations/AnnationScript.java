@@ -1,4 +1,4 @@
-package net.jueb.util4j.hotSwap.classFactory.annationScriptFactory.annations;
+package net.jueb.util4j.hotSwap.classFactory.v4.annations;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;

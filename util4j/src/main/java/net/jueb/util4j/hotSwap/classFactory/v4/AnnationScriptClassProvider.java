@@ -1,4 +1,4 @@
-package net.jueb.util4j.hotSwap.classFactory.annationScriptFactory;
+package net.jueb.util4j.hotSwap.classFactory.v4;
 
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
@@ -12,7 +12,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.jueb.util4j.hotSwap.classFactory.annationScriptFactory.annations.AnnationScript;
+import net.jueb.util4j.hotSwap.classFactory.v4.annations.AnnationScript;
 import net.jueb.util4j.hotSwap.classProvider.IClassProvider;
 import net.jueb.util4j.hotSwap.classProvider.IClassProvider.State;
 

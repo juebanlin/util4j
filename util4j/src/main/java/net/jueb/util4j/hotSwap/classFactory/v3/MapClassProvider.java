@@ -1,15 +1,18 @@
-package net.jueb.util4j.hotSwap.classFactory.generalScriptFactory;
+package net.jueb.util4j.hotSwap.classFactory.v3;
 
 import java.lang.reflect.Modifier;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import net.jueb.util4j.hotSwap.classProvider.DynamicClassProvider;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import net.jueb.util4j.hotSwap.classProvider.IClassProvider;
 import net.jueb.util4j.hotSwap.classProvider.IClassProvider.State;
-import net.jueb.util4j.hotSwap.classSources.ClassSource;
 
 /**
  * 动态加载jar内的脚本,支持包含匿名内部类 T不能做为父类加载 T尽量为接口类型,
@@ -17,8 +20,9 @@ import net.jueb.util4j.hotSwap.classSources.ClassSource;
  * 此类提供的脚本最好不要长期保持引用,由其是热重载后,原来的脚本要GC必须保证引用不存在
  * 通过监听脚本源实现代码的加载
  */
-public abstract class GeneralScriptClassProvider<K,T extends IGeneralScript<K>> extends StaticGeneralScriptClassFactory<K,T> {
-
+public abstract class MapClassProvider<C,K> implements IMapClassFactory<C, K>{
+	
+	protected final Logger _log = LoggerFactory.getLogger(this.getClass());
 	/**
 	 * 脚本库目录
 	 */
@@ -29,15 +33,16 @@ public abstract class GeneralScriptClassProvider<K,T extends IGeneralScript<K>> 
 	 */
 	protected volatile boolean autoReload;
 	
-	private final Map<K, Class<? extends T>> codeMap = new ConcurrentHashMap<K, Class<? extends T>>();
+	private final Class<C> parentClass;
+	private final Map<K, Class<? extends C>> codeMap = new ConcurrentHashMap<K, Class<? extends C>>();
 	private final ReentrantReadWriteLock rwLock=new ReentrantReadWriteLock();
 
-	protected GeneralScriptClassProvider(ClassSource classSource,boolean autoReload) {
-		this(new DynamicClassProvider(classSource,autoReload));
-	}
 
-	protected GeneralScriptClassProvider(IClassProvider classProvider) {
+	protected MapClassProvider(Class<C> parentClass,IClassProvider classProvider) {
+		Objects.requireNonNull(parentClass);
+		Objects.requireNonNull(classProvider);
 		this.classProvider=classProvider;
+		this.parentClass=parentClass;
 		init();
 	}
 	
@@ -81,8 +86,8 @@ public abstract class GeneralScriptClassProvider<K,T extends IGeneralScript<K>> 
 	 */
 	private void initScriptClasses(Set<Class<?>> classes)throws Exception
 	{
-		Set<Class<? extends T>> scriptClass=findScriptClass(classes);
-		Map<K, Class<? extends T>> newCodeMap = findInstanceAbleScript(scriptClass);
+		Set<Class<? extends C>> scriptClass=findScriptClass(classes);
+		Map<K, Class<? extends C>> newCodeMap = findInstanceAbleScript(scriptClass);
 		this.codeMap.clear();
 		this.codeMap.putAll(newCodeMap);
 		_log.info("loadScriptClass complete,find Class:"+newCodeMap.size());
@@ -96,12 +101,12 @@ public abstract class GeneralScriptClassProvider<K,T extends IGeneralScript<K>> 
 	 * @throws IllegalAccessException
 	 */
 	@SuppressWarnings("unchecked")
-	private Set<Class<? extends T>> findScriptClass(Set<Class<?>> clazzs)
+	private Set<Class<? extends C>> findScriptClass(Set<Class<?>> clazzs)
 			throws InstantiationException, IllegalAccessException {
-		Set<Class<? extends T>> scriptClazzs = new HashSet<Class<? extends T>>();
+		Set<Class<? extends C>> scriptClazzs = new HashSet<Class<? extends C>>();
 		for (Class<?> clazz : clazzs) {
-			if (IGeneralScript.class.isAssignableFrom(clazz)) {
-				Class<T> scriptClazz = (Class<T>) clazz;
+			if (parentClass.isAssignableFrom(clazz)) {
+				Class<C> scriptClazz = (Class<C>) clazz;
 				scriptClazzs.add(scriptClazz);
 			}
 		}
@@ -115,17 +120,25 @@ public abstract class GeneralScriptClassProvider<K,T extends IGeneralScript<K>> 
 	 * @throws InstantiationException
 	 * @throws IllegalAccessException
 	 */
-	private Map<K, Class<? extends T>> findInstanceAbleScript(Set<Class<? extends T>> scriptClazzs)
+	private Map<K, Class<? extends C>> findInstanceAbleScript(Set<Class<? extends C>> scriptClazzs)
 			throws InstantiationException, IllegalAccessException {
-		Map<K, Class<? extends T>> codeMap = new ConcurrentHashMap<K, Class<? extends T>>();
-		for (Class<? extends T> scriptClazz : scriptClazzs) 
+		Map<K, Class<? extends C>> codeMap = new ConcurrentHashMap<K, Class<? extends C>>();
+		for (Class<? extends C> scriptClazz : scriptClazzs) 
 		{
-			T script = getInstacne(scriptClazz);
+			C script = getInstacne(scriptClazz);
 			if(script==null)
 			{
 				continue;
 			}
-			K key = script.getScriptKey();
+			K key=null;
+			try {
+				key = findKey(script);
+			} catch (Exception e) {
+			}
+			if(key==null)
+			{
+				continue;
+			}
 			if(skipRegistScript(script))
 			{
 				_log.warn("skip regist script,key="+key+",class=" + script.getClass());
@@ -142,14 +155,21 @@ public abstract class GeneralScriptClassProvider<K,T extends IGeneralScript<K>> 
 		return codeMap;
 	}
 
+	/**
+	 * 获取这个实例的key
+	 * @param instance
+	 * @return
+	 */
+	protected abstract K findKey(C instance);
+	
 	protected final boolean isAbstractOrInterface(Class<?> clazz)
 	{
 		return Modifier.isAbstract(clazz.getModifiers())|| Modifier.isInterface(clazz.getModifiers());// 是否是抽象类
 	}
 	
-	protected final <C> C getInstacne(Class<C> clazz)
+	protected final <X> X getInstacne(Class<X> clazz)
 	{
-		C instacne=null;
+		X instacne=null;
 		if (!isAbstractOrInterface(clazz)) {// 可实例化脚本
 			try {
 				instacne=clazz.newInstance();
@@ -165,7 +185,7 @@ public abstract class GeneralScriptClassProvider<K,T extends IGeneralScript<K>> 
 	 * @param script
 	 * @return
 	 */
-	protected boolean skipRegistScript(T script)
+	protected boolean skipRegistScript(C script)
 	{
 		return false;
 	}
@@ -192,7 +212,32 @@ public abstract class GeneralScriptClassProvider<K,T extends IGeneralScript<K>> 
 		}
 	}
 	
-	protected final Class<? extends T> getScriptClass(K key)
+	protected  final <T> T newInstance(Class<? extends T> c,Object... args) {
+		T result = null;
+		try {
+			Class<?>[] cs=new Class<?>[args.length];
+			for(int i=0;i<args.length;i++)
+			{
+				cs[i]=args[i].getClass();
+			}
+			result = c.getConstructor(cs).newInstance(args);
+		} catch (Exception e) {
+			_log.error(e.getMessage(), e);
+		}
+		return result;
+	}
+	
+	protected final <T> T newInstance(Class<? extends T> c) {
+		T result = null;
+		try {
+			result = c.newInstance();
+		} catch (Exception e) {
+			_log.error(e.getMessage(), e);
+		}
+		return result;
+	}
+	
+	protected final Class<? extends C> getScriptClass(K key)
 	{
 		rwLock.readLock().lock();
 		try {
@@ -203,19 +248,14 @@ public abstract class GeneralScriptClassProvider<K,T extends IGeneralScript<K>> 
 	}
 
 
-	private Class<? extends T> getClass(K key)
+	private Class<? extends C> getClass(K key)
 	{
-		Class<? extends T> c = getStaticScriptClass(key);
-		if(c==null)
-		{
-			c = getScriptClass(key);
-		}
-		return c;
+		return getScriptClass(key);
 	}
 	
-	public final T buildInstance(K key) {
-		T result=null;
-		Class<? extends T> c = getClass(key);
+	public final C buildInstance(K key) {
+		C result=null;
+		Class<? extends C> c = getClass(key);
 		if (c == null) 
 		{
 			_log.error("not found script,key=" + key);
@@ -227,9 +267,9 @@ public abstract class GeneralScriptClassProvider<K,T extends IGeneralScript<K>> 
 	}
 	
 	@Override
-	public final T buildInstance(K key, Object... args) {
-		T result=null;
-		Class<? extends T> c = getClass(key);
+	public final C buildInstance(K key, Object... args) {
+		C result=null;
+		Class<? extends C> c = getClass(key);
 		if (c == null) 
 		{
 			_log.error("not found script,key=" + key );
@@ -246,11 +286,6 @@ public abstract class GeneralScriptClassProvider<K,T extends IGeneralScript<K>> 
 		} catch (Throwable e) {
 			_log.error(e.getMessage(), e);
 		}
-	}
-	
-	public final boolean hasKey(K key)
-	{
-		return getClass(key)!=null;
 	}
 	
 	public boolean isAutoReload() {

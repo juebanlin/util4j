@@ -1,4 +1,4 @@
-package net.jueb.util4j.hotSwap.classFactory.annationScriptFactory;
+package net.jueb.util4j.hotSwap.classFactory.v4;
 
 /**
  * 动态加载类 
