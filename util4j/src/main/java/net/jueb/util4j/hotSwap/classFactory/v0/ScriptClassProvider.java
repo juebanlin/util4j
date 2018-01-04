@@ -1,4 +1,4 @@
-package net.jueb.util4j.hotSwap.generalScriptFactory;
+package net.jueb.util4j.hotSwap.classFactory.v0;
 
 import java.lang.reflect.Modifier;
 import java.util.HashSet;
@@ -17,7 +17,7 @@ import net.jueb.util4j.hotSwap.classSources.ClassSource;
  * 此类提供的脚本最好不要长期保持引用,由其是热重载后,原来的脚本要GC必须保证引用不存在
  * 通过监听脚本源实现代码的加载
  */
-public abstract class GeneralScriptClassProvider<K,T extends IGeneralScript<K>> extends StaticGeneralScriptClassFactory<K,T> {
+public abstract class ScriptClassProvider<T extends IScript> extends StaticScriptClassFactory<T> {
 
 	/**
 	 * 脚本库目录
@@ -29,14 +29,14 @@ public abstract class GeneralScriptClassProvider<K,T extends IGeneralScript<K>> 
 	 */
 	protected volatile boolean autoReload;
 	
-	private final Map<K, Class<? extends T>> codeMap = new ConcurrentHashMap<K, Class<? extends T>>();
+	private final Map<Integer, Class<? extends T>> codeMap = new ConcurrentHashMap<Integer, Class<? extends T>>();
 	private final ReentrantReadWriteLock rwLock=new ReentrantReadWriteLock();
 
-	protected GeneralScriptClassProvider(ClassSource classSource,boolean autoReload) {
+	protected ScriptClassProvider(ClassSource classSource,boolean autoReload) {
 		this(new DynamicClassProvider(classSource,autoReload));
 	}
 
-	protected GeneralScriptClassProvider(IClassProvider classProvider) {
+	protected ScriptClassProvider(IClassProvider classProvider) {
 		this.classProvider=classProvider;
 		init();
 	}
@@ -82,7 +82,7 @@ public abstract class GeneralScriptClassProvider<K,T extends IGeneralScript<K>> 
 	private void initScriptClasses(Set<Class<?>> classes)throws Exception
 	{
 		Set<Class<? extends T>> scriptClass=findScriptClass(classes);
-		Map<K, Class<? extends T>> newCodeMap = findInstanceAbleScript(scriptClass);
+		Map<Integer, Class<? extends T>> newCodeMap = findInstanceAbleScript(scriptClass);
 		this.codeMap.clear();
 		this.codeMap.putAll(newCodeMap);
 		_log.info("loadScriptClass complete,find Class:"+newCodeMap.size());
@@ -100,7 +100,7 @@ public abstract class GeneralScriptClassProvider<K,T extends IGeneralScript<K>> 
 			throws InstantiationException, IllegalAccessException {
 		Set<Class<? extends T>> scriptClazzs = new HashSet<Class<? extends T>>();
 		for (Class<?> clazz : clazzs) {
-			if (IGeneralScript.class.isAssignableFrom(clazz)) {
+			if (IScript.class.isAssignableFrom(clazz)) {
 				Class<T> scriptClazz = (Class<T>) clazz;
 				scriptClazzs.add(scriptClazz);
 			}
@@ -115,9 +115,9 @@ public abstract class GeneralScriptClassProvider<K,T extends IGeneralScript<K>> 
 	 * @throws InstantiationException
 	 * @throws IllegalAccessException
 	 */
-	private Map<K, Class<? extends T>> findInstanceAbleScript(Set<Class<? extends T>> scriptClazzs)
+	private Map<Integer, Class<? extends T>> findInstanceAbleScript(Set<Class<? extends T>> scriptClazzs)
 			throws InstantiationException, IllegalAccessException {
-		Map<K, Class<? extends T>> codeMap = new ConcurrentHashMap<K, Class<? extends T>>();
+		Map<Integer, Class<? extends T>> codeMap = new ConcurrentHashMap<Integer, Class<? extends T>>();
 		for (Class<? extends T> scriptClazz : scriptClazzs) 
 		{
 			T script = getInstacne(scriptClazz);
@@ -125,18 +125,18 @@ public abstract class GeneralScriptClassProvider<K,T extends IGeneralScript<K>> 
 			{
 				continue;
 			}
-			K key = script.getScriptKey();
 			if(skipRegistScript(script))
 			{
-				_log.warn("skip regist script,key="+key+",class=" + script.getClass());
+				_log.warn("skil regist script,code="+script.getMessageCode()+",class=" + script.getClass());
 				continue;
 			}
-			if (codeMap.containsKey(key)) {// 重复脚本code定义
-				_log.error("find Repeat ScriptClass,key="+key+",addingScript:" + script.getClass() + ",existScript:"
-						+ codeMap.get(key));
+			int code = script.getMessageCode();
+			if (codeMap.containsKey(script.getMessageCode())) {// 重复脚本code定义
+				_log.error("find Repeat ScriptClass,code="+code+",addingScript:" + script.getClass() + ",existScript:"
+						+ codeMap.get(code));
 			} else {
-				codeMap.put(key, scriptClazz);
-				_log.info("regist ScriptClass:key="+key+",class=" + scriptClazz);
+				codeMap.put(code, scriptClazz);
+				_log.info("regist ScriptClass:code="+code+",class=" + scriptClazz);
 			}
 		}
 		return codeMap;
@@ -182,7 +182,7 @@ public abstract class GeneralScriptClassProvider<K,T extends IGeneralScript<K>> 
 		return classProvider.getState();
 	}
 	
-	public final Set<K> getRegistKeys()
+	public final Set<Integer> getRegistCode()
 	{
 		rwLock.readLock().lock();
 		try {
@@ -192,33 +192,33 @@ public abstract class GeneralScriptClassProvider<K,T extends IGeneralScript<K>> 
 		}
 	}
 	
-	protected final Class<? extends T> getScriptClass(K key)
+	protected final Class<? extends T> getScriptClass(int code)
 	{
 		rwLock.readLock().lock();
 		try {
-			return codeMap.get(key);
+			return codeMap.get(code);
 		} finally {
 			rwLock.readLock().unlock();
 		}
 	}
 
 
-	private Class<? extends T> getClass(K key)
+	private Class<? extends T> getClass(int code)
 	{
-		Class<? extends T> c = getStaticScriptClass(key);
+		Class<? extends T> c = getStaticScriptClass(code);
 		if(c==null)
 		{
-			c = getScriptClass(key);
+			c = getScriptClass(code);
 		}
 		return c;
 	}
 	
-	public final T buildInstance(K key) {
+	public final T buildInstance(int code) {
 		T result=null;
-		Class<? extends T> c = getClass(key);
+		Class<? extends T> c = getClass(code);
 		if (c == null) 
 		{
-			_log.error("not found script,key=" + key);
+			_log.error("not found script,code=" + code + "(0x" + Integer.toHexString(code) + ")");
 		} else 
 		{
 			result = newInstance(c);
@@ -227,12 +227,12 @@ public abstract class GeneralScriptClassProvider<K,T extends IGeneralScript<K>> 
 	}
 	
 	@Override
-	public final T buildInstance(K key, Object... args) {
+	public final T buildInstance(int code, Object... args) {
 		T result=null;
-		Class<? extends T> c = getClass(key);
+		Class<? extends T> c = getClass(code);
 		if (c == null) 
 		{
-			_log.error("not found script,key=" + key );
+			_log.error("not found script,code=" + code + "(0x" + Integer.toHexString(code) + ")");
 		} else 
 		{
 			result = newInstance(c,args);
@@ -248,9 +248,9 @@ public abstract class GeneralScriptClassProvider<K,T extends IGeneralScript<K>> 
 		}
 	}
 	
-	public final boolean hasKey(K key)
+	public final boolean hasCode(int code)
 	{
-		return getClass(key)!=null;
+		return getClass(code)!=null;
 	}
 	
 	public boolean isAutoReload() {

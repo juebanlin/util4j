@@ -1,4 +1,4 @@
-package net.jueb.util4j.hotSwap.classFactory;
+package net.jueb.util4j.hotSwap.classFactory.v0;
 
 /**
  * 注意,脚本的实现类一定要保留无参构造器

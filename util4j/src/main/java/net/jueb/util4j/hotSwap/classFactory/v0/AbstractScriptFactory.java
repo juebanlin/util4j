@@ -1,4 +1,4 @@
-package net.jueb.util4j.hotSwap.classFactory.lite;
+package net.jueb.util4j.hotSwap.classFactory.v0;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -17,7 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.jueb.util4j.bytesStream.InputStreamUtils;
-import net.jueb.util4j.hotSwap.classFactory.IScript;
 import net.jueb.util4j.hotSwap.classFactory.v1.AbstractStaticScriptFactory;
 import net.jueb.util4j.thread.NamedThreadFactory;
 

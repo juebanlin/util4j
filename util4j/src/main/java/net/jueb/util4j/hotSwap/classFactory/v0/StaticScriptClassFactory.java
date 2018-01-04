@@ -1,4 +1,4 @@
-package net.jueb.util4j.hotSwap.classFactory;
+package net.jueb.util4j.hotSwap.classFactory.v0;
 
 import java.lang.reflect.Modifier;
 import java.util.Map;

@@ -6,8 +6,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.jueb.util4j.hotSwap.classFactory.IScript;
-import net.jueb.util4j.hotSwap.classFactory.IScriptFactory;
+import net.jueb.util4j.hotSwap.classFactory.v0.IScript;
+import net.jueb.util4j.hotSwap.classFactory.v0.IScriptFactory;
 
 /**
  * 静态脚本工厂
