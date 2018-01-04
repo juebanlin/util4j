@@ -11,7 +11,7 @@ public interface IGenericScriptFactory<S extends IGenericScript> {
 	 * @param code
 	 * @return
 	 */
-	public S buildInstance(int value);
+	public S buildInstance(int key);
 	
 	/**
 	 * 创建一个脚本实例 
@@ -19,14 +19,14 @@ public interface IGenericScriptFactory<S extends IGenericScript> {
 	 * @param args 脚本构造参数
 	 * @return
 	 */
-	public S buildInstance(int value,Object ...args);
+	public S buildInstance(int key,Object ...args);
 	
 	/**
 	 * 创建一个脚本实例
 	 * @param code
 	 * @return
 	 */
-	public S buildInstance(String value);
+	public S buildInstance(String key);
 	
 	/**
 	 * 创建一个脚本实例 
@@ -34,7 +34,7 @@ public interface IGenericScriptFactory<S extends IGenericScript> {
 	 * @param args 脚本构造参数
 	 * @return
 	 */
-	public S buildInstance(String value,Object ...args);
+	public S buildInstance(String key,Object ...args);
 	
 	/**
 	 * 重新加载脚本

@@ -10,8 +10,6 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.jueb.util4j.hotSwap.classFactory.stable.annactions.IntMapper;
-import net.jueb.util4j.hotSwap.classFactory.stable.annactions.StringMapper;
 import net.jueb.util4j.hotSwap.classProvider.IClassProvider;
 import net.jueb.util4j.hotSwap.classProvider.IClassProvider.State;
 
@@ -35,10 +33,6 @@ public abstract class GenericScriptProvider<S extends IGenericScript> implements
 	
 	private ClassData classData;
 	
-	private class ClassData{
-		final Map<String, Class<? extends S>> nameMap = new HashMap<String, Class<? extends S>>();
-		final Map<Integer, Class<? extends S>> idMap = new HashMap<Integer, Class<? extends S>>();
-	}
 	
 	protected GenericScriptProvider(IClassProvider classProvider) {
 		Objects.requireNonNull(classProvider);
@@ -51,6 +45,40 @@ public abstract class GenericScriptProvider<S extends IGenericScript> implements
 		classProvider.addListener(this::classProviderListener);//被动加载监听器
 	}
 
+	private class ClassData{
+		final Map<Integer, Class<? extends S>> intMap = new HashMap<Integer, Class<? extends S>>();
+		final Map<String, Class<? extends S>> stringMap = new HashMap<String, Class<? extends S>>();
+	}
+	
+	protected class ClassRegister{
+		final Map<Integer, Class<? extends S>> intMap = new HashMap<Integer, Class<? extends S>>();
+		final Map<String, Class<? extends S>> stringMap = new HashMap<String, Class<? extends S>>();
+		
+		public void regist(int key,Class<? extends S> clazz)
+		{
+			Class<? extends S> old=intMap.getOrDefault(key,null);
+			if(old!=null)
+			{
+				_log.error("find Repeat key ScriptClass,key="+key+",addingScript:" + clazz + ",existScript:"+ old);
+			}
+			intMap.put(key, clazz);
+			_log.info("regist int mapping ScriptClass:key="+key+",class=" + clazz);
+		}
+		
+		public void regist(String key,Class<? extends S> clazz)
+		{
+			Class<? extends S> old=stringMap.getOrDefault(key,null);
+			if(old!=null)
+			{
+				_log.error("find Repeat name ScriptClass,key="+key+",addingScript:" + clazz + ",existScript:"+ old);
+			}else
+			{
+				stringMap.put(key, clazz);
+				_log.info("regist String mapping ScriptClass:key="+key+",class=" + clazz);
+			}
+		}
+	}
+	
 	/**
 	 * 加载完成
 	 */
@@ -85,49 +113,19 @@ public abstract class GenericScriptProvider<S extends IGenericScript> implements
 	{
 		Set<Class<? extends S>> scriptClass=findScriptClass(classes);
 		Set<Class<? extends S>> instanceAbleScript = findInstanceAbleScript(scriptClass);
-		ClassData cd=new ClassData();
-		Map<String, Class<? extends S>> nameMap_ = cd.nameMap;
-		Map<Integer, Class<? extends S>> idMap_ = cd.idMap;
+		ClassRegister classRegister=new ClassRegister();
 		for(Class<? extends S> clazz:instanceAbleScript)
 		{
-			IntMapper code=clazz.getAnnotation(IntMapper.class);
-			if(code!=null)
-			{
-				int id=code.value();
-				if(id!=0)
-				{
-					Class<? extends S> old=idMap_.getOrDefault(id,null);
-					if(old!=null)
-					{
-						_log.error("find Repeat Id ScriptClass,id="+id+",addingScript:" + clazz + ",existScript:"+ old);
-					}else
-					{
-						idMap_.put(id, clazz);
-						_log.info("regist id mapping ScriptClass:id="+id+",class=" + clazz);
-					}
-				}
-			}
-			StringMapper path=clazz.getAnnotation(StringMapper.class);
-			if(path!=null)
-			{
-				String name=path.value();
-				if(name!=null && name.trim().length()>0)
-				{
-					Class<? extends S> old=nameMap_.getOrDefault(name,null);
-					if(old!=null)
-					{
-						_log.error("find Repeat name ScriptClass,name="+name+",addingScript:" + clazz + ",existScript:"+ old);
-					}else
-					{
-						nameMap_.put(name, clazz);
-						_log.info("regist name mapping ScriptClass:name="+name+",class=" + clazz);
-					}
-				}
-			}
+			onClassInit(clazz, classRegister);//交给子类初始化注册
 		}
-		_log.info("loadScriptClass complete,id mapping size:"+idMap_.size()+",name mapping size:"+nameMap_.size());
+		ClassData cd=new ClassData();
+		cd.intMap.putAll(classRegister.intMap);
+		cd.stringMap.putAll(classRegister.stringMap);
+		_log.info("loadScriptClass complete,id mapping size:"+cd.intMap.size()+",name mapping size:"+cd.stringMap.size());
 		this.classData=cd;
 	}
+	
+	protected abstract void onClassInit(Class<? extends S> clazz ,ClassRegister classRegister);
 	
 	/**
 	 * 找出脚本类
@@ -164,11 +162,6 @@ public abstract class GenericScriptProvider<S extends IGenericScript> implements
 			S script = getInstacne(scriptClazz);
 			if(script==null)
 			{
-				continue;
-			}
-			if(skipRegistScript(script))
-			{
-				_log.warn("skip regist script,class=" + script.getClass());
 				continue;
 			}
 			result.add(scriptClazz);
@@ -208,12 +201,12 @@ public abstract class GenericScriptProvider<S extends IGenericScript> implements
 	
 	protected final Class<? extends S> getScriptClass(int id)
 	{
-		return classData.idMap.get(id);
+		return classData.intMap.get(id);
 	}
 	
 	protected final Class<? extends S> getScriptClass(String name)
 	{
-		return classData.nameMap.get(name);
+		return classData.stringMap.get(name);
 	}
 	
 	protected final S newInstance(Class<? extends S> c,Object... args) {
@@ -239,16 +232,6 @@ public abstract class GenericScriptProvider<S extends IGenericScript> implements
 			_log.error(e.getMessage(), e);
 		}
 		return result;
-	}
-	
-	/**
-	 * 是否跳过此脚本类的注册
-	 * @param script
-	 * @return
-	 */
-	protected boolean skipRegistScript(S script)
-	{
-		return false;
 	}
 
 	/**
