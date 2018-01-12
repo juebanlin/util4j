@@ -11,18 +11,7 @@ import net.jueb.util4j.queue.queueExecutor.executor.QueueExecutor;
  */
 public interface KeyQueueGroupManager extends Iterable<QueueExecutor>{
 	
-	/**
-	 * 设置队列别名
-	 * @param solt
-	 * @param alias
-	 */
-	public void setAlias(String key,String alias);
-	
-	/**
-	 * 获取队列别名
-	 * @param solt
-	 */
-	public String getAlias(String key);
+	public boolean hasQueueExecutor(String key);
 	
 	/**
 	 * 获取任务执行器,此队列的名字等于队列别名

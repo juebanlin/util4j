@@ -63,15 +63,10 @@ public class ScheduledThreadPoolQueueGroupExecutor extends ScheduledThreadPoolEx
 	}
 
 	@Override
-	public void setAlias(short solt, String alias) {
-		iqm.setAlias(solt, alias);
+	public boolean hasQueueExecutor(short index) {
+		return iqm.hasQueueExecutor(index);
 	}
-
-	@Override
-	public String getAlias(short solt) {
-		return iqm.getAlias(solt);
-	}
-
+	
 	@Override
 	public QueueExecutor getQueueExecutor(short solt) {
 		return iqm.getQueueExecutor(solt);
@@ -86,17 +81,12 @@ public class ScheduledThreadPoolQueueGroupExecutor extends ScheduledThreadPoolEx
 	public void execute(String key, List<Runnable> tasks) {
 		kqm.getQueueExecutor(key).execute(tasks);
 	}
-
+	
 	@Override
-	public void setAlias(String key, String alias) {
-		kqm.setAlias(key, alias);
+	public boolean hasQueueExecutor(String key) {
+		return kqm.hasQueueExecutor(key);
 	}
-
-	@Override
-	public String getAlias(String key) {
-		return kqm.getAlias(key);
-	}
-
+	
 	@Override
 	public QueueExecutor getQueueExecutor(String key) {
 		return kqm.getQueueExecutor(key);

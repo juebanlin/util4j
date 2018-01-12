@@ -74,14 +74,9 @@ public final class QueueGroupExecutorPrototype implements QueueGroupExecutorBase
     private final SoltQueue[] solts=new SoltQueue[MAX_SOLT_COUNT+1];
     
     /**
-     * 队列别名
-     */
-    private final String[] soltAlias=new String[solts.length];
-    
-    /**
      * 系统队列
      */
-    private final EventQueue systemQueue = new EventQueue("systemQueue");
+    private final EventQueue systemQueue = new EventQueue();
     
     /**
      * 队列处理线程
@@ -102,7 +97,7 @@ public final class QueueGroupExecutorPrototype implements QueueGroupExecutorBase
     {
     	for(int i=0;i<solts.length;i++)
     	{
-    		solts[i]=new SoltQueue(i);
+    		solts[i]=new SoltQueue();
     	}
     }
     
@@ -512,18 +507,6 @@ public final class QueueGroupExecutorPrototype implements QueueGroupExecutorBase
 		 */
 		private static final long serialVersionUID = -2961878968488809736L;
 
-		private final String name;
-		public EventQueue() {
-			this.name="EventQueue";
-		}
-		public EventQueue(String name) {
-			this.name=name;
-		}
-		
-		@Override
-		public String getQueueName() {
-			return name;
-		}
 
 		/**
 		 * 有任务进入
@@ -560,6 +543,72 @@ public final class QueueGroupExecutorPrototype implements QueueGroupExecutorBase
 		public final void execute(List<Runnable> tasks) {
 			addAll(tasks);
 		}
+
+		@Override
+		public void setAlias(String alias) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public String getAlias() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public void addTag(String tag) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void removeTag(String tag) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public boolean hasTag(String tag) {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		@Override
+		public Set<String> getTags() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public boolean hasAttribute(String key) {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		@Override
+		public void setAttribute(String key, Object value) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public Object getAttribute(String key) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public Object removeAttribute(String key) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public void clearAttributes() {
+			// TODO Auto-generated method stub
+			
+		}
     }
     
     /**
@@ -571,7 +620,6 @@ public final class QueueGroupExecutorPrototype implements QueueGroupExecutorBase
 		 * 
 		 */
 		private static final long serialVersionUID = 1711281918590904219L;
-		private final int soltIndex;
 		/**
          * 此队列是否锁定/是否被线程占用
          * 次属性仅供本类持有
@@ -582,14 +630,7 @@ public final class QueueGroupExecutorPrototype implements QueueGroupExecutorBase
          */
 		private final AtomicLong completedTaskCount = new AtomicLong(0);
 		
-		
-		@Override
-		public String getQueueName() {
-			return getAlias((short) soltIndex);
-		}
-		
-		public SoltQueue(int soltIndex) {
-			this.soltIndex=soltIndex;
+		public SoltQueue() {
 			init();
 		}
 		
@@ -743,16 +784,6 @@ public final class QueueGroupExecutorPrototype implements QueueGroupExecutorBase
     		throw new RuntimeException("tasks is null");
     	}
 		getQueueExecutor(solt).execute(tasks);
-	}
-
-	@Override
-	public void setAlias(short solt, String alias) {
-		soltAlias[convertIndex(solt)]=alias;
-	}
-
-	@Override
-	public String getAlias(short solt) {
-		return soltAlias[convertIndex(solt)];
 	}
 
 	@Override

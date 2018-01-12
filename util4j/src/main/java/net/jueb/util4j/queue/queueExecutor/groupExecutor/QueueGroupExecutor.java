@@ -26,25 +26,19 @@ public interface QueueGroupExecutor extends QueueGroupExecutorBase{
 	public void execute(short index,List<Runnable> tasks);
 	
 	/**
-	 * 设置队列别名
+	 * 是否存在此队列执行器
 	 * @param index
-	 * @param alias
+	 * @return
 	 */
-	public void setAlias(short index,String alias);
-	
-	/**
-	 * 获取队列别名
-	 * @param index
-	 */
-	public String getAlias(short index);
+	public boolean hasQueueExecutor(short index);
 	
 	/**
 	 * 获取任务执行器,此队列的名字等于队列别名
+	 * 没有则创建
 	 * @param queue
 	 * @return
 	 */
 	public QueueExecutor getQueueExecutor(short index);
-	
 	
 	/**
 	 * 迭代执行器
@@ -53,8 +47,12 @@ public interface QueueGroupExecutor extends QueueGroupExecutorBase{
 	
 	public void execute(String key,Runnable task);
 	public void execute(String key,List<Runnable> tasks);
-	public void setAlias(String key,String alias);
-	public String getAlias(String key);
+	/**
+	 * 是否存在此队列执行器
+	 * @param index
+	 * @return
+	 */
+	public boolean hasQueueExecutor(String key);
 	public QueueExecutor getQueueExecutor(String key);
 	Iterator<QueueExecutor> keyIterator();
 }

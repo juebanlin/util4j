@@ -17,7 +17,6 @@ import net.jueb.util4j.queue.queueExecutor.groupExecutor.KeyQueueGroupManager;
 public class DefaultKeyQueueManager extends AbstractQueueMaganer implements KeyQueueGroupManager{
 
 	private final Map<String,TaskQueue> queues=new HashMap<>();
-	private final Map<String,String> alias=new HashMap<>();
 	private final AtomicLong totalCompleteTask=new AtomicLong();
 	
 	private final Object addLock=new Object();
@@ -51,12 +50,9 @@ public class DefaultKeyQueueManager extends AbstractQueueMaganer implements KeyQ
 		this.listener=listener;
 	}
 	
-	public void setAlias(String index, String alias) {
-		this.alias.put(index, alias);
-	}
-
-	public String getAlias(String index) {
-		return this.alias.get(index);
+	@Override
+	public boolean hasQueueExecutor(String key) {
+		return queues.containsKey(key);
 	}
 
 	public QueueExecutor getQueueExecutor(String index) {
@@ -70,6 +66,8 @@ public class DefaultKeyQueueManager extends AbstractQueueMaganer implements KeyQ
 				if(qe==null)
 				{
 					TaskQueue tq=new TaskQueue(index,getQueueFactory_().buildQueue());
+					tq.setAlias("key_"+index);
+					tq.setAttribute("key", index);
 					queues.put(index,tq);
 					return tq;
 				}
@@ -148,14 +146,9 @@ public class DefaultKeyQueueManager extends AbstractQueueMaganer implements KeyQ
 		private final AtomicLong completedTaskCount = new AtomicLong(0);
 		
 		public TaskQueue(String index,Queue<Runnable> queue) {
-			super(queue,"TaskQueue-"+index);
+			super(queue);
 			this.index=index;
 			init();
-		}
-		
-		@Override
-		public String getQueueName() {
-			return getAlias(index);
 		}
 		
 		/**

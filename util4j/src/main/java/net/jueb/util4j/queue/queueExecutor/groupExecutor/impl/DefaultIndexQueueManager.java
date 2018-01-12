@@ -22,11 +22,6 @@ public class DefaultIndexQueueManager extends AbstractQueueMaganer implements In
 	 * 队列插槽
 	 */
 	private final SoltQueue[] solts = new SoltQueue[MAX_SOLT_COUNT + 1];
-
-	/**
-	 * 队列别名
-	 */
-	private final String[] soltAlias = new String[solts.length];
 	
 	private final AtomicLong totalCompleteTask=new AtomicLong();
 	
@@ -108,14 +103,12 @@ public class DefaultIndexQueueManager extends AbstractQueueMaganer implements In
 		getQueueExecutor(solt).execute(tasks);
 	}
 
-	public void setAlias(short solt, String alias) {
-		soltAlias[convertIndex(solt)] = alias;
+	@Override
+	public boolean hasQueueExecutor(short solt) {
+		int index = convertIndex(solt);
+		return solts[index]==null;
 	}
-
-	public String getAlias(short solt) {
-		return soltAlias[convertIndex(solt)];
-	}
-
+	
 	public QueueExecutor getQueueExecutor(short solt) {
 		int index = convertIndex(solt);
 		if(solts[index]==null)
@@ -123,7 +116,10 @@ public class DefaultIndexQueueManager extends AbstractQueueMaganer implements In
 			synchronized (solts) {
 				if(solts[index]==null)
 				{
-					solts[index]=new SoltQueue(index,getQueueFactory_().buildQueue());
+					SoltQueue sq=new SoltQueue(index,getQueueFactory_().buildQueue());
+					sq.setAlias("solt_"+solt);
+					sq.setAttribute("solt", solt);
+					solts[index]=sq;
 				}
 			}
 		}
@@ -182,14 +178,9 @@ public class DefaultIndexQueueManager extends AbstractQueueMaganer implements In
 		private final AtomicLong completedTaskCount = new AtomicLong(0);
 		
 		public SoltQueue(int soltIndex,Queue<Runnable> queue) {
-			super(queue,"SoltQueue-"+soltIndex);
+			super(queue);
 			this.soltIndex=soltIndex;
 			init();
-		}
-		
-		@Override
-		public String getQueueName() {
-			return getAlias((short) soltIndex);
 		}
 		
 		/**
