@@ -4,6 +4,7 @@ import java.util.Iterator;
 
 import net.jueb.util4j.queue.queueExecutor.QueueFactory;
 import net.jueb.util4j.queue.queueExecutor.executor.QueueExecutor;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupExecutor.KeyElement;
 
 /**
  * 队列组
@@ -24,7 +25,9 @@ public interface KeyQueueGroupManager extends Iterable<QueueExecutor>{
 	 * 迭代执行器
 	 */
 	@Override
-	Iterator<QueueExecutor> iterator();
+	public Iterator<QueueExecutor> iterator();
+	
+	public Iterator<KeyElement<QueueExecutor>> keyIterator();
 	
 	public long getToalCompletedTaskCount();
 	

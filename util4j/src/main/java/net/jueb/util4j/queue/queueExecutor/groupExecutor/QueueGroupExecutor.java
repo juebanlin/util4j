@@ -43,16 +43,17 @@ public interface QueueGroupExecutor extends QueueGroupExecutorBase{
 	/**
 	 * 迭代执行器
 	 */
-	Iterator<QueueExecutor> indexIterator();
+	Iterator<IndexElement<QueueExecutor>> indexIterator();
+	
+	
+	public static interface KeyElement<T>{
+		public String getKey();
+		public T getValue();
+	}
 	
 	public void execute(String key,Runnable task);
 	public void execute(String key,List<Runnable> tasks);
-	/**
-	 * 是否存在此队列执行器
-	 * @param index
-	 * @return
-	 */
 	public boolean hasQueueExecutor(String key);
 	public QueueExecutor getQueueExecutor(String key);
-	Iterator<QueueExecutor> keyIterator();
+	Iterator<KeyElement<QueueExecutor>> keyIterator();
 }

@@ -11,6 +11,7 @@ import net.jueb.util4j.queue.queueExecutor.QueueFactory;
 import net.jueb.util4j.queue.queueExecutor.executor.QueueExecutor;
 import net.jueb.util4j.queue.queueExecutor.executor.impl.RunnableQueueExecutorEventWrapper;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.IndexQueueGroupManager;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupExecutorBase.IndexElement;
 
 public class DefaultIndexQueueManager extends AbstractQueueMaganer implements IndexQueueGroupManager{
 	/**
@@ -73,6 +74,34 @@ public class DefaultIndexQueueManager extends AbstractQueueMaganer implements In
 		return solt & 0xFFFF;
 	}
 
+	public Iterator<IndexElement<QueueExecutor>> indexIterator(){
+		return new Iterator<IndexElement<QueueExecutor>>() {
+			short i=0;
+			
+			@Override
+			public boolean hasNext() {
+				return i < solts.length;
+			}
+
+			@Override
+			public IndexElement<QueueExecutor> next() {
+				final short index=i;
+				final QueueExecutor qe=solts[i++];
+				return new IndexElement<QueueExecutor>() {
+					@Override
+					public short getIndex() {
+						return index;
+					}
+
+					@Override
+					public QueueExecutor getValue() {
+						return qe;
+					}
+				};
+			}
+		};
+	}
+	
 	public Iterator<QueueExecutor> iterator() {
 		return new Iterator<QueueExecutor>() {
 			int i = 0;

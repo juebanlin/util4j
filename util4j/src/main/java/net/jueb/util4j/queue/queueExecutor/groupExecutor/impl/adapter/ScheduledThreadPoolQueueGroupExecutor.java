@@ -48,8 +48,8 @@ public class ScheduledThreadPoolQueueGroupExecutor extends ScheduledThreadPoolEx
 		init();
 	}
 	
-	public Iterator<QueueExecutor> indexIterator() {
-		return iqm.iterator();
+	public Iterator<IndexElement<QueueExecutor>> indexIterator() {
+		return iqm.indexIterator();
 	}
 
 	@Override
@@ -93,8 +93,8 @@ public class ScheduledThreadPoolQueueGroupExecutor extends ScheduledThreadPoolEx
 	}
 
 	@Override
-	public Iterator<QueueExecutor> keyIterator() {
-		return kqm.iterator();
+	public Iterator<KeyElement<QueueExecutor>> keyIterator() {
+		return kqm.keyIterator();
 	}
 }
 

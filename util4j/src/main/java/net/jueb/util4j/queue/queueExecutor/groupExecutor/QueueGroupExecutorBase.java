@@ -11,6 +11,11 @@ import net.jueb.util4j.queue.queueExecutor.executor.QueueExecutor;
  */
 public interface QueueGroupExecutorBase{
 	
+	public static interface IndexElement<T>{
+		public short getIndex();
+		public T getValue();
+	}
+	
 	/**
 	 * 执行队列任务
 	 * @param solt 队列号
@@ -36,5 +41,5 @@ public interface QueueGroupExecutorBase{
 	/**
 	 * 迭代执行器
 	 */
-	Iterator<QueueExecutor> indexIterator();
+	Iterator<IndexElement<QueueExecutor>> indexIterator();
 }

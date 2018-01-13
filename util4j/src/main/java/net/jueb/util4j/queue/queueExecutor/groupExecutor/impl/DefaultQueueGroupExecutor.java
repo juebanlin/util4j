@@ -20,12 +20,12 @@ import net.jueb.util4j.lock.waiteStrategy.SleepingWaitConditionStrategy;
 import net.jueb.util4j.lock.waiteStrategy.WaitCondition;
 import net.jueb.util4j.lock.waiteStrategy.WaitConditionStrategy;
 import net.jueb.util4j.queue.queueExecutor.executor.QueueExecutor;
-import net.jueb.util4j.queue.queueExecutor.executor.impl.RunnableQueueExecutorEventWrapper;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.IndexQueueGroupManager;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.IndexQueueGroupManager.IndexGroupEventListener;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.KeyQueueGroupManager;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.KeyQueueGroupManager.KeyGroupEventListener;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupExecutor;
+import net.jueb.util4j.queue.queueExecutor.queue.RunnableQueueEventWrapper;
 
 public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
     
@@ -514,7 +514,7 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
      * 基于事件的系统队列
      * @author juebanlin
      */
-    class SystemQueue extends RunnableQueueExecutorEventWrapper{
+    class SystemQueue extends RunnableQueueEventWrapper{
 		
 		public SystemQueue(Queue<Runnable> queue) {
 			super(queue);
@@ -577,10 +577,11 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 		systemQueue.addAll(tasks);
 	}
 
-	public Iterator<QueueExecutor> indexIterator() {
-		return iqm.iterator();
+	@Override
+	public Iterator<IndexElement<QueueExecutor>> indexIterator() {
+		return iqm.indexIterator();
 	}
-
+	
 	@Override
 	public void execute(short solt, Runnable task) {
 		iqm.getQueueExecutor(solt).execute(task);
@@ -622,9 +623,9 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 	}
 
 	@Override
-	public Iterator<QueueExecutor> keyIterator() {
-		return kqm.iterator();
-	}
+	public Iterator<KeyElement<QueueExecutor>> keyIterator() {
+		return kqm.keyIterator();
+	}	
 	
 	public static class Builder{
 		int corePoolSize=DEFAULT_INITIAL_THREAD_POOL_SIZE;

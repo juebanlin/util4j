@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -13,6 +14,7 @@ import net.jueb.util4j.queue.queueExecutor.QueueFactory;
 import net.jueb.util4j.queue.queueExecutor.executor.QueueExecutor;
 import net.jueb.util4j.queue.queueExecutor.executor.impl.RunnableQueueExecutorEventWrapper;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.KeyQueueGroupManager;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupExecutor.KeyElement;
 
 public class DefaultKeyQueueManager extends AbstractQueueMaganer implements KeyQueueGroupManager{
 
@@ -55,6 +57,7 @@ public class DefaultKeyQueueManager extends AbstractQueueMaganer implements KeyQ
 		return queues.containsKey(key);
 	}
 
+	
 	public QueueExecutor getQueueExecutor(String index) {
 		if (index==null) {
 			throw new IllegalArgumentException();
@@ -94,6 +97,30 @@ public class DefaultKeyQueueManager extends AbstractQueueMaganer implements KeyQ
 		return 0;
 	}
 
+	public Iterator<KeyElement<QueueExecutor>> keyIterator(){
+		return new Iterator<KeyElement<QueueExecutor>>() {
+			final Iterator<Entry<String, TaskQueue>> map=queues.entrySet().iterator();
+			@Override
+			public boolean hasNext() {
+				return map.hasNext();
+			}
+			@Override
+			public KeyElement<QueueExecutor> next() {
+				Entry<String, TaskQueue> e=map.next();
+				return new KeyElement<QueueExecutor>() {
+					@Override
+					public String getKey() {
+						return e.getKey();
+					}
+					@Override
+					public QueueExecutor getValue() {
+						return e.getValue();
+					}
+				};
+			}
+		};
+	}
+	
 	public Iterator<QueueExecutor> iterator() {
 		return new Iterator<QueueExecutor>() {
 			final Iterator<TaskQueue> map=queues.values().iterator();
