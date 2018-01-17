@@ -1,5 +1,5 @@
 # util4j
-[![Version](https://img.shields.io/badge/version-4.1.2-brightgreen.svg)](http://search.maven.org/#search|gav|1|g:%22net.jueb%22%20AND%20a:%22util4j%22)
+[![Version](https://img.shields.io/badge/version-4.1.9-brightgreen.svg)](http://search.maven.org/#search|gav|1|g:%22net.jueb%22%20AND%20a:%22util4j%22)
 [![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
 [![JDK 1.8](https://img.shields.io/badge/JDK-1.8-green.svg "JDK 1.8")]()
 
