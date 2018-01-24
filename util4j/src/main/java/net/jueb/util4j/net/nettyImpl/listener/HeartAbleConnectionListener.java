@@ -173,7 +173,7 @@ public abstract class HeartAbleConnectionListener<T> implements JConnectionIdleL
 		}
 		if(isHeartReq(msg))
 		{
-			sendHeartRsp(conn);
+			responseHeartReq(msg, conn);
 			return;
 		}
 		doMessageArrived(conn, msg);
@@ -208,7 +208,16 @@ public abstract class HeartAbleConnectionListener<T> implements JConnectionIdleL
 	 * @return
 	 */
 	protected abstract boolean isHeartReq(T msg);
-
+	
+	/**
+	 * 回复心跳请求
+	 * @param req
+	 * @param connection
+	 */
+	protected void responseHeartReq(T req,JConnection connection) {
+		sendHeartRsp(connection);
+	}
+	
 	/**
 	 * 处理收到的消息
 	 * @param conn
