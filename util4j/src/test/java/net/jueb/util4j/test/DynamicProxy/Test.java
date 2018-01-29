@@ -18,7 +18,7 @@ public class Test {
          * 第二个参数realSubject.getClass().getInterfaces()，我们这里为代理对象提供的接口是真实对象所实行的接口，表示我要代理的是该真实对象，这样我就能调用这组接口中的方法了
          * 第三个参数handler， 我们这里将这个代理对象关联到了上方的 InvocationHandler 这个对象上
          */
-        Subject subject = (Subject)Proxy.newProxyInstance(handler.getClass().getClassLoader(), realSubject
+        Subject subject = (Subject)Proxy.newProxyInstance(realSubject.getClass().getClassLoader(), realSubject
                 .getClass().getInterfaces(), handler);
         System.out.println(subject.getClass().getName());
         subject.rent();
