@@ -1,11 +1,7 @@
-package net.jueb.util4j.hotSwap.classFactory.stable.defaultImpl;
+package net.jueb.util4j.example.script.factory;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
+import net.jueb.util4j.example.script.factory.annations.IntMapper;
+import net.jueb.util4j.example.script.factory.annations.StringMapper;
 import net.jueb.util4j.hotSwap.classFactory.stable.GenericScriptProvider;
 import net.jueb.util4j.hotSwap.classFactory.stable.IGenericScript;
 import net.jueb.util4j.hotSwap.classProvider.IClassProvider;
@@ -16,15 +12,15 @@ import net.jueb.util4j.hotSwap.classProvider.IClassProvider;
  * 此类提供的脚本最好不要长期保持引用,由其是热重载后,原来的脚本要GC必须保证引用不存在
  * 通过监听脚本源实现代码的加载
  */
-public abstract class DefaultGenericScriptProvider<S extends IGenericScript> extends GenericScriptProvider<S>{
-
-	public DefaultGenericScriptProvider(IClassProvider classProvider) {
+public abstract class GameScriptProvider<S extends IGenericScript> extends GenericScriptProvider<S>{
+	
+	public GameScriptProvider(IClassProvider classProvider) {
 		super(classProvider);
 	}
-	
+
 	@Override
 	protected void onClassInit(Class<? extends S> clazz, GenericScriptProvider<S>.ClassRegister classRegister) {
-		IntKeyScript code=clazz.getAnnotation(IntKeyScript.class);
+		IntMapper code=clazz.getAnnotation(IntMapper.class);
 		if(code!=null)
 		{
 			int intKey=code.value();
@@ -33,7 +29,7 @@ public abstract class DefaultGenericScriptProvider<S extends IGenericScript> ext
 				classRegister.regist(intKey, clazz);
 			}
 		}
-		StringKeyScript path=clazz.getAnnotation(StringKeyScript.class);
+		StringMapper path=clazz.getAnnotation(StringMapper.class);
 		if(path!=null)
 		{
 			String stringKey=path.value();
@@ -42,27 +38,5 @@ public abstract class DefaultGenericScriptProvider<S extends IGenericScript> ext
 				classRegister.regist(stringKey, clazz);
 			}
 		}
-	}
-	
-	/**
-	 * int类型映射器
-	 * @author jaci
-	 */
-	@Target({ElementType.TYPE})
-	@Retention(RetentionPolicy.RUNTIME)
-	@Documented
-	public static @interface IntKeyScript{
-		int value();
-	}
-	
-	/**
-	 * string类型映射器
-	 * @author jaci
-	 */
-	@Target({ElementType.TYPE})
-	@Retention(RetentionPolicy.RUNTIME)
-	@Documented
-	public static @interface StringKeyScript{
-		String value();
 	}
 }
