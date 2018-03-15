@@ -27,6 +27,26 @@ import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.common.HybridBinarizer;
 
+/**
+ * 二维码生成工具
+ * 需要依赖
+ * 	<pre>{@code
+ * 		<dependency>
+			<groupId>com.google.zxing</groupId>
+			<artifactId>core</artifactId>
+			<version>3.3.2</version>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>com.google.zxing</groupId>
+			<artifactId>javase</artifactId>
+			<version>3.3.2</version>
+			<optional>true</optional>
+		</dependency>
+ * }
+ * </pre>
+ * @author jaci
+ */
 public class QrCodeUtil {
 
 	public static byte[] encode(int width, int height, String content, String format) throws Exception {
