@@ -1,6 +1,7 @@
 package net.jueb.util4j.net.nettyImpl.handler.websocket;
 
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -10,6 +11,7 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler.HandshakeComplete;
+import io.netty.handler.ssl.SslContext;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.util.internal.logging.InternalLogger;
 import net.jueb.util4j.net.nettyImpl.NetLogFactory;
@@ -21,23 +23,41 @@ import net.jueb.util4j.net.nettyImpl.NetLogFactory;
  * @author Administrator
  */
 @Sharable
-public abstract class WebSocketServerInitializer extends ChannelInitializer<Channel>{
+public class WebSocketServerInitializer extends ChannelInitializer<Channel>{
 	
 	protected final InternalLogger log = NetLogFactory.getLogger(getClass());
 	
-	protected final String uri;
+	protected final String websocketPath;
+	private SslContext sslCtx;
+	private ChannelHandler handler;
 	
-	public WebSocketServerInitializer(String uri) {
-		this.uri=uri;
+	public WebSocketServerInitializer(String websocketPath,ChannelHandler handler) {
+		this(websocketPath, null, handler);
+	}
+	/**
+	 * <pre>{@code //SslContextBuilder
+	 	SelfSignedCertificate ssc = new SelfSignedCertificate();
+           sslCtx = SslContextBuilder.forServer(ssc.certificate(), ssc.privateKey()).build();
+           }</pre>
+	 * @param uri
+	 * @param sslCtx
+	 */
+	public WebSocketServerInitializer(String websocketPath,SslContext sslCtx,ChannelHandler handler) {
+		this.websocketPath=websocketPath;
+		this.sslCtx=sslCtx;
+		this.handler=handler;
 	}
 
 	@Override
 	protected final void initChannel(Channel ch) throws Exception {
 		ChannelPipeline pipeline=ch.pipeline();
+		if (sslCtx != null) {
+			pipeline.addLast(sslCtx.newHandler(ch.alloc()));
+        }
 		pipeline.addLast(new HttpServerCodec());
         pipeline.addLast(new ChunkedWriteHandler());
         pipeline.addLast(new HttpObjectAggregator(64*1024));
-        pipeline.addLast(new WebSocketServerProtocolHandler(uri));
+        pipeline.addLast(new WebSocketServerProtocolHandler(websocketPath));
         pipeline.addLast(new WebSocketConnectedServerHandler());//连接成功监听handler
 	}
 	
@@ -49,7 +69,12 @@ public abstract class WebSocketServerInitializer extends ChannelInitializer<Chan
 	 * @param channel
 	 * @throws Exception
 	 */
-	protected abstract void webSocketHandComplete(ChannelHandlerContext ctx);
+	protected void webSocketHandComplete(ChannelHandlerContext ctx) {
+		ctx.channel().pipeline().addLast(handler);
+		//为新加的handler手动触发必要事件
+		ctx.fireChannelRegistered();
+		ctx.fireChannelActive();
+	}
 	
 	/**
 	  * 用于监测WebSocketClientProtocolHandler的事件

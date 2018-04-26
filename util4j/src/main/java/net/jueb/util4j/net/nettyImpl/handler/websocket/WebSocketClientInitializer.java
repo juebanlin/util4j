@@ -3,6 +3,7 @@ package net.jueb.util4j.net.nettyImpl.handler.websocket;
 import java.net.URI;
 
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -14,6 +15,7 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshakerFactory;
 import io.netty.handler.codec.http.websocketx.WebSocketClientProtocolHandler;
 import io.netty.handler.codec.http.websocketx.WebSocketVersion;
+import io.netty.handler.ssl.SslContext;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.util.internal.logging.InternalLogger;
 import net.jueb.util4j.net.nettyImpl.NetLogFactory;
@@ -25,13 +27,47 @@ import net.jueb.util4j.net.nettyImpl.NetLogFactory;
  * @author Administrator
  */
 @Sharable
-public abstract class WebSocketClientInitializer extends ChannelInitializer<Channel>{
+public class WebSocketClientInitializer extends ChannelInitializer<Channel>{
 	
 	protected final InternalLogger log = NetLogFactory.getLogger(getClass());
-	protected final String url;
+	protected final URI webSocketURL;
+	protected final ChannelHandler handler;
+	private SslContext sslCtx;
 	
-	public WebSocketClientInitializer(String url) {
-		this.url=url;
+	public WebSocketClientInitializer(URI webSocketURL,ChannelHandler handler) {
+		this(webSocketURL,null,handler);
+	}
+	/**
+	 * <pre>{@code //SslContextBuilder
+	 	sslCtx = SslContextBuilder.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE).build();
+           }</pre>
+	 * @param url
+	 * @param sslCtx
+	 */
+	public WebSocketClientInitializer(URI webSocketURL,SslContext sslCtx,ChannelHandler handler) {
+		this.webSocketURL=webSocketURL;
+		this.sslCtx=sslCtx;
+		this.handler=handler;
+		init();
+	}
+	
+	protected  String host;
+	protected  int port;
+	protected void init()
+	{
+		String scheme = webSocketURL.getScheme() == null? "ws" : webSocketURL.getScheme();
+        host = webSocketURL.getHost() == null? "127.0.0.1" : webSocketURL.getHost();
+        if (webSocketURL.getPort() == -1) {
+            if ("ws".equalsIgnoreCase(scheme)) {
+                port = 80;
+            } else if ("wss".equalsIgnoreCase(scheme)) {
+                port = 443;
+            } else {
+                port = -1;
+            }
+        } else {
+            port = webSocketURL.getPort();
+        }
 	}
 	
 	/**
@@ -40,10 +76,13 @@ public abstract class WebSocketClientInitializer extends ChannelInitializer<Chan
 	@Override
 	protected final void initChannel(Channel ch) throws Exception {
 		ChannelPipeline pipeline=ch.pipeline();
+		if (sslCtx != null) {
+			pipeline.addLast(sslCtx.newHandler(ch.alloc(),host,port));
+        }
 		pipeline.addLast(new HttpClientCodec());
 		pipeline.addLast(new ChunkedWriteHandler());
 		pipeline.addLast(new HttpObjectAggregator(64*1024));
-		pipeline.addLast(new WebSocketClientProtocolHandler(WebSocketClientHandshakerFactory.newHandshaker(new URI(url), WebSocketVersion.V13, null, false, new DefaultHttpHeaders())));
+		pipeline.addLast(new WebSocketClientProtocolHandler(WebSocketClientHandshakerFactory.newHandshaker(webSocketURL, WebSocketVersion.V13, null, false, new DefaultHttpHeaders())));
         pipeline.addLast(new WebSocketConnectedClientHandler());//连接成功监听handler
 	}
 	
@@ -55,7 +94,12 @@ public abstract class WebSocketClientInitializer extends ChannelInitializer<Chan
 	 * @param channel
 	 * @throws Exception
 	 */
-	protected abstract void webSocketHandComplete(ChannelHandlerContext ctx);
+	protected void webSocketHandComplete(ChannelHandlerContext ctx) {
+		ctx.channel().pipeline().addLast(handler);
+		//为新加的handler手动触发必要事件
+		ctx.fireChannelRegistered();
+		ctx.fireChannelActive();
+	}
 	
 	/**
 	  * 用于监测WebSocketClientProtocolHandler的事件

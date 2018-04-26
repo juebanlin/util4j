@@ -28,7 +28,10 @@ public class HttpServerInitHandler extends ChannelInitializer<SocketChannel> {
 	}
 	
 	/**
-	 * SslContextBuilder
+	 * <pre>{@code //SslContextBuilder
+	 	SelfSignedCertificate ssc = new SelfSignedCertificate();
+           sslCtx = SslContextBuilder.forServer(ssc.certificate(), ssc.privateKey()).build();
+           }</pre>
 	 * @param listener
 	 * @param sslCtx
 	 */

@@ -25,7 +25,9 @@ public class HttpClientInitHandler extends ChannelInitializer<SocketChannel> {
 	}
 	
 	/**
-	 * SslContextBuilder
+	 * <pre>{@code //SslContextBuilder
+	 	sslCtx = SslContextBuilder.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE).build();
+           }</pre>
 	 * @param listener
 	 * @param sslCtx
 	 */

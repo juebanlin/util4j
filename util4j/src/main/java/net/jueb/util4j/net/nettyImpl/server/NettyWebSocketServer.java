@@ -4,41 +4,50 @@ import java.net.InetSocketAddress;
 
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import net.jueb.util4j.net.nettyImpl.handler.websocket.binary.WebSocketServerBinaryAdapterHandler;
+import io.netty.handler.ssl.SslContext;
+import net.jueb.util4j.net.nettyImpl.handler.websocket.WebSocketServerInitializer;
 
 /**
  * 将WebSocket的Binary流转换为正常socket链路的服务器
- * @author Administrator
+ * handler只需要传入ChannelInboundHandlerAdapter类型的处理消息的handler即可,比如{@link AbstractListenerHandler} 
  */
 public class NettyWebSocketServer extends NettyServer{
-	protected final String uri;
+	protected final String websocketPath;
+	protected SslContext sslCtx;
 	
-	public NettyWebSocketServer(String host,int port,String uri,ChannelInboundHandlerAdapter handler) {
-		super(new InetSocketAddress(host, port), handler);
-		if(uri==null || uri.isEmpty())
+	public NettyWebSocketServer(String host,int port,String websocketPath,ChannelInboundHandlerAdapter msgHandler) {
+		super(new InetSocketAddress(host, port), msgHandler);
+		if(websocketPath==null || websocketPath.isEmpty())
 		{
-			this.uri="/";
+			this.websocketPath="/";
 		}else
 		{
-			this.uri=uri;
+			this.websocketPath=websocketPath;
 		}
 	}
-	public NettyWebSocketServer(NettyServerConfig config,String host,int port,String uri,ChannelInboundHandlerAdapter handler) {
-		super(config,new InetSocketAddress(host, port), handler);
-		if(uri==null || uri.isEmpty())
+	public NettyWebSocketServer(NettyServerConfig config,String host,int port,String websocketPath,ChannelInboundHandlerAdapter msgHandler) {
+		this(config, host, port, websocketPath, null, msgHandler);
+	}
+	
+	public NettyWebSocketServer(NettyServerConfig config,String host,int port,String websocketPath,SslContext sslCtx,ChannelInboundHandlerAdapter msgHandler) {
+		super(config,new InetSocketAddress(host, port), msgHandler);
+		if(websocketPath==null || websocketPath.isEmpty())
 		{
-			this.uri="/";
+			this.websocketPath="/";
 		}else
 		{
-			this.uri=uri;
+			this.websocketPath=websocketPath;
 		}
+		this.sslCtx=sslCtx;
 	}
 
 	/**
-	 * 使用websocket字节流的服务器
+	 * 包装
 	 */
 	@Override
-	protected ChannelInboundHandlerAdapter fixHandlerBeforeDoBooterBind(ChannelHandler handler) {
-		return new WebSocketServerBinaryAdapterHandler(uri, handler);
+	protected ChannelHandler fixHandlerBeforeDoBooterBind(ChannelHandler handler) {
+		ChannelHandler result=new WebSocketServerInitializer(websocketPath, sslCtx, handler);
+		//result= new WebSocketServerBinaryAdapterHandler(websocketPath,sslCtx,handler);
+		return result;
 	}
 }
