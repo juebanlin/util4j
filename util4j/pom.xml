@@ -184,8 +184,8 @@
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
 			<version>2.7</version>
+			<optional>true</optional>
 		</dependency>
-		<optional>true</optional>
 		<dependency>
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>
