@@ -14,17 +14,22 @@ import net.jueb.util4j.net.nettyImpl.handler.websocket.text.codec.WebSocketTextF
  */
 public  class WebSocketClientTextAdapterHandler extends WebSocketClientInitializer{
 	
+	ChannelHandler handler;
 	public WebSocketClientTextAdapterHandler(URI uri,ChannelHandler handler) {
-		this(uri, null, handler);
+		this(uri, null,handler);
 	}
 	
 	public WebSocketClientTextAdapterHandler(URI uri,SslContext sslCtx,ChannelHandler handler) {
-		super(uri,sslCtx,handler);
+		super(uri,sslCtx);
+		this.handler=handler;
 	}
 
 	@Override
 	protected void webSocketHandComplete(ChannelHandlerContext ctx) {
 		ctx.channel().pipeline().addLast(new WebSocketTextFrameByteBufAdapter());//适配器
-		super.webSocketHandComplete(ctx);
+		ctx.channel().pipeline().addLast(handler);
+		//为新加的handler手动触发必要事件
+		ctx.fireChannelRegistered();
+		ctx.fireChannelActive();
 	}
 }

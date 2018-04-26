@@ -12,17 +12,22 @@ import net.jueb.util4j.net.nettyImpl.handler.websocket.binary.codec.WebSocketBin
  */
 public  class WebSocketServerBinaryAdapterHandler extends WebSocketServerInitializer{
 
+	ChannelHandler handler;
 	public WebSocketServerBinaryAdapterHandler(String websocketPath,ChannelHandler handler) {
 		this(websocketPath, null, handler);
 	}
 	
 	public WebSocketServerBinaryAdapterHandler(String websocketPath,SslContext sslCtx,ChannelHandler handler) {
-		super(websocketPath,sslCtx,handler);
+		super(websocketPath,sslCtx);
+		this.handler=handler;
 	}
 
 	@Override
 	protected void webSocketHandComplete(ChannelHandlerContext ctx) {
 		ctx.channel().pipeline().addLast(new WebSocketBinaryFrameByteBufAdapter());//适配器
-		super.webSocketHandComplete(ctx);
+		ctx.channel().pipeline().addLast(handler);
+		//为新加的handler手动触发必要事件
+		ctx.fireChannelRegistered();
+		ctx.fireChannelActive();
 	}
 }

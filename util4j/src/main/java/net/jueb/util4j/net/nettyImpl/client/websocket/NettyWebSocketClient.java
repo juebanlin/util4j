@@ -2,6 +2,7 @@ package net.jueb.util4j.net.nettyImpl.client.websocket;
 import java.net.URI;
 
 import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.ssl.SslContext;
 import net.jueb.util4j.net.nettyImpl.client.NettyClient;
@@ -46,8 +47,15 @@ public class NettyWebSocketClient extends NettyClient {
 	 */
 	@Override
 	protected ChannelHandler fixHandlerBeforeConnect(final ChannelHandler handler) {
-		ChannelHandler result=new WebSocketClientInitializer(webSocketURL, sslCtx, handler);
-		//result= new WebSocketClientBinaryAdapterHandler(websocketPath,sslCtx,handler);
+		ChannelHandler result=new WebSocketClientInitializer(webSocketURL, sslCtx) {
+			@Override
+			protected void webSocketHandComplete(ChannelHandlerContext ctx) {
+				ctx.channel().pipeline().addLast(handler);
+				//为新加的handler手动触发必要事件
+				ctx.fireChannelRegistered();
+				ctx.fireChannelActive();
+			}
+		};
 		return result;
 	}	
 }

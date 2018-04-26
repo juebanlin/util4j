@@ -1,7 +1,6 @@
 package net.jueb.util4j.net.nettyImpl.handler.websocket;
 
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -23,16 +22,15 @@ import net.jueb.util4j.net.nettyImpl.NetLogFactory;
  * @author Administrator
  */
 @Sharable
-public class WebSocketServerInitializer extends ChannelInitializer<Channel>{
+public abstract class WebSocketServerInitializer extends ChannelInitializer<Channel>{
 	
 	protected final InternalLogger log = NetLogFactory.getLogger(getClass());
 	
 	protected final String websocketPath;
 	private SslContext sslCtx;
-	private ChannelHandler handler;
 	
-	public WebSocketServerInitializer(String websocketPath,ChannelHandler handler) {
-		this(websocketPath, null, handler);
+	public WebSocketServerInitializer(String websocketPath) {
+		this(websocketPath, null);
 	}
 	/**
 	 * <pre>{@code //SslContextBuilder
@@ -42,10 +40,9 @@ public class WebSocketServerInitializer extends ChannelInitializer<Channel>{
 	 * @param uri
 	 * @param sslCtx
 	 */
-	public WebSocketServerInitializer(String websocketPath,SslContext sslCtx,ChannelHandler handler) {
+	public WebSocketServerInitializer(String websocketPath,SslContext sslCtx) {
 		this.websocketPath=websocketPath;
 		this.sslCtx=sslCtx;
-		this.handler=handler;
 	}
 
 	@Override
@@ -69,12 +66,7 @@ public class WebSocketServerInitializer extends ChannelInitializer<Channel>{
 	 * @param channel
 	 * @throws Exception
 	 */
-	protected void webSocketHandComplete(ChannelHandlerContext ctx) {
-		ctx.channel().pipeline().addLast(handler);
-		//为新加的handler手动触发必要事件
-		ctx.fireChannelRegistered();
-		ctx.fireChannelActive();
-	}
+	protected abstract void webSocketHandComplete(ChannelHandlerContext ctx);
 	
 	/**
 	  * 用于监测WebSocketClientProtocolHandler的事件
