@@ -214,6 +214,7 @@ public class MultipleTest {
 				Thread.sleep(1000);
 			} catch (Exception e) {
 			}
+			System.out.println("source1 end");
 			return "string1";
 		});
 		CompletableFuture<Integer> source2= CompletableFuture.supplyAsync(() -> {
@@ -222,6 +223,7 @@ public class MultipleTest {
 				Thread.sleep(5000);
 			} catch (Exception e) {
 			}
+			System.out.println("source2 end");
 			return 1;
 		});
 		source1.thenCombineAsync(source2,(v,u)->{
@@ -271,7 +273,7 @@ public class MultipleTest {
 	}
 	
 	public static void main(String[] args) throws InterruptedException {
-		test_notsame_thenComposeAsync();
+		test_notsame_thenCombineAsync();
 		Thread.sleep(100000000);
 	}
 }
