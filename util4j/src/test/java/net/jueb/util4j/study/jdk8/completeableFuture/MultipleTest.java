@@ -123,8 +123,155 @@ public class MultipleTest {
 		});
 	}
 	
+	/**
+	 * 同类型-只要有一个-执行完成就执行下一步
+	 */
+	public static void test_same_acceptEitherAsync()
+	{
+		CompletableFuture<String> source1= CompletableFuture.supplyAsync(() -> {
+			System.out.println("string1 start");
+			try {
+				Thread.sleep(1000);
+			} catch (Exception e) {
+			}
+			return "string1";
+		});
+		CompletableFuture<String> source2= CompletableFuture.supplyAsync(() -> {
+			System.out.println("string2 start");
+			try {
+				Thread.sleep(5000);
+			} catch (Exception e) {
+			}
+			return "string2";
+		});
+		source1.acceptEitherAsync(source2,(a)->{
+			System.out.println("string is:"+a);
+		});
+	}
+	
+	/**
+	 *同类型-只要有一个-执行完成就执行下一步并返回新类型
+	 */
+	public static void test_same_applyToEitherAsync()
+	{
+		CompletableFuture<String> source1= CompletableFuture.supplyAsync(() -> {
+			System.out.println("string1 start");
+			try {
+				Thread.sleep(1000);
+			} catch (Exception e) {
+			}
+			return "string1";
+		});
+		CompletableFuture<String> source2= CompletableFuture.supplyAsync(() -> {
+			System.out.println("string2 start");
+			try {
+				Thread.sleep(5000);
+			} catch (Exception e) {
+			}
+			return "string2";
+		});
+		//同类型-只要有一个执行完成就执行下一步
+		source1.applyToEitherAsync(source2,(a)->{
+			System.out.println("string is:"+a);
+			return "1";
+		});
+	}
+	
+	/**
+	 * 接受2个不同future的结果,当2个都完成后才执行
+	 */
+	public static void test_notsame_thenAcceptBothAsync()
+	{
+		CompletableFuture<String> source1= CompletableFuture.supplyAsync(() -> {
+			System.out.println("source1 start");
+			try {
+				Thread.sleep(1000);
+			} catch (Exception e) {
+			}
+			return "string1";
+		});
+		CompletableFuture<Integer> source2= CompletableFuture.supplyAsync(() -> {
+			System.out.println("source2 start");
+			try {
+				Thread.sleep(5000);
+			} catch (Exception e) {
+			}
+			return 1;
+		});
+		source1.thenAcceptBothAsync(source2, (v,u)->{
+			System.out.println("v="+v+",u="+u);
+		});
+	}
+	
+	/**
+	 * 接受2个不同future的结果,当2个都完成后才执行并返回新类型结果
+	 */
+	public static void test_notsame_thenCombineAsync()
+	{
+		CompletableFuture<String> source1= CompletableFuture.supplyAsync(() -> {
+			System.out.println("source1 start");
+			try {
+				Thread.sleep(1000);
+			} catch (Exception e) {
+			}
+			return "string1";
+		});
+		CompletableFuture<Integer> source2= CompletableFuture.supplyAsync(() -> {
+			System.out.println("source2 start");
+			try {
+				Thread.sleep(5000);
+			} catch (Exception e) {
+			}
+			return 1;
+		});
+		source1.thenCombineAsync(source2,(v,u)->{
+			System.out.println("v="+v+",u="+u);
+			return false;
+		});
+	}
+	/**
+	 * 组合-返回新的不同类型的future,和handle类型,不同的是handle是单个future延续执行
+	 */
+	public static void test_notsame_thenComposeAsync()
+	{
+		CompletableFuture<String> source1= CompletableFuture.supplyAsync(() -> {
+			try {
+				Thread.sleep(5000);
+			} catch (Exception e) {
+			}
+			System.out.println("source1 start");
+			return "string1";
+		});
+		CompletableFuture<Integer> source2= CompletableFuture.supplyAsync(() -> {
+			try {
+				Thread.sleep(1000);
+			} catch (Exception e) {
+			}
+			System.out.println("source2 start");
+			return 1;
+		});
+		CompletableFuture<Boolean> source3= CompletableFuture.supplyAsync(() -> {
+			try {
+				Thread.sleep(8000);
+			} catch (Exception e) {
+			}
+			System.out.println("source3 start");
+			return false;
+		});
+		//组合有序执行
+		source1.thenComposeAsync((v)->{
+			System.out.println("source1 ->source2");
+			return source2;
+		}).thenComposeAsync((v)->{
+			System.out.println("source2 ->source3");
+			return source3;
+		}).thenAcceptAsync((v)->{
+			System.out.println(v);
+		});
+	}
+	
 	public static void main(String[] args) throws InterruptedException {
-		test2();
+		test_notsame_thenComposeAsync();
 		Thread.sleep(100000000);
 	}
 }
