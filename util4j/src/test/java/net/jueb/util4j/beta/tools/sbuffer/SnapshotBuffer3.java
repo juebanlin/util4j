@@ -6,6 +6,8 @@ import java.util.Scanner;
 
 import org.apache.commons.lang.math.RandomUtils;
 
+import net.jueb.util4j.cache.map.btree.BTreeMap;
+
 public class SnapshotBuffer3 {
 	
 	private byte[] array=new byte[]{};
@@ -14,7 +16,7 @@ public class SnapshotBuffer3 {
 	private volatile boolean readOnly;
 	private Map<Integer,Byte> override=new HashMap<Integer, Byte>();//底层数据覆盖
 //	private Map<Integer,Byte> override=new TreeMap<Integer, Byte>();//底层数据覆盖
-//	private Map<Integer,Byte> override=BTreeMap.create();//底层数据覆盖
+//	private Map<Integer,Byte> override=new BTreeMap<>();//底层数据覆盖
 //	private SparseArray<Byte> override=new SparseArray<Byte>();//底层数据覆盖
 //	private Node_bit2 override=new Node_bit2();//底层数据覆盖
 //	private NodeMap<Integer,Byte> override=new NodeMap<Integer,Byte>();//底层数据覆盖
@@ -382,6 +384,7 @@ public class SnapshotBuffer3 {
 	public static void main(String[] args) {
 		Scanner sc=new Scanner(System.in);
 		sc.nextLine();
+		new Test().test6();
 		new Test().test6();
 		sc.nextLine();
 	}

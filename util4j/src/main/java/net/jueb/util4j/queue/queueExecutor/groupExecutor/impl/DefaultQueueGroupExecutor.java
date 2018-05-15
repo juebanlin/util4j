@@ -1,5 +1,7 @@
 package net.jueb.util4j.queue.queueExecutor.groupExecutor.impl;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -96,7 +98,11 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
      * 辅助执行器
      * 用于启动工作线程或者其它逻辑处理
      */
-    private final Executor assistExecutor;
+    private Executor assistExecutor;
+    /**
+     * 设置worker线程上下文classloder为null
+     */
+    private boolean nullContextClassLoader=true;
     
     public DefaultQueueGroupExecutor() {
         this(DEFAULT_INITIAL_THREAD_POOL_SIZE, DEFAULT_MAX_THREAD_POOL);
@@ -137,7 +143,7 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
      * @param bossQueue 主队列
      * @param iqm 索引队列管理器
      * @param kqm 键值队列管理器
-     * @param assistExecutor 辅助执行器,用于启动工作线程或处理其它逻辑
+     * @param assistExecutor optional 辅助执行器,用于启动工作线程或处理其它逻辑
      */
     public DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize, 
     		long keepAliveTime, TimeUnit unit,ThreadFactory threadFactory,
@@ -155,7 +161,6 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 		Objects.requireNonNull(iqm);
 		Objects.requireNonNull(kqm);
 		Objects.requireNonNull(bossQueue);
-		Objects.requireNonNull(assistExecutor);
 		this.corePoolSize = corePoolSize;
 		this.maximumPoolSize = maximumPoolSize;
 		this.keepAliveNanoTime = unit.toNanos(keepAliveTime);
@@ -216,6 +221,14 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 
 	public void setAllowCoreThreadTimeOut(boolean allowCoreThreadTimeOut) {
 		this.allowCoreThreadTimeOut = allowCoreThreadTimeOut;
+	}
+
+	public boolean isNullContextClassLoader() {
+		return nullContextClassLoader;
+	}
+
+	public void setNullContextClassLoader(boolean nullContextClassLoader) {
+		this.nullContextClassLoader = nullContextClassLoader;
 	}
 
 	public int getCorePoolSize() {
@@ -351,7 +364,13 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 	 * 唤醒工作线程(如果还没超过最大工作线程)
 	 */
 	public void wakeUpWorkerIfNecessary(){
-		assistExecutor.execute(this::doWakeUpWorker);
+		if(assistExecutor!=null)
+		{
+			assistExecutor.execute(this::doWakeUpWorker);
+		}else
+		{
+			doWakeUpWorker();
+		}
 	}
 	
 	/**
@@ -373,6 +392,21 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 	private void addWorkerUnsafe() {
          Worker worker = new Worker();
          Thread thread = getThreadFactory().newThread(worker);
+         if(nullContextClassLoader)
+         {//设置线程不会引用其它classloader
+             AccessController.doPrivileged(new PrivilegedAction<Void>() {
+                 @Override
+                 public Void run() {
+                	 // Set to null to ensure we not create classloader leaks by holds a strong reference to the inherited
+                     // classloader.
+                     // See:
+                     // - https://github.com/netty/netty/issues/7290
+                     // - https://bugs.openjdk.java.net/browse/JDK-7008595
+                	 thread.setContextClassLoader(null);
+                     return null;
+                 }
+             });
+         }
          idleWorkers.incrementAndGet();
          thread.start();
          workers.add(worker);
@@ -425,8 +459,7 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
                 for (;;) 
                 {
                 	Runnable task=null;
-                	//等待任务
-                	try {
+                	try {//等待任务
                 		workerWaitCondition.init();
                 		task=waitConditionStrategy.waitFor(workerWaitCondition, getKeepAliveTime(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
 					} catch (InterruptedException e) {
@@ -650,7 +683,11 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
         	this.maximumPoolSize=maximumPoolSize;
         	return this;
         }
-        
+        /**
+         * 可选执行器,用于启动工作线程
+         * @param assistExecutor optional
+         * @return
+         */
         public Builder setAssistExecutor(Executor assistExecutor)
         {
         	this.assistExecutor=assistExecutor;
