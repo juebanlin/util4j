@@ -4,13 +4,13 @@ echo BootDir:%cd%
 set Boot_JAVA_HOME=
 set Boot_Class=net.jueb.xx.MainClass
 set Boot_Class_Args=
-set Jvm_Args=-Xms128m -Xmx1024m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=%ROOT_HOME%\heap.dump -Xloggc:%ROOT_HOME%\logs\gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps
+set ROOT_HOME=.
+# -Xloggc:%ROOT_HOME%\logs\gc.log -XX:HeapDumpPath=%ROOT_HOME%\heap.dump
+set Jvm_Args=-server -verbose:gc -Xloggc:logs/gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xms256m -Xmx1024m -XX:+UseConcMarkSweepGC -XX:+UseParNewGC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=heap.dump
 
 rem =====setWindowStyle=====
 :: color 2A
 title %Boot_Class% %Boot_Class_Args%
-
-set ROOT_HOME=.
 
 rem =====customJavaHome=====
 if "%Boot_JAVA_HOME%" == "" goto useSystemJavaHome
