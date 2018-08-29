@@ -77,6 +77,17 @@ public class HttpUtil {
 		}
 	}
 	
+	public byte[] httpsGet(String url) throws Exception
+	{
+		HttpURLConnection conn=buildSSLConn(url);
+		try {
+			return InputStreamUtils.getBytes(conn.getInputStream());
+		} finally {
+			conn.getInputStream().close();
+			conn.disconnect();
+		}
+	}
+	
 	public byte[] httpPost(String url,Map<String,String> args) throws Exception
 	{
 		List<String> list=new ArrayList<String>();
