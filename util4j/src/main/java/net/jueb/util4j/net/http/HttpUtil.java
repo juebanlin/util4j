@@ -13,7 +13,6 @@ import javax.net.ssl.TrustManager;
 
 import org.apache.commons.lang.StringUtils;
 
-import io.netty.util.CharsetUtil;
 import net.jueb.util4j.bytesStream.InputStreamUtils;
 
 public class HttpUtil {
@@ -149,7 +148,7 @@ public class HttpUtil {
 			conn.setRequestMethod("POST");
 			conn.setDoOutput(true);
 			conn.setRequestProperty("Content-Type","application/json");
-			conn.getOutputStream().write(json.getBytes(CharsetUtil.UTF_8));
+			conn.getOutputStream().write(json.getBytes("UTF-8"));
 			conn.getOutputStream().flush();
 			conn.getOutputStream().close();
 			return InputStreamUtils.getBytes(conn.getInputStream());
