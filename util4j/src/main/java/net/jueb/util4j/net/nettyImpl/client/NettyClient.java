@@ -1,6 +1,7 @@
 package net.jueb.util4j.net.nettyImpl.client;
 
 import java.net.InetSocketAddress;
+
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -8,6 +9,7 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.EventLoopGroup;
 import net.jueb.util4j.net.nettyImpl.handler.ShareableChannelInboundHandler;
+import net.jueb.util4j.net.nettyImpl.handler.websocket.WebSocketClientAdapterHandler;
 
 public class NettyClient extends AbstractNettyClient{
 	
@@ -24,6 +26,16 @@ public class NettyClient extends AbstractNettyClient{
 		this(config, new InetSocketAddress(host, port), handler);
 	}
 	public NettyClient(NettyClientConfig config,InetSocketAddress target,ChannelHandler handler) {
+		super(target);
+		if(config.getIoWorkers().isShutdown())
+		{
+			throw new UnsupportedOperationException("config is unActive");
+		}
+		this.config=config;
+		this.handler=handler;
+	}
+	
+	public NettyClient(NettyClientConfig config,InetSocketAddress target,WebSocketClientAdapterHandler handler) {
 		super(target);
 		if(config.getIoWorkers().isShutdown())
 		{

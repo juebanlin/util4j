@@ -22,12 +22,12 @@ import net.jueb.util4j.net.nettyImpl.NetLogFactory;
  * @author Administrator
  */
 @Sharable
-public abstract class WebSocketServerInitializer extends ChannelInitializer<Channel>{
+public abstract class WebSocketServerInitializer extends ChannelInitializer<Channel> implements WebSocketServerAdapterHandler{
 	
 	protected final InternalLogger log = NetLogFactory.getLogger(getClass());
 	
 	protected final String websocketPath;
-	private SslContext sslCtx;
+	private SslContext  sslCtx;
 	
 	public WebSocketServerInitializer(String websocketPath) {
 		this(websocketPath, null);
@@ -63,6 +63,15 @@ public abstract class WebSocketServerInitializer extends ChannelInitializer<Chan
 	 * 注意此方法加入的handler需要手动触发
 	 * ctx.fireChannelActive()
 	 * ctx.fireChannelRegistered()
+	 *<pre> 
+	 {@code
+		ChannelPipeline p=ctx.pipeline();
+		p.addLast(new CodecHandler());//消息解码器
+		p.addLast(new DefaultIdleListenerHandler<String>(new Listener()));//心跳适配器
+		//为新加的handler手动触发必要事件
+		ctx.fireChannelRegistered();
+		ctx.fireChannelActive();	 			
+	 *}}</pre>
 	 * @param channel
 	 * @throws Exception
 	 */

@@ -26,7 +26,7 @@ import net.jueb.util4j.net.nettyImpl.NetLogFactory;
  * @author Administrator
  */
 @Sharable
-public abstract class WebSocketClientInitializer extends ChannelInitializer<Channel>{
+public abstract class WebSocketClientInitializer extends ChannelInitializer<Channel> implements WebSocketClientAdapterHandler{
 	
 	protected final InternalLogger log = NetLogFactory.getLogger(getClass());
 	protected final URI webSocketURL;

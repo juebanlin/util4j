@@ -1,14 +1,13 @@
 package net.jueb.util4j.net.nettyImpl.handler.websocket.text.codec;
 
-import io.netty.buffer.ByteBuf;
+import java.util.List;
+
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageCodec;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.util.internal.logging.InternalLogger;
 import net.jueb.util4j.net.nettyImpl.NetLogFactory;
-
-import java.util.List;
 
 /**
  * UTF8格式：
@@ -26,7 +25,7 @@ import java.util.List;
  * 
  * @author Administrator
  */
-public class WebSocketTextFrameByteBufAdapter extends MessageToMessageCodec<WebSocketFrame, ByteBuf>{
+public class WebSocketTextFrameStringAdapter extends MessageToMessageCodec<WebSocketFrame, String>{
 	protected final InternalLogger log = NetLogFactory.getLogger(getClass());
 	/**
 	 * 将webSocket消息转换为bytebuf类型,以适配后面的解码器
@@ -38,10 +37,9 @@ public class WebSocketTextFrameByteBufAdapter extends MessageToMessageCodec<WebS
 		if(paramINBOUND_IN instanceof TextWebSocketFrame)
 		{
 			TextWebSocketFrame msg=(TextWebSocketFrame)paramINBOUND_IN;
-			ByteBuf data = msg.content();
-			paramList.add(data);
-			data.retain();
-			log.debug("TextWebSocketFrame to ByteBuf,size="+data.readableBytes());
+			String text=msg.text();
+			paramList.add(msg.text());
+			log.debug("TextWebSocketFrame to text:"+text);
 		}
 	}
 
@@ -50,9 +48,8 @@ public class WebSocketTextFrameByteBufAdapter extends MessageToMessageCodec<WebS
 	 */
 	@Override
 	protected void encode(ChannelHandlerContext paramChannelHandlerContext,
-			ByteBuf paramOUTBOUND_IN, List<Object> paramList) throws Exception {
+			String paramOUTBOUND_IN, List<Object> paramList) throws Exception {
 		paramList.add(new TextWebSocketFrame(paramOUTBOUND_IN));
-		paramOUTBOUND_IN.retain();
-		log.debug("ByteBuf to TextWebSocketFrame,size="+paramOUTBOUND_IN.readableBytes());
+		log.debug("text to TextWebSocketFrame,text:"+paramOUTBOUND_IN);
 	}
 }

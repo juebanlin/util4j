@@ -5,12 +5,13 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.ssl.SslContext;
 import net.jueb.util4j.net.nettyImpl.handler.websocket.WebSocketServerInitializer;
 import net.jueb.util4j.net.nettyImpl.handler.websocket.binary.codec.WebSocketBinaryFrameByteBufAdapter;
+import net.jueb.util4j.net.nettyImpl.listener.MsgListenerHandler;
 
 /**
  * websocket服务端handler适配器
  * @author Administrator
  */
-public  class WebSocketServerBinaryAdapterHandler extends WebSocketServerInitializer{
+public class WebSocketServerBinaryAdapterHandler extends WebSocketServerInitializer{
 
 	ChannelHandler handler;
 	public WebSocketServerBinaryAdapterHandler(String websocketPath,ChannelHandler handler) {
@@ -18,6 +19,11 @@ public  class WebSocketServerBinaryAdapterHandler extends WebSocketServerInitial
 	}
 	
 	public WebSocketServerBinaryAdapterHandler(String websocketPath,SslContext sslCtx,ChannelHandler handler) {
+		super(websocketPath,sslCtx);
+		this.handler=handler;
+	}
+	
+	public WebSocketServerBinaryAdapterHandler(String websocketPath,SslContext sslCtx,MsgListenerHandler handler) {
 		super(websocketPath,sslCtx);
 		this.handler=handler;
 	}

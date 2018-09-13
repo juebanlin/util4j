@@ -13,13 +13,14 @@ import net.jueb.util4j.net.JConnection;
 import net.jueb.util4j.net.JConnectionListener;
 import net.jueb.util4j.net.nettyImpl.NetLogFactory;
 import net.jueb.util4j.net.nettyImpl.NettyConnection;
+import net.jueb.util4j.net.nettyImpl.listener.MsgListenerHandler;
 
 /**
  * 负责chanel与JConnectionListener的绑定
  * @author Administrator
  * @param <M>
  */
-abstract class AbstractListenerHandler<M,L extends JConnectionListener<M>> extends ChannelInboundHandlerAdapter{
+public abstract class AbstractListenerHandler<M,L extends JConnectionListener<M>> extends ChannelInboundHandlerAdapter implements MsgListenerHandler{
 
 	protected final InternalLogger log = NetLogFactory.getLogger(getClass());
 	

@@ -26,6 +26,7 @@ import net.jueb.util4j.net.nettyImpl.NettyConnection;
 import net.jueb.util4j.net.nettyImpl.ServerOptionConfiger;
 import net.jueb.util4j.net.nettyImpl.handler.LoggerHandler;
 import net.jueb.util4j.net.nettyImpl.handler.ShareableChannelInboundHandler;
+import net.jueb.util4j.net.nettyImpl.handler.websocket.WebSocketServerAdapterHandler;
 
 public class NettyServer extends AbstractNettyServer{
 
@@ -49,6 +50,13 @@ public class NettyServer extends AbstractNettyServer{
 	}
 	
 	public NettyServer(NettyServerConfig config,InetSocketAddress local,ChannelHandler handler) {
+		super(local);
+		this.config=config;
+		this.handler=handler;
+		initBooter();
+	}
+	
+	public NettyServer(NettyServerConfig config,InetSocketAddress local,WebSocketServerAdapterHandler handler) {
 		super(local);
 		this.config=config;
 		this.handler=handler;
@@ -156,10 +164,11 @@ public class NettyServer extends AbstractNettyServer{
 			final CountDownLatch latch=new CountDownLatch(1);
 			LoggerHandler loggerHandler=null;//server接收处理链路的日志记录器
 			LogLevel level=config.getLevel();
-			if(level!=null)
+			if(level==null)
 			{
-				loggerHandler=new LoggerHandler(level);
+				level=LogLevel.DEBUG;
 			}
+			loggerHandler=new LoggerHandler(level);
 			ChannelHandler childHandler=initLogHandlerAdapter(fixedHandler);
 			booter.handler(loggerHandler).childHandler(childHandler);
 			cf=booter.bind(local);
