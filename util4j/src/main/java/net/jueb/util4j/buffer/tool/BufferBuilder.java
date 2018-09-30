@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.function.Predicate;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -291,7 +292,11 @@ public class BufferBuilder{
 			
 			String var_mapKeyType=getVarTypeName(keyType,keyTypeActs);
 			String var_mapValueType=getVarTypeName(valueType,valueTypeActs);
-			String varInstanceType="java.util.HashMap";
+			String varInstanceType=type.getCanonicalName();
+			if(type==Map.class)
+			{
+				varInstanceType="java.util.HashMap";
+			}
 			
 			if(nullCheck)
 			{
@@ -364,18 +369,27 @@ public class BufferBuilder{
 			String var_listValue=varName+"_lv";
 			String var_listValueType=getVarTypeName(valueType,valueTypeActs);
 			
-			String varInstanceType="java.util.ArrayList";
+			String varInstanceType=type.getCanonicalName();
 			if(List.class.isAssignableFrom(type))
 			{
-				varInstanceType="java.util.ArrayList";
+				if(type==List.class)
+				{
+					varInstanceType="java.util.ArrayList";
+				}
 			}
 			if(Queue.class.isAssignableFrom(type))
 			{
-				varInstanceType="java.util.concurrent.ConcurrentLinkedQueue";
+				if(type==Queue.class)
+				{
+					varInstanceType="java.util.concurrent.ConcurrentLinkedQueue";
+				}
 			}
 			if(Set.class.isAssignableFrom(type))
 			{
-				varInstanceType="java.util.HashSet";
+				if(type==Set.class)
+				{
+					varInstanceType="java.util.HashSet";
+				}
 			}
 			if(nullCheck)
 			{
@@ -535,19 +549,10 @@ public class BufferBuilder{
 			readsb.append("\t").append(varName+"=buffer.readFloat();").append("\n");
 			match=true;
 		}
-//		if(ISqlTableData.class.isAssignableFrom(type))
-//		{//自定义类型
-//			String ClassName=type.getSimpleName();
-//			writesb.append("\t").append(varName+"."+writeMethodName+"(buffer);").append("\n");
-//			
-//			readsb.append("\t").append(varName +"=new "+ClassName+"();").append("\n");
-//			readsb.append("\t").append(varName + "."+readMethodName+"(buffer);").append("\n");
-//			match=true;
-//		}
 		if(!match)
 		{//没有匹配,可能是集合中的复合类型
-			boolean varType=type.isArray();
-			if(varType)
+			boolean arrayType=type.isArray();
+			if(arrayType)
 			{
 				readWriteVar(type, varName, writesb, readsb, nullCheck);
 			}else
