@@ -1,4 +1,4 @@
-package net.jueb.util4j.hotSwap.classFactory.v0;
+package net.jueb.util4j.hotSwap.classFactory.old.v0;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,7 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.jueb.util4j.file.FileUtil;
-import net.jueb.util4j.hotSwap.classFactory.v1.AbstractStaticScriptFactory;
+import net.jueb.util4j.hotSwap.classFactory.old.v1.AbstractStaticScriptFactory;
 import net.jueb.util4j.thread.NamedThreadFactory;
 
 /**

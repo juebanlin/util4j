@@ -1,4 +1,4 @@
-package net.jueb.util4j.hotSwap.classFactory.v3;
+package net.jueb.util4j.hotSwap.classFactory.map;
 
 /**
  * 自定义映射实例工厂 

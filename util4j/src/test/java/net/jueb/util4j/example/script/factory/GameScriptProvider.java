@@ -2,8 +2,8 @@ package net.jueb.util4j.example.script.factory;
 
 import net.jueb.util4j.example.script.factory.annations.IntMapper;
 import net.jueb.util4j.example.script.factory.annations.StringMapper;
-import net.jueb.util4j.hotSwap.classFactory.stable.GenericScriptProvider;
-import net.jueb.util4j.hotSwap.classFactory.stable.IGenericScript;
+import net.jueb.util4j.hotSwap.classFactory.generic.GenericScriptProvider;
+import net.jueb.util4j.hotSwap.classFactory.generic.IGenericScript;
 import net.jueb.util4j.hotSwap.classProvider.IClassProvider;
 
 /**
@@ -19,7 +19,7 @@ public abstract class GameScriptProvider<S extends IGenericScript> extends Gener
 	}
 
 	@Override
-	protected void onClassInit(Class<? extends S> clazz, GenericScriptProvider<S>.ClassRegister classRegister) {
+	protected void onScriptClassFind(Class<? extends S> clazz, GenericScriptProvider<S>.ClassRegister classRegister) {
 		IntMapper code=clazz.getAnnotation(IntMapper.class);
 		if(code!=null)
 		{

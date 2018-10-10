@@ -1,4 +1,4 @@
-package net.jueb.util4j.hotSwap.classFactory.v1;
+package net.jueb.util4j.hotSwap.classFactory.old.v1;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,9 +17,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.jueb.util4j.file.FileUtil;
-import net.jueb.util4j.hotSwap.classFactory.v0.IScript;
-import net.jueb.util4j.hotSwap.classFactory.v1.ScriptSource.DirClassFile;
-import net.jueb.util4j.hotSwap.classFactory.v1.ScriptSource.URLClassFile;
+import net.jueb.util4j.hotSwap.classFactory.old.v0.IScript;
+import net.jueb.util4j.hotSwap.classFactory.old.v1.ScriptSource.DirClassFile;
+import net.jueb.util4j.hotSwap.classFactory.old.v1.ScriptSource.URLClassFile;
 
 /**
  * 动态加载jar内的脚本,支持包含匿名内部类 T不能做为父类加载 T尽量为接口类型,

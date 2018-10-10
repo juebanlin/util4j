@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * 静态类生产
+ * 静态类提供者
  * @author juebanlin
  */
 public class StaticClassProvider implements IClassProvider{

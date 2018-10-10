@@ -1,4 +1,4 @@
-package net.jueb.util4j.hotSwap.classFactory.v0;
+package net.jueb.util4j.hotSwap.classFactory.old.v1;
 
 import java.lang.reflect.Modifier;
 import java.util.Map;
@@ -6,20 +6,24 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import net.jueb.util4j.hotSwap.classFactory.old.v0.IScript;
+import net.jueb.util4j.hotSwap.classFactory.old.v0.IScriptFactory;
+
 /**
  * 静态脚本工厂
  * 当不需要使用到热重载脚本需求时,可直接使用静态脚本注册
  * @author juebanlin
  */
-public abstract class StaticScriptClassFactory<T extends IScript> implements IScriptFactory<T>{
+public abstract class AbstractStaticScriptFactory<T extends IScript> implements IScriptFactory<T>{
 	
 	protected final Logger _log = LoggerFactory.getLogger(this.getClass());
 	protected final Map<Integer, Class<? extends T>> staticCodeMap = new ConcurrentHashMap<Integer, Class<? extends T>>(); 
+	
 	protected class StaticScriptRegister{
 		
-		protected final StaticScriptClassFactory<T> factory;
+		protected final AbstractStaticScriptFactory<T> factory;
 		
-		public StaticScriptRegister(StaticScriptClassFactory<T> factory) {
+		public StaticScriptRegister(AbstractStaticScriptFactory<T> factory) {
 			super();
 			this.factory = factory;
 		}
@@ -33,8 +37,7 @@ public abstract class StaticScriptClassFactory<T extends IScript> implements ISc
 		}
 	}
 	
-	public StaticScriptClassFactory() {
-		super();
+	protected AbstractStaticScriptFactory() {
 		init();
 	}
 	

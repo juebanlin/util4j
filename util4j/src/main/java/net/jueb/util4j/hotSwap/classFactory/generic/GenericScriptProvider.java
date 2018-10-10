@@ -1,4 +1,4 @@
-package net.jueb.util4j.hotSwap.classFactory.stable;
+package net.jueb.util4j.hotSwap.classFactory.generic;
 
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
@@ -105,18 +105,21 @@ public abstract class GenericScriptProvider<S extends IGenericScript> implements
 	}
 	
 	/**
-	 * 脚本类的加载不交给父类控制
+	 * 脚本类的加载不交给子类控制
 	 * @param classes
 	 * @throws Exception
 	 */
 	private void initScriptClasses(Set<Class<?>> classes)throws Exception
 	{
+		ClassRegister classRegister=new ClassRegister();
+		for (Class<?> clazz : classes) {
+			onClassFind(clazz, classRegister);
+		}
 		Set<Class<? extends S>> scriptClass=findScriptClass(classes);
 		Set<Class<? extends S>> instanceAbleScript = findInstanceAbleScript(scriptClass);
-		ClassRegister classRegister=new ClassRegister();
 		for(Class<? extends S> clazz:instanceAbleScript)
 		{
-			onClassInit(clazz, classRegister);//交给子类初始化注册
+			onScriptClassFind(clazz, classRegister);//交给子类处理
 		}
 		ClassData cd=new ClassData();
 		cd.intMap.putAll(classRegister.intMap);
@@ -124,8 +127,6 @@ public abstract class GenericScriptProvider<S extends IGenericScript> implements
 		_log.info("loadScriptClass complete,id mapping size:"+cd.intMap.size()+",name mapping size:"+cd.stringMap.size());
 		this.classData=cd;
 	}
-	
-	protected abstract void onClassInit(Class<? extends S> clazz ,ClassRegister classRegister);
 	
 	/**
 	 * 找出脚本类
@@ -139,12 +140,22 @@ public abstract class GenericScriptProvider<S extends IGenericScript> implements
 			throws InstantiationException, IllegalAccessException {
 		Set<Class<? extends S>> scriptClazzs = new HashSet<Class<? extends S>>();
 		for (Class<?> clazz : clazzs) {
-			if (IGenericScript.class.isAssignableFrom(clazz)) {
+			if (isScriptClass(clazz)) {
 				Class<S> scriptClazz = (Class<S>) clazz;
 				scriptClazzs.add(scriptClazz);
 			}
 		}
 		return scriptClazzs;
+	}
+	
+	/**
+	 * 是否是脚本类
+	 * @param clazz
+	 * @return
+	 */
+	protected boolean isScriptClass(Class<?> clazz)
+	{
+		return IGenericScript.class.isAssignableFrom(clazz);
 	}
 	
 	/**
@@ -154,27 +165,30 @@ public abstract class GenericScriptProvider<S extends IGenericScript> implements
 	 * @throws InstantiationException
 	 * @throws IllegalAccessException
 	 */
-	private Set<Class<? extends S>> findInstanceAbleScript(Set<Class<? extends S>> scriptClazzs)
+	protected Set<Class<? extends S>> findInstanceAbleScript(Set<Class<? extends S>> scriptClazzs)
 			throws InstantiationException, IllegalAccessException {
 		Set<Class<? extends S>> result=new HashSet<>();
 		for (Class<? extends S> scriptClazz : scriptClazzs) 
 		{
-			S script = getInstacne(scriptClazz);
-			if(script==null)
+			if(isInstanceAble(scriptClazz))
 			{
-				continue;
+				result.add(scriptClazz);
 			}
-			result.add(scriptClazz);
 		}
 		return result;
 	}
+	
+	protected boolean isInstanceAble(Class<? extends S> clazz)
+	{
+		return getInstacne(clazz)!=null;
+	}
 
-	protected final boolean isAbstractOrInterface(Class<?> clazz)
+	protected boolean isAbstractOrInterface(Class<?> clazz)
 	{
 		return Modifier.isAbstract(clazz.getModifiers())|| Modifier.isInterface(clazz.getModifiers());// 是否是抽象类
 	}
 	
-	protected final <C> C getInstacne(Class<C> clazz)
+	protected <C> C getInstacne(Class<C> clazz)
 	{
 		C instacne=null;
 		if (!isAbstractOrInterface(clazz)) {// 可实例化脚本
@@ -187,6 +201,32 @@ public abstract class GenericScriptProvider<S extends IGenericScript> implements
 		return instacne;
 	}
 	
+	/**
+	 * 发现类
+	 * @param clazz 类型
+	 * @param classRegister 注册器
+	 */
+	protected void onClassFind(Class<?> clazz ,ClassRegister classRegister) {
+		
+	}
+	
+	/**
+	 * 发现可实例化脚本类
+	 * @param clazz 类型
+	 * @param classRegister 注册器
+	 */
+	protected abstract void onScriptClassFind(Class<? extends S> clazz ,ClassRegister classRegister);
+	
+	
+	/**
+	 * 当脚本加载完成后调用此方法,子类可继续过滤查找其它类
+	 * @param classes 
+	 */
+	protected void onScriptLoaded(Set<Class<?>> loadedClasses)throws Exception
+	{
+		
+	}
+
 	public final boolean isAutoReload() {
 		return autoReload;
 	}
@@ -232,15 +272,6 @@ public abstract class GenericScriptProvider<S extends IGenericScript> implements
 			_log.error(e.getMessage(), e);
 		}
 		return result;
-	}
-
-	/**
-	 * 当脚本加载完成后调用此方法,子类可继续过滤查找其它类
-	 * @param classes 
-	 */
-	protected void onScriptLoaded(Set<Class<?>> loadedClasses)throws Exception
-	{
-		
 	}
 
 	public S buildInstance(int id) {

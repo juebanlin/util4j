@@ -1,4 +1,4 @@
-package net.jueb.util4j.hotSwap.classFactory.v2;
+package net.jueb.util4j.hotSwap.classFactory.old.v2;
 
 /**
  * 通用脚本

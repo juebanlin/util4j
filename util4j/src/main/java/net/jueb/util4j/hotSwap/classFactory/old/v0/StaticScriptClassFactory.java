@@ -1,4 +1,4 @@
-package net.jueb.util4j.hotSwap.classFactory.v2;
+package net.jueb.util4j.hotSwap.classFactory.old.v0;
 
 import java.lang.reflect.Modifier;
 import java.util.Map;
@@ -11,15 +11,15 @@ import org.slf4j.LoggerFactory;
  * 当不需要使用到热重载脚本需求时,可直接使用静态脚本注册
  * @author juebanlin
  */
-public abstract class StaticGeneralScriptClassFactory<K,T extends IGeneralScript<K>> implements IGeneralScriptFactory<K,T>{
+public abstract class StaticScriptClassFactory<T extends IScript> implements IScriptFactory<T>{
 	
 	protected final Logger _log = LoggerFactory.getLogger(this.getClass());
-	protected final Map<K, Class<? extends T>> staticCodeMap = new ConcurrentHashMap<K, Class<? extends T>>(); 
+	protected final Map<Integer, Class<? extends T>> staticCodeMap = new ConcurrentHashMap<Integer, Class<? extends T>>(); 
 	protected class StaticScriptRegister{
 		
-		protected final StaticGeneralScriptClassFactory<K,T> factory;
+		protected final StaticScriptClassFactory<T> factory;
 		
-		public StaticScriptRegister(StaticGeneralScriptClassFactory<K,T> factory) {
+		public StaticScriptRegister(StaticScriptClassFactory<T> factory) {
 			super();
 			this.factory = factory;
 		}
@@ -33,7 +33,7 @@ public abstract class StaticGeneralScriptClassFactory<K,T extends IGeneralScript
 		}
 	}
 	
-	public StaticGeneralScriptClassFactory() {
+	public StaticScriptClassFactory() {
 		super();
 		init();
 	}
@@ -63,24 +63,24 @@ public abstract class StaticGeneralScriptClassFactory<K,T extends IGeneralScript
 				throw new UnsupportedOperationException(scriptClass +"can not newInstance");
 			}
 			T script = scriptClass.newInstance();
-			K key=script.getScriptKey();
-			Class<? extends T> old=staticCodeMap.get(key);
-			staticCodeMap.put(key,scriptClass);
+			int code=script.getMessageCode();
+			Class<? extends T> old=staticCodeMap.get(code);
+			staticCodeMap.put(code,scriptClass);
 			if(old==null)
 			{
-				_log.info("regist Static Script,key="+key+",class="+scriptClass);
+				_log.info("regist Static codeScript,code="+code+"(0x"+Integer.toHexString(code)+"),class="+scriptClass);
 			}else
 			{
-				_log.info("regist Static Script,key="+key+",class="+scriptClass+",Override script="+old);
+				_log.info("regist Static codeScript,code="+code+"(0x"+Integer.toHexString(code)+"),class="+scriptClass+",Override script="+old);
 			}
 		} catch (Exception e) {
 			_log.error(e.getMessage(),e);
 		}
 	}
 	
-	protected final Class<? extends T> getStaticScriptClass(K key)
+	protected final Class<? extends T> getStaticScriptClass(int code)
 	{
-		return staticCodeMap.get(key);
+		return staticCodeMap.get(code);
 	}
 	
 	protected final T newInstance(Class<? extends T> c,Object... args) {
@@ -109,12 +109,12 @@ public abstract class StaticGeneralScriptClassFactory<K,T extends IGeneralScript
 	}
 	
 	@Override
-	public T buildInstance(K key) {
+	public T buildInstance(int code) {
 		T result=null;
-		Class<? extends T> c = getStaticScriptClass(key);
+		Class<? extends T> c = getStaticScriptClass(code);
 		if(c==null)
 		{
-			_log.error("not found script,key=" + key);
+			_log.error("not found script,code=" + code+"(0x"+Integer.toHexString(code)+")");
 		}else
 		{
 			result=newInstance(c);
@@ -123,11 +123,11 @@ public abstract class StaticGeneralScriptClassFactory<K,T extends IGeneralScript
 	}
 
 	@Override
-	public T buildInstance(K key,Object ...args) {
+	public T buildInstance(int code,Object ...args) {
 		T result = null;
-		Class<? extends T> c = getStaticScriptClass(key);
+		Class<? extends T> c = getStaticScriptClass(code);
 		if (c == null) {
-			_log.error("not found script,key=" + key);
+			_log.error("not found script,code=" + code + "(0x" + Integer.toHexString(code) + ")");
 		} else 
 		{
 			result=newInstance(c,args);

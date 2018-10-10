@@ -1,6 +1,6 @@
 package net.jueb.util4j.example.script;
 
-import net.jueb.util4j.hotSwap.classFactory.stable.IGenericScript;
+import net.jueb.util4j.hotSwap.classFactory.generic.IGenericScript;
 import net.jueb.util4j.net.JConnection;
 
 /**
@@ -8,7 +8,7 @@ import net.jueb.util4j.net.JConnection;
  * @author juebanlin@gmail.com
  * time:2015年6月17日
  */
-public interface IServerScript extends IGenericScript{
+public interface IServerScript extends IGenericScript,Runnable{
 
 	public void setRequest(Request request);
 	
