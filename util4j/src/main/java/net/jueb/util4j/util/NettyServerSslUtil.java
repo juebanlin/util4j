@@ -69,6 +69,49 @@ public class NettyServerSslUtil {
 		return buildSslContext(keyStore, password, keyStoreType, algorithm);
 	}
 	
+	public static SslContext buildSslContext_JKS(InputStream keyStore,String password) throws Exception {
+		String algorithm=KeyManagerFactory.getDefaultAlgorithm();
+		String keyStoreType="JKS";
+		return buildSslContext(keyStore, password, keyStoreType, algorithm);
+	}
+	
+	/**
+	 * @param keyStoreType PKCS12 or JKS
+	 * @param keyStore
+	 * @param password
+	 * @return
+	 * @throws Exception
+	 */
+	public static SSLContext createSSLContext(String keyStoreType ,InputStream keyStore ,String password) throws Exception {
+		String pootocol="TLS";
+		KeyStore ks = KeyStore.getInstance(keyStoreType);
+		ks.load(keyStore, password.toCharArray());
+		KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+		kmf.init(ks, password.toCharArray());
+		SSLContext sslContext=SSLContext.getInstance(pootocol);
+		sslContext.init(kmf.getKeyManagers(), null, null);
+		return sslContext;
+	}
+	
+	public static SSLContext createSSLContext_JKS(InputStream keyStore ,String password) throws Exception {
+		return createSSLContext("JKS", keyStore, password);
+	}
+	
+	public static SslHandler BuildServerSslHandler(SSLContext sslContext)
+	{
+		SSLEngine sslEngine = sslContext.createSSLEngine();
+		sslEngine.setUseClientMode(false); //服务器端模式
+		sslEngine.setNeedClientAuth(false); //不需要验证客户端
+		return new SslHandler(sslEngine);
+	}
+	
+	public static SslHandler BuildClientSslHandler(SSLContext sslContext,String host,int port)
+	{
+		SSLEngine sslEngine = sslContext.createSSLEngine(host,port);  
+	    sslEngine.setUseClientMode(true);  
+		return new SslHandler(sslEngine);
+	}
+	
 	public  static void printPfxInfo(InputStream pfx, String strPassword){  
         try {  
         	String keyStoreType="PKCS12";
@@ -103,38 +146,4 @@ public class NettyServerSslUtil {
             e.printStackTrace();  
         }  
     }
-	
-	/**
-	 * 
-	 * @param keyStoreType PKCS12 or JKS
-	 * @param keyStore
-	 * @param password
-	 * @return
-	 * @throws Exception
-	 */
-	public static SSLContext createSSLContext(String keyStoreType ,InputStream keyStore ,String password) throws Exception {
-		String pootocol="TLS";
-		KeyStore ks = KeyStore.getInstance(keyStoreType);
-		ks.load(keyStore, password.toCharArray());
-		KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-		kmf.init(ks, password.toCharArray());
-		SSLContext sslContext=SSLContext.getInstance(pootocol);
-		sslContext.init(kmf.getKeyManagers(), null, null);
-		return sslContext;
-	}
-	
-	public static SslHandler BuildServerSslHandler(SSLContext sslContext)
-	{
-		SSLEngine sslEngine = sslContext.createSSLEngine();
-		sslEngine.setUseClientMode(false); //服务器端模式
-		sslEngine.setNeedClientAuth(false); //不需要验证客户端
-		return new SslHandler(sslEngine);
-	}
-	
-	public static SslHandler BuildClientSslHandler(SSLContext sslContext,String host,int port)
-	{
-		SSLEngine sslEngine = sslContext.createSSLEngine(host,port);  
-	    sslEngine.setUseClientMode(true);  
-		return new SslHandler(sslEngine);
-	}
 }
