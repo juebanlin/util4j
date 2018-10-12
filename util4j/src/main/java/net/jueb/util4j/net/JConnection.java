@@ -12,10 +12,16 @@ public interface JConnection {
 	public int getId();
 	
 	/**
-	 * 是否活跃打开可写
+	 * 是否活跃打开
 	 * @return
 	 */
 	public boolean isActive();
+	
+	/**
+	 * 是否可写,如果不可写则底层可能出现消息堆积
+	 * @return
+	 */
+	public boolean isWritable();
 	
 	public void write(Object obj);
 

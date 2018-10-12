@@ -144,7 +144,7 @@ public class ArrayBytesBuff extends AbstractArrayBytesBuff {
 		checkIndex(index, length);
         byte[] copiedArray = new byte[length];
         System.arraycopy(getArray(), index, copiedArray, 0, length);
-        return new ArrayBytesBuff(0,0,copiedArray);
+        return new ArrayBytesBuff(0,length,copiedArray);
 	}
 
 	@Override

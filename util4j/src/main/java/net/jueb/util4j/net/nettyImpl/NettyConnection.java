@@ -65,9 +65,14 @@ public class NettyConnection implements JConnection{
 
 	@Override
 	public boolean isActive() {
-		return channel!=null && channel.isActive() && channel.isWritable();
+		return channel!=null && channel.isActive();
 	}
 
+	@Override
+	public boolean isWritable() {
+		return channel.isWritable();
+	}
+	
 	@Override
 	public void close() {
 		if(channel!=null && channel.isActive())
