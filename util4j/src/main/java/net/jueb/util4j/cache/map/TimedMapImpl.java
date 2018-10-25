@@ -23,6 +23,7 @@ import net.jueb.util4j.thread.NamedThreadFactory;
  * 默认30秒自动清理,其它则访问时触发清理
  * 类似需求实现
  * http://ifeve.com/google-guava-cachesexplained/
+ * https://github.com/ben-manes/caffeine
  * @author Administrator
  * @param <K> 
  * @param <V>
