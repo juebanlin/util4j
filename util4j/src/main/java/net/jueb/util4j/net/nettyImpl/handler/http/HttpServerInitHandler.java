@@ -1,8 +1,10 @@
 package net.jueb.util4j.net.nettyImpl.handler.http;
 
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
+import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpRequestDecoder;
@@ -13,6 +15,7 @@ import io.netty.handler.codec.http.cors.CorsHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.internal.logging.InternalLogger;
+import net.jueb.util4j.net.JConnection;
 import net.jueb.util4j.net.JConnectionListener;
 import net.jueb.util4j.net.nettyImpl.NetLogFactory;
 import net.jueb.util4j.net.nettyImpl.NettyConnection;
@@ -22,6 +25,7 @@ public class HttpServerInitHandler extends ChannelInitializer<SocketChannel> {
 	protected InternalLogger log=NetLogFactory.getLogger(NettyConnection.class);
 	private JConnectionListener<HttpRequest> listener;
 	private SslContext sslCtx;
+	private boolean unPoolMsg;
 
 	public HttpServerInitHandler(JConnectionListener<HttpRequest> listener) {
 		this.listener = listener;
@@ -38,6 +42,12 @@ public class HttpServerInitHandler extends ChannelInitializer<SocketChannel> {
 	public HttpServerInitHandler(JConnectionListener<HttpRequest> listener,SslContext sslCtx) {
 		this.listener=listener;
 		this.sslCtx=sslCtx;
+	}
+	
+	public HttpServerInitHandler(JConnectionListener<HttpRequest> listener,SslContext sslCtx,boolean unPoolMsg) {
+		this.listener=listener;
+		this.sslCtx=sslCtx;
+		this.unPoolMsg=unPoolMsg;
 	}
 
 	@Override
@@ -56,6 +66,38 @@ public class HttpServerInitHandler extends ChannelInitializer<SocketChannel> {
 		//跨域配置
 		CorsConfig corsConfig = CorsConfigBuilder.forAnyOrigin().allowNullOrigin().allowCredentials().build();
 		p.addLast(new CorsHandler(corsConfig));
-		p.addLast(new DefaultListenerHandler<HttpRequest>(listener));
+		if(unPoolMsg)
+		{
+			p.addLast(new DefaultListenerHandler<HttpRequest>(new HttpListenerProxy(listener)));
+		}else
+		{
+			p.addLast(new DefaultListenerHandler<HttpRequest>(listener));
+		}
+	}
+	
+	class HttpListenerProxy implements JConnectionListener<HttpRequest>{
+		private final JConnectionListener<HttpRequest> listener;
+		public HttpListenerProxy(JConnectionListener<HttpRequest> listener) {
+			this.listener=listener;
+		}
+		@Override
+		public void messageArrived(JConnection conn, HttpRequest msg) {
+			if(msg instanceof FullHttpRequest)
+			{//转换为unpool类型
+				FullHttpRequest req=(FullHttpRequest) msg;
+				msg=req.replace(Unpooled.copiedBuffer(req.content()));
+			}
+			listener.messageArrived(conn, msg);
+		}
+
+		@Override
+		public void connectionOpened(JConnection connection) {
+			listener.connectionOpened(connection);
+		}
+
+		@Override
+		public void connectionClosed(JConnection connection) {
+			listener.connectionClosed(connection);
+		}
 	}
 }
