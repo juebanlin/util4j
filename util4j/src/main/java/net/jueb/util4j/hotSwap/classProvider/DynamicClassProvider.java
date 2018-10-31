@@ -54,8 +54,6 @@ public class DynamicClassProvider implements IClassProvider{
 		init();
 	}
 	
-	private boolean disableReload;
-	
 	private void init() {
 		try {
 			loadClasses();//主动加载一次
@@ -185,11 +183,6 @@ public class DynamicClassProvider implements IClassProvider{
 	}
 
 	public final void reload() {
-		if(disableReload)
-		{//脚本源已经删除
-			_log.error("disableReload="+disableReload);
-			return ;
-		}
 		try {
 			loadClasses();
 		} catch (Throwable e) {

@@ -24,7 +24,7 @@ public interface ClassSource {
 	}
 	
 	/**
-	 * 主动扫描资源
+	 * 主动扫描并更新资源
 	 * @param event
 	 */
 	public void scanClassSources();

@@ -59,24 +59,23 @@ public class DefaultClassSource implements ClassSource{
 	     }
 	}
 	
-	private final Runnable updateTask=this::update;
+	private final Runnable updateTask=this::checkAndScan;
 	
 	/**
-	 * 自动更新
+	 * 自动检查并更新
 	 * @param executor
 	 * @param unit
 	 * @param time
 	 */
-	public void updateAttach(ScheduledExecutorService executor,TimeUnit unit,long time)
+	public void autoUpdate(ScheduledExecutorService executor,TimeUnit unit,long time)
 	{
 		executor.scheduleAtFixedRate(updateTask,time, time, unit);
 	}
 	
 	/**
-	 *扫描文件变化
+	 * 检查是否发生变化,如果发生变化则更新
 	 */
-	private void update()
-	{
+	public boolean checkAndScan() {
 		String changeLogs=null;
 		try {
 			synchronized (lock) {
@@ -84,7 +83,7 @@ public class DefaultClassSource implements ClassSource{
 			}
 			if(changes.isEmpty())
 			{
-				return ;
+				return false;
 			}
 			for(;;)
 			{
@@ -106,7 +105,9 @@ public class DefaultClassSource implements ClassSource{
 		{
 			log.debug("startScanClassSources from events:\n"+changeLogs);
 			scanClassSources();
+			return true;
 		}
+		return false;
 	}
 	
 	private void changeLog(String logStr)
