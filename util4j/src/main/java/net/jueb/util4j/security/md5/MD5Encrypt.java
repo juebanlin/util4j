@@ -63,17 +63,19 @@ public class MD5Encrypt {
 
 	/**
 	 * 把字符串加密成十六进制表示形式
-	 * 
 	 * @param str
 	 *            字符串
 	 * @return 十六进制表示的字符串
 	 */
 	public static String MD5EncodeToHex(String str) {
+		return MD5EncodeToHex(str.getBytes());
+	}
+	
+	public static String MD5EncodeToHex(byte[] str) {
 		String reStr = null;
 		try {
-			reStr = new String(str);
 			MessageDigest md = MessageDigest.getInstance("MD5");
-			reStr = byteArrayToHexString(md.digest(reStr.getBytes()));
+			reStr = byteArrayToHexString(md.digest(str));
 		} catch (Exception e) {
 		}
 		return reStr;

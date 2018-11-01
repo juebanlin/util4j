@@ -45,19 +45,49 @@ public class FileUtil {
 		File target=new File(dir,file.getName());
 		copyTo(file, target);
 	}
-	
 	/**
 	 * 寻找目录和子目录下面指定后缀的文件
 	 * @param dir 根目录
-	 * @param sub 是否搜索子目录
+	 * @param suffix 后缀
 	 * @return
 	 */
-	public static final Set<File> findFileByDirAndSub(File dir,String suffix)
+	public static final Set<File> findFileByDirAndSubBySuffix(File dir,String ...suffix)
+	{
+		return findFileByDirAndSub(dir,new FileFilter() {
+			@Override
+			public boolean accept(File pathname) 
+				{
+					if(pathname.isFile())
+					{
+						for(String s:suffix)
+						{
+							if(pathname.getName().endsWith(s))
+							{
+								return true;
+							}
+						}
+					}
+					return false;
+				}
+			});
+	}
+	
+	/**
+	 * 寻找目录和子目录下面的文件
+	 * @param dir 根目录
+	 * @return
+	 */
+	public static final Set<File> findFileByDirAndSub(File dir)
+	{
+		return findFileByDirAndSub(dir,null);
+	}
+	
+	public static final Set<File> findFileByDirAndSub(File dir,FileFilter filter)
 	{
 		Set<File> files=new HashSet<File>();
 		if(dir==null)
 		{
-			throw new NullArgumentException("dir ==null");
+			throw new IllegalArgumentException("dir ==null");
 		}
 		if(dir.isFile())
 		{
@@ -72,13 +102,7 @@ public class FileUtil {
 		while (!dirs.isEmpty()) 
 		{
 			File path = dirs.pop();
-			File[] fs = path.listFiles(new FileFilter() {
-			@Override
-			public boolean accept(File pathname) 
-				{
-					return pathname.isDirectory() || pathname.getName().endsWith(suffix);
-				}
-			});
+			File[] fs = path.listFiles(filter);
 			for (File subFile : fs) 
 			{
 				if (subFile.isDirectory()) 

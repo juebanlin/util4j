@@ -98,7 +98,7 @@ public class BufferBuilderDemo{
 		List<Class<?>> list=new ArrayList<Class<?>>();
 		String suffix=".java";
 		File rootDir=new File(root);
-		Set<File> files=FileUtil.findFileByDirAndSub(rootDir,suffix);
+		Set<File> files=FileUtil.findFileByDirAndSubBySuffix(rootDir,suffix);
 		URLClassLoader loader=new URLClassLoader(new URL[]{rootDir.toURI().toURL()});
 		try {
 			// 获取路径长度
