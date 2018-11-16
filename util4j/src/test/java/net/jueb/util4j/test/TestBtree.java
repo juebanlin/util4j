@@ -4,8 +4,8 @@ import java.util.Scanner;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import net.jueb.util4j.cache.map.btree.BTree;
-import net.jueb.util4j.cache.map.btree.BTree.MaskEnum;
+import net.jueb.util4j.collection.map.btree.BTree;
+import net.jueb.util4j.collection.map.btree.BTree.MaskEnum;
 
 public class TestBtree {
 

@@ -17,7 +17,7 @@ import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.CharsetUtil;
 import io.netty.util.ReferenceCountUtil;
-import net.jueb.util4j.cache.callBack.CallBack;
+import net.jueb.util4j.collection.callBack.CallBack;
 import net.jueb.util4j.net.JConnection;
 import net.jueb.util4j.net.JConnectionListener;
 import net.jueb.util4j.net.nettyImpl.client.NettyClient;

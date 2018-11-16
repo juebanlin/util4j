@@ -6,7 +6,7 @@ import java.util.Scanner;
 
 import org.apache.commons.lang.math.RandomUtils;
 
-import net.jueb.util4j.cache.map.btree.BTreeMap;
+import net.jueb.util4j.collection.map.btree.BTreeMap;
 
 public class SnapshotBuffer3 {
 	

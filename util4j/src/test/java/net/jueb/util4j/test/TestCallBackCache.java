@@ -4,8 +4,8 @@ import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
-import net.jueb.util4j.cache.callBack.CallBack;
-import net.jueb.util4j.cache.callBack.impl.CallBackCache;
+import net.jueb.util4j.collection.callBack.CallBack;
+import net.jueb.util4j.collection.callBack.impl.CallBackCache;
 
 public class TestCallBackCache {
 

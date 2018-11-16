@@ -5,8 +5,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import net.jueb.util4j.cache.callBack.CallBack;
-import net.jueb.util4j.cache.callBack.impl.CallBackCache;
+import net.jueb.util4j.collection.callBack.CallBack;
+import net.jueb.util4j.collection.callBack.impl.CallBackCache;
 import net.jueb.util4j.hotSwap.classFactory.old.v0.IScript;
 import net.jueb.util4j.thread.NamedThreadFactory;
 

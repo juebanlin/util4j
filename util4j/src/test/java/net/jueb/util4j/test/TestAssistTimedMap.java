@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.util.concurrent.RateLimiter;
 
-import net.jueb.util4j.cache.map.AssistTimedMapImpl;
+import net.jueb.util4j.collection.map.AssistTimedMapImpl;
 import net.jueb.util4j.thread.NamedThreadFactory;
 
 public class TestAssistTimedMap {

@@ -12,7 +12,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.google.common.util.concurrent.RateLimiter;
-import net.jueb.util4j.cache.map.btree.BTreeMap;
+
+import net.jueb.util4j.collection.map.btree.BTreeMap;
 import net.jueb.util4j.thread.NamedThreadFactory;
 
 public class TestTreeMap {
