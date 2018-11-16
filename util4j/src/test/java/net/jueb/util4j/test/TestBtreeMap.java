@@ -1,20 +1,21 @@
 package net.jueb.util4j.test;
 
+import java.util.HashMap;
 import java.util.Scanner;
-import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import net.jueb.util4j.cache.map.btree.BTree;
-import net.jueb.util4j.cache.map.btree.BTree.MaskEnum;
+import net.jueb.util4j.cache.map.bitMap.BitMap;
+import net.jueb.util4j.cache.map.bitMap.BitTreeMap;
+import net.jueb.util4j.cache.map.bitMap.BitTreeMap.MaskEnum;
 
-public class TestBtree {
+public class TestBtreeMap {
 
 	
-	public static int num=10000000;
+	public static int num=100000;
 	
 	public void Map()
 	{
-		java.util.Map<Integer,Integer> mtree=new TreeMap<>();
+		java.util.Map<Integer,Integer> mtree=new HashMap<>();
 		long t=System.currentTimeMillis();
 		for(int i=0;i<num;i++)
 		{
@@ -37,18 +38,18 @@ public class TestBtree {
 		System.out.println(t1+","+t2+","+t3+","+i.get());
 	}
 	
-	public void test(MaskEnum mask)
+	public void test(BitMaskEnum mask)
 	{
-		BTree<Byte> mtree=new BTree<>(mask);
+		BitMap<Integer,Integer> mtree=new BitTreeMap<>(mask);
 		long t=System.currentTimeMillis();
 		for(int i=0;i<num;i++)
 		{
-			mtree.write(i,(byte) (i+100));
+			mtree.write(i,i,(i+100));
 		}
 		long t1=System.currentTimeMillis()-t;
 		final AtomicInteger i=new AtomicInteger(0);
 		t=System.currentTimeMillis();
-		mtree.forEach((k,v)->{
+		mtree.forEach((e)->{
 			i.incrementAndGet();
 //			System.out.println(k+":"+v);
 		});
@@ -63,9 +64,9 @@ public class TestBtree {
 	}
 	
 	public static void main(String[] args) {
-		TestBtree tb=new TestBtree();
-//		tb.test(MaskEnum.MASK_1111_1111);
-//		tb.test(MaskEnum.MASK_1111_1111);
+		TestBtreeMap tb=new TestBtreeMap();
+		tb.test(BitMaskEnum.MASK_1111_1111);
+		tb.test(BitMaskEnum.MASK_1111_1111);
 		tb.Map();
 		tb.Map();
 		Scanner sc=new Scanner(System.in);
