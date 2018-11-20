@@ -434,6 +434,11 @@ public class BIPEntry<K,V> implements BitIntPathEntry<K,V>{
 		size=0;
 	}
 	
+	public final int size()
+	{
+		return size;
+	}
+	
 	@Override
 	public Iterator<Entry<K, V>> iterator() {
 		return new Iterator<Map.Entry<K,V>>() {
@@ -463,11 +468,6 @@ public class BIPEntry<K,V> implements BitIntPathEntry<K,V>{
 				}
 			}
 		};
-	}
-	
-	public final int size()
-	{
-		return size;
 	}
 	
 	@Override
