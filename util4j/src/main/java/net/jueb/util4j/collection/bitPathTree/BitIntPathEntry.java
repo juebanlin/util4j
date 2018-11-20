@@ -1,5 +1,6 @@
-package net.jueb.util4j.collection.tree.bitTree;
+package net.jueb.util4j.collection.bitPathTree;
 
+import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -10,7 +11,7 @@ import java.util.function.Consumer;
  * @param <K>
  * @param <V>
  */
-public interface BitIntTreeMap<K,V> {
+public interface BitIntPathEntry<K,V> extends Iterable<Entry<K,V>>{
 
 	/**
 	 * 存储数据
@@ -34,7 +35,16 @@ public interface BitIntTreeMap<K,V> {
 	 */
 	Entry<K,V> clean(int bitNumber);
 	
+	int size();
+	
+	void clear();
+	
+	Iterator<Entry<K,V>> iterator();
+	
     void forEach(BiConsumer<K,V> consumer);
     
-    void forEach(Consumer<Entry<K,V>> consumer);
+    @Override
+    default void forEach(Consumer<? super Entry<K, V>> action) {
+    	Iterable.super.forEach(action);
+    }
 }

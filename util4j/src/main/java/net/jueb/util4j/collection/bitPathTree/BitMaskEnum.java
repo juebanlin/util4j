@@ -1,4 +1,4 @@
-package net.jueb.util4j.collection.tree.bitTree;
+package net.jueb.util4j.collection.bitPathTree;
 
 /**
  * 分段掩码

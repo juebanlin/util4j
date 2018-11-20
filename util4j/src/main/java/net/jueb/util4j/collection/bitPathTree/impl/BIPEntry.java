@@ -1,12 +1,13 @@
-package net.jueb.util4j.collection.tree.bitTree.impl;
+package net.jueb.util4j.collection.bitPathTree.impl;
 
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import net.jueb.util4j.collection.tree.bitTree.BitIntTreeMap;
-import net.jueb.util4j.collection.tree.bitTree.BitMaskEnum;
+import net.jueb.util4j.collection.bitPathTree.BitIntPathEntry;
+import net.jueb.util4j.collection.bitPathTree.BitMaskEnum;
 
 /**
  * 优化节点非必要属性的内存占用
@@ -14,7 +15,7 @@ import net.jueb.util4j.collection.tree.bitTree.BitMaskEnum;
  * beta for NodeMap5
  * @author juebanlin
  */
-public class BITreeMap<K,V> implements BitIntTreeMap<K,V>{
+public class BIPEntry<K,V> implements BitIntPathEntry<K,V>{
 	
 	private static final int BIT_NUMS=32;//总bit位数量
 	private final MapConfig config;
@@ -24,11 +25,11 @@ public class BITreeMap<K,V> implements BitIntTreeMap<K,V>{
 	private Node<K,V> firstAdd;//最先加入的节点
 	private Node<K,V> lastAdd;//最后一次加入的节点
 	
-	public BITreeMap() {
+	public BIPEntry() {
 		this(BitMaskEnum.MASK_1111_1111);
 	}
 	
-	public BITreeMap(BitMaskEnum mask) {
+	public BIPEntry(BitMaskEnum mask) {
 		int tmp=mask.getValue();
 		int num=0;
 		while(tmp!=0)
@@ -99,24 +100,13 @@ public class BITreeMap<K,V> implements BitIntTreeMap<K,V>{
 	interface Node<K,V> extends Entry<K,V>{
 		
 		public Node<K,V>[] getSub();
-		
 		public void setSub(Node<K,V> sub[]);
-		
 		public int getNodeSize();
-		
+		public int getNumber();
 		public void setKey(K key);
-		
 		public void setPre(Node<K,V> node);
 		public void setNext(Node<K,V> node);
-		/**
-		 * 前一个
-		 * @return
-		 */
 		public Node<K,V> getPre();
-		/**
-		 * 后一个
-		 * @return
-		 */
 		public Node<K,V> getNext();
 	}
 	
@@ -154,6 +144,12 @@ public class BITreeMap<K,V> implements BitIntTreeMap<K,V>{
 		public void setSub(Node<K1,V1>[] sub) {
 			throw new UnsupportedOperationException();
 		}
+		
+		@Override
+		public int getNumber() {
+			throw new UnsupportedOperationException();
+		}
+		
 		@Override
 		public void setKey(K1 key) {
 			throw new UnsupportedOperationException();
@@ -220,11 +216,20 @@ public class BITreeMap<K,V> implements BitIntTreeMap<K,V>{
 	 * @param <T>
 	 */
 	class DataNode<K1,V1> extends AbstractNode<K1,V1>{
+		private final int number;
 		private K1 key;
 		private V1 value;
 		//用于迭代使用
 		private Node<K1,V1> pre;
 		private Node<K1,V1> next;
+		
+		public DataNode(int number) {
+			this.number=number;
+		}
+		
+		public int getNumber() {
+			return number;
+		}
 		@Override
 		public void setKey(K1 key) {
 			this.key=key;
@@ -283,7 +288,7 @@ public class BITreeMap<K,V> implements BitIntTreeMap<K,V>{
 			}
 			if(layout==0)
 			{//到达终点
-				node=new DataNode<K,V>();
+				node=new DataNode<K,V>(number);
 			}else
 			{
 				node=new LayOutNode<K,V>();
@@ -339,21 +344,21 @@ public class BITreeMap<K,V> implements BitIntTreeMap<K,V>{
 		{
 			Node<K,V> pre=node.getPre();
 			Node<K,V> next=node.getNext();
-			if(pre==null)
+			if(pre!=null)
 			{
-				if(next!=null)
-				{//设置头节点
-					node.setNext(null);
-					firstAdd=next;
-				}
-			}else
-			{
-				node.setPre(null);
 				pre.setNext(next);
-				if(next!=null)
-				{
-					next.setPre(pre);
-				}
+				node.setPre(null);
+			}else
+			{//设置头节点
+				firstAdd=next;
+			}
+			if(next!=null)
+			{
+				next.setPre(pre);
+				node.setNext(null);
+			}else
+			{//设置尾节点
+				lastAdd=pre;
 			}
 			size--;
 		}
@@ -429,6 +434,37 @@ public class BITreeMap<K,V> implements BitIntTreeMap<K,V>{
 		size=0;
 	}
 	
+	@Override
+	public Iterator<Entry<K, V>> iterator() {
+		return new Iterator<Map.Entry<K,V>>() {
+			Node<K,V> node=firstAdd;
+			
+			@Override
+			public boolean hasNext() {
+				return node!=null;
+			}
+
+			@Override
+			public Entry<K, V> next() {
+				if(node==null)
+				{
+					return null;
+				}
+				Node<K,V> result=node;
+				node=node.getNext();
+				return result;
+			}
+			
+			@Override
+			public void remove() {
+				if(node!=null)
+				{
+					clean(node.getNumber());
+				}
+			}
+		};
+	}
+	
 	public final int size()
 	{
 		return size;
@@ -444,8 +480,7 @@ public class BITreeMap<K,V> implements BitIntTreeMap<K,V>{
 		}
 	}
 	
-	@Override
-	public void forEach(Consumer<Entry<K,V>> consumer) {
+	public void forEach(Consumer<? super Entry<K, V>> consumer) {
 		Node<K,V> node=firstAdd;
 		for(;node!=null;)
 		{
@@ -455,7 +490,7 @@ public class BITreeMap<K,V> implements BitIntTreeMap<K,V>{
 	}
 	
 	public static void main(String[] args) {
-		BitIntTreeMap<Integer,String> b=new BITreeMap<>();
+		BitIntPathEntry<Integer,String> b=new BIPEntry<>();
 		for(int i=1;i<=5;i++)
 		{
 			b.write(i,i,"i="+i);
@@ -464,6 +499,9 @@ public class BITreeMap<K,V> implements BitIntTreeMap<K,V>{
 		b.clean(3);
 		b.forEach((k,v)->{
 			System.out.println(k+":"+v);
+		});
+		b.forEach((e)->{
+			System.out.println(e.getKey()+":"+e.getValue());
 		});
 	}
 }

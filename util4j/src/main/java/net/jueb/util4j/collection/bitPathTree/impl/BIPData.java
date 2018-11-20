@@ -1,32 +1,32 @@
-package net.jueb.util4j.collection.tree.bitTree.impl;
+package net.jueb.util4j.collection.bitPathTree.impl;
 
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Iterator;
 import java.util.function.Consumer;
 
-import net.jueb.util4j.collection.tree.bitTree.BitIntTree;
-import net.jueb.util4j.collection.tree.bitTree.BitMaskEnum;
+import net.jueb.util4j.collection.bitPathTree.BitIntPathData;
+import net.jueb.util4j.collection.bitPathTree.BitMaskEnum;
 
 /**
  * 优化节点非必要属性的内存占用
- * 
+ * 分解层数越小,内存占用越低,速度越快
+ * 减少了key的存储,占用内存更小速度更快
  * @author juebanlin
  */
-public class BITree<V> implements BitIntTree<V>{
+public class BIPData<V> implements BitIntPathData<V>{
 	
 	private static final int BIT_NUMS=32;//总bit位数量
 	private final MapConfig config;
-	private final LayOutNode<Integer,V> root;
+	private final LayOutNode<V> root;
 	private final int[] posCache;
 	private int size;
-	private Node<Integer,V> firstAdd;//最先加入的节点
-	private Node<Integer,V> lastAdd;//最后一次加入的节点
+	private Node<V> firstAdd;//最先加入的节点
+	private Node<V> lastAdd;//最后一次加入的节点
 	
-	public BITree() {
+	public BIPData() {
 		this(BitMaskEnum.MASK_1111_1111);
 	}
 	
-	public BITree(BitMaskEnum mask) {
+	public BIPData(BitMaskEnum mask) {
 		int tmp=mask.getValue();
 		int num=0;
 		while(tmp!=0)
@@ -43,7 +43,7 @@ public class BITree<V> implements BitIntTree<V>{
 			posCache[i]=maskLen*i;
 		}
 		config=new MapConfig(mask.getValue(), maskLen, layout, nodeSize);
-		root=new LayOutNode<Integer,V>();
+		root=new LayOutNode<V>();
 	}
 
 	class MapConfig{
@@ -94,48 +94,53 @@ public class BITree<V> implements BitIntTree<V>{
 		}
 	}
 
-	interface Node<K,V> extends Entry<K,V>{
+	interface Node<V>{
 		
-		public Node<K,V>[] getSub();
+		public Node<V>[] getSub();
 		
-		public void setSub(Node<K,V> sub[]);
+		public void setSub(Node<V> sub[]);
 		
 		public int getNodeSize();
 		
-		public void setKey(K key);
+		public int getNumber();
 		
-		public void setPre(Node<K,V> node);
-		public void setNext(Node<K,V> node);
+		default V getValue() {
+			return null;
+		}
+		default V setValue(V value) {
+			return null;
+		}
+		
+		public void setPre(Node<V> node);
+		public void setNext(Node<V> node);
 		/**
 		 * 前一个
 		 * @return
 		 */
-		public Node<K,V> getPre();
+		public Node<V> getPre();
 		/**
 		 * 后一个
 		 * @return
 		 */
-		public Node<K,V> getNext();
+		public Node<V> getNext();
 	}
 	
-	abstract class AbstractNode<K1,V1> implements Node<K1,V1>
+	abstract class AbstractNode<V1> implements Node<V1>
 	{
         public boolean equals(Object o) {
-        	 if (!(o instanceof Map.Entry))
+        	 if (!(o instanceof Node))
                  return false;
-             Map.Entry<?,?> e = (Map.Entry<?,?>)o;
-             return (getKey()==null ? e.getKey()==null : getKey().equals(e.getKey())) &&
-                (getValue()==null ? e.getValue()==null : getValue().equals(e.getValue()));
+        	 Node<?> e = (Node<?>)o;
+             return (getValue()==null ? e.getValue()==null : getValue().equals(e.getValue()));
         }
 
         public int hashCode() {
-            int keyHash = (getKey()==null ? 0 : getKey().hashCode());
             int valueHash = (getValue()==null ? 0 : getValue().hashCode());
-            return keyHash ^ valueHash;
+            return valueHash;
         }
 
         public String toString() {
-            return getKey() + "=" + getValue();
+            return "value =" + getValue();
         }
 
 		@Override
@@ -144,20 +149,17 @@ public class BITree<V> implements BitIntTree<V>{
 		}
 		
 		@Override
-		public Node<K1,V1>[] getSub() {
+		public int getNumber() {
 			throw new UnsupportedOperationException();
 		}
 		
 		@Override
-		public void setSub(Node<K1,V1>[] sub) {
+		public Node<V1>[] getSub() {
 			throw new UnsupportedOperationException();
 		}
+		
 		@Override
-		public void setKey(K1 key) {
-			throw new UnsupportedOperationException();
-		}
-		@Override
-		public K1 getKey() {
+		public void setSub(Node<V1>[] sub) {
 			throw new UnsupportedOperationException();
 		}
 
@@ -172,21 +174,21 @@ public class BITree<V> implements BitIntTree<V>{
 		}
 		
 		@Override
-		public void setNext(Node<K1, V1> node) {
+		public void setNext(Node<V1> node) {
 			throw new UnsupportedOperationException();
 		}
 		
 		@Override
-		public void setPre(Node<K1, V1> node) {
+		public void setPre(Node<V1> node) {
 			throw new UnsupportedOperationException();
 		}
 		@Override
-		public Node<K1, V1> getNext() {
+		public Node<V1> getNext() {
 			throw new UnsupportedOperationException();
 		}
 		
 		@Override
-		public Node<K1, V1> getPre() {
+		public Node<V1> getPre() {
 			throw new UnsupportedOperationException();
 		}
 	}
@@ -196,18 +198,18 @@ public class BITree<V> implements BitIntTree<V>{
 	 * @author juebanlin
 	 * @param <T>
 	 */
-	class LayOutNode<K1,V1> extends AbstractNode<K1,V1>{
+	class LayOutNode<V1> extends AbstractNode<V1>{
 		
 		@SuppressWarnings("unchecked")
-		private Node<K1,V1>[] sub=new Node[getNodeSize()];
+		private Node<V1>[] sub=new Node[getNodeSize()];
 		
 		@Override
-		public Node<K1,V1>[] getSub() {
+		public Node<V1>[] getSub() {
 			return sub;
 		}
 
 		@Override
-		public void setSub(Node<K1,V1>[] sub) {
+		public void setSub(Node<V1>[] sub) {
 			this.sub=sub;
 		}
 	}
@@ -217,41 +219,41 @@ public class BITree<V> implements BitIntTree<V>{
 	 * @author juebanlin
 	 * @param <T>
 	 */
-	class DataNode<K1,V1> extends AbstractNode<K1,V1>{
-		private K1 key;
+	class DataNode<V1> extends AbstractNode<V1>{
+		private final int number;
 		private V1 value;
 		//用于迭代使用
-		private Node<K1,V1> pre;
-		private Node<K1,V1> next;
-		@Override
-		public void setKey(K1 key) {
-			this.key=key;
+		private Node<V1> pre;
+		private Node<V1> next;
+		
+		public DataNode(int number) {
+			this.number=number;
 		}
-		@Override
-		public K1 getKey() {
-			return key;
+		
+		public int getNumber() {
+			return number;
 		}
+		
 		@Override
 		public V1 getValue() {
 			return value;
 		}
-		
 		@Override
 		public V1 setValue(V1 value) {
 			V1 old=this.value;
 			this.value=value;
 			return old;
 		}
-		public Node<K1, V1> getPre() {
+		public Node<V1> getPre() {
 			return pre;
 		}
-		public void setPre(Node<K1, V1> pre) {
+		public void setPre(Node<V1> pre) {
 			this.pre = pre;
 		}
-		public Node<K1, V1> getNext() {
+		public Node<V1> getNext() {
 			return next;
 		}
-		public void setNext(Node<K1, V1> next) {
+		public void setNext(Node<V1> next) {
 			this.next = next;
 		}
 	}
@@ -263,7 +265,7 @@ public class BITree<V> implements BitIntTree<V>{
 	 * @param currentNode
 	 * @return
 	 */
-	protected Node<Integer,V> arraivedNode(int number,int layout,Node<Integer,V> currentNode,boolean create)
+	protected Node<V> arraivedNode(int number,int layout,Node<V> currentNode,boolean create)
 	{
 		if(layout<0)
 		{//超出范围
@@ -275,8 +277,8 @@ public class BITree<V> implements BitIntTree<V>{
 		}
 		layout--;
 		int p=getMaskValue(number,layout);
-		Node<Integer,V>[] sub=currentNode.getSub();
-		Node<Integer,V> node=sub[p];
+		Node<V>[] sub=currentNode.getSub();
+		Node<V> node=sub[p];
 		if(node==null)
 		{
 			if(!create)
@@ -285,14 +287,77 @@ public class BITree<V> implements BitIntTree<V>{
 			}
 			if(layout==0)
 			{//layout=0的node具有data属性
-				node=new DataNode<Integer,V>();
+				node=new DataNode<V>(number);
 			}else
 			{
-				node=new LayOutNode<Integer,V>();
+				node=new LayOutNode<V>();
 			}
 			sub[p]=node;
 		}
 		return arraivedNode(number, layout,node,create);
+	}
+	
+	/**
+	 *  清理路径
+	 * @param number
+	 * @param layout
+	 * @param currentNode
+	 * @return
+	 */
+	protected Node<V> cleanNodePath(int number,int layout,Node<V> currentNode)
+	{
+		if(layout<0)
+		{//超出范围
+			return null;
+		}
+		layout--;
+		int p=getMaskValue(number,layout);
+		Node<V>[] sub=currentNode.getSub();
+		Node<V> node=sub[p];
+		if(node==null)
+		{//不可达
+			return null;
+		}
+		if(layout==0)
+		{//到达终点
+			sub[p]=null;
+			return node;
+		}
+		Node<V> next=cleanNodePath(number, layout,node);
+		return next;
+	}
+	
+	/**
+	 *  清理节点
+	 * @param bitNumber
+	 * @return
+	 */
+	protected Node<V> cleanNode(int bitNumber)
+	{
+		Node<V> node=cleanNodePath(bitNumber, config.layout, root);
+		if(node!=null)
+		{
+			Node<V> pre=node.getPre();
+			Node<V> next=node.getNext();
+			if(pre!=null)
+			{
+				pre.setNext(next);
+				node.setPre(null);
+			}else
+			{//设置头节点
+				firstAdd=next;
+			}
+			if(next!=null)
+			{
+				next.setPre(pre);
+				node.setNext(null);
+			}else
+			{//设置尾节点
+				lastAdd=pre;
+			}
+			size--;
+		}
+		return node;
 	}
 	
 	/**
@@ -306,7 +371,7 @@ public class BITree<V> implements BitIntTree<V>{
 		return (number & (config.mask<<posCache[layout]))>>>posCache[layout];
 	}		
 
-	protected final LayOutNode<Integer,V> getRootNode() {
+	protected final LayOutNode<V> getRootNode() {
 		return root;
 	}
 
@@ -321,15 +386,14 @@ public class BITree<V> implements BitIntTree<V>{
 
 	@Override
 	public V write(int bitNumber,V value) {
-		Node<Integer,V> node=arraivedNode(bitNumber, config.layout, root, true);
+		Node<V> node=arraivedNode(bitNumber, config.layout, root, true);
 		V oldValue=node.getValue();
-		if(node.getKey()!=null)
+		if(node.getPre()!=null)
 		{//仅仅是覆盖值
 			node.setValue(value);
 			return oldValue;
 		}
 		//新键值
-		node.setKey(bitNumber);
 		node.setValue(value);
 		if(firstAdd==null)
 		{
@@ -347,7 +411,7 @@ public class BITree<V> implements BitIntTree<V>{
 
 	@Override
 	public V read(int bitNumber) {
-		Node<Integer,V> node=arraivedNode(bitNumber, config.layout, root, false);
+		Node<V> node=arraivedNode(bitNumber, config.layout, root, false);
 		if(node==null)
 		{
 			return null;
@@ -355,12 +419,22 @@ public class BITree<V> implements BitIntTree<V>{
 		return node.getValue();
 	}
 	
+	@Override
+	public V clean(int bitNumber) {
+		Node<V> node=cleanNode(bitNumber);
+		if(node!=null)
+		{
+			return node.getValue();
+		}
+		return null;
+	}
+	
 	@SuppressWarnings("unchecked")
 	public final void clear()
 	{
 		getRootNode().setSub(new Node[getConfig().getNodeSize()]);
-		lastAdd=null;
 		firstAdd=null;
+		lastAdd=null;
 		size=0;
 	}
 	
@@ -370,17 +444,45 @@ public class BITree<V> implements BitIntTree<V>{
 	}
 	
 	@Override
-	public void forEach(Consumer<V> consumer) {
-		Node<Integer,V> node=firstAdd;
+	public Iterator<V> iterator() {
+		return new Iterator<V>() {
+			Node<V> node=firstAdd;
+			@Override
+			public boolean hasNext() {
+				return node!=null;
+			}
+			@Override
+			public V next() {
+				if(node==null)
+				{
+					return null;
+				}
+				V result=node.getValue();
+				node=node.getNext();
+				return result;
+			}
+			@Override
+			public void remove() {
+				if(node!=null)
+				{
+					clean(node.getNumber());
+				}
+			}
+		};
+	}
+	
+	@Override
+	public void forEach(Consumer<? super V> action)  {
+		Node<V> node=firstAdd;
 		for(;node!=null;)
 		{
-			consumer.accept(node.getValue());
+			action.accept(node.getValue());
 			node=node.getNext();
 		}
 	}
 	
 	public static void main(String[] args) {
-		BitIntTree<String> b=new BITree<>();
+		BitIntPathData<String> b=new BIPData<>();
 		for(int i=0;i<10;i++)
 		{
 			b.write(i,"i="+i);
