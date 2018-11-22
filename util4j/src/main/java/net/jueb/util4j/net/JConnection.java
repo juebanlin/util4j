@@ -2,6 +2,7 @@ package net.jueb.util4j.net;
 
 import java.net.InetSocketAddress;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * 网络连接接口
@@ -30,10 +31,14 @@ public interface JConnection {
 	public void writeAndFlush(Object obj);
 
 	public void writeAndFlush(byte[] bytes);
+	
+	public CompletableFuture<JConnection> writeAndFlushFutureAble(byte[] bytes);
+	
+	public CompletableFuture<JConnection> writeAndFlushFutureAble(Object bytes);
 
 	public void flush();
 
-	public void close();
+	public CompletableFuture<Boolean> close();
 	
 	/**
 	 * 获取连接远程地址
@@ -53,6 +58,7 @@ public interface JConnection {
 	 * @return
 	 */
 	public boolean hasAttribute(String key);
+	
 	/**
 	 * 设置属性
 	 * @param key

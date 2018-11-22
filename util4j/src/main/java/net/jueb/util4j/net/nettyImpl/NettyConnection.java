@@ -1,17 +1,20 @@
 package net.jueb.util4j.net.nettyImpl;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.PooledByteBufAllocator;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.util.AttributeKey;
-import io.netty.util.internal.logging.InternalLogger;
-import net.jueb.util4j.net.JConnection;
-
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.util.AttributeKey;
+import io.netty.util.internal.logging.InternalLogger;
+import net.jueb.util4j.net.JConnection;
 
 /**
  * 实现的连接
@@ -74,11 +77,21 @@ public class NettyConnection implements JConnection{
 	}
 	
 	@Override
-	public void close() {
+	public CompletableFuture<Boolean> close() {
+		CompletableFuture<Boolean> f=new CompletableFuture<>();
 		if(channel!=null && channel.isActive())
 		{
-			channel.close();
+			channel.close().addListener(new ChannelFutureListener() {
+				@Override
+				public void operationComplete(ChannelFuture future) throws Exception {
+					f.complete(future.isSuccess());
+				}
+			});
+		}else
+		{
+			f.complete(true);
 		}
+		return f;
 	}
 
 	@Override
@@ -93,22 +106,36 @@ public class NettyConnection implements JConnection{
 
 	@Override
 	public void write(byte[] bytes) {
-		if(bytes!=null && bytes.length>0 && isActive())
-		{
-			ByteBuf buf=PooledByteBufAllocator.DEFAULT.buffer();
-			buf.writeBytes(bytes);
-			write(buf);
-		}
+		ByteBuf buf=PooledByteBufAllocator.DEFAULT.buffer();
+		buf.writeBytes(bytes);
+		channel.write(buf);
 	}
 
 	@Override
 	public void writeAndFlush(byte[] bytes) {
-		if(bytes!=null && bytes.length>0 && isActive())
-		{
-			ByteBuf buf=PooledByteBufAllocator.DEFAULT.buffer();
-			buf.writeBytes(bytes);
-			writeAndFlush(buf);
-		}
+		ByteBuf buf=PooledByteBufAllocator.DEFAULT.buffer();
+		buf.writeBytes(bytes);
+		channel.writeAndFlush(buf);
+	}
+	
+	@Override
+	public CompletableFuture<JConnection> writeAndFlushFutureAble(byte[] bytes) {
+		ByteBuf buf=PooledByteBufAllocator.DEFAULT.buffer();
+		buf.writeBytes(bytes);
+		return writeAndFlushFutureAble(buf);
+	}
+	
+	@Override
+	public CompletableFuture<JConnection> writeAndFlushFutureAble(Object bytes) {
+		CompletableFuture<JConnection> f=new CompletableFuture<>();
+		JConnection jc=this;
+		channel.writeAndFlush(bytes).addListener(new ChannelFutureListener() {
+			@Override
+			public void operationComplete(ChannelFuture future) throws Exception {
+				f.complete(jc);
+			}
+		});
+		return f;
 	}
 
 	@Override

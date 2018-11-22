@@ -100,9 +100,9 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
      */
     private Executor assistExecutor;
     /**
-     * 设置worker线程上下文classloder为null
+      * 设置worker线程上下文classloder为null
      */
-    private boolean nullContextClassLoader=true;
+    private boolean nullContextClassLoader=false;
     
     public DefaultQueueGroupExecutor() {
         this(DEFAULT_INITIAL_THREAD_POOL_SIZE, DEFAULT_MAX_THREAD_POOL);
@@ -670,6 +670,7 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
         Queue<Runnable> bossQueue=DEFAULT_BossQueue;
         IndexQueueGroupManager iqm=DEFAULT_IndexQueueGroupManager;
         KeyQueueGroupManager kqm=DEFAULT_KeyQueueGroupManager;
+        boolean nullContextClassLoader;
         Executor assistExecutor;
 		
         public Builder setCorePoolSize(int corePoolSize)
@@ -731,7 +732,17 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
         	return this;
         }
         
-        public DefaultQueueGroupExecutor build()
+        /**
+         *  是否设置工作线程：thread.setContextClassLoader(null);
+         * @param nullContextClassLoader
+         * @return 
+         */
+		public Builder setNullContextClassLoader(boolean nullContextClassLoader) {
+			this.nullContextClassLoader = nullContextClassLoader;
+			return this;
+		}
+
+		public DefaultQueueGroupExecutor build()
 		{
         	DefaultQueueGroupExecutor qe=new DefaultQueueGroupExecutor(corePoolSize, 
 					maximumPoolSize, 
@@ -742,6 +753,7 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 					bossQueue, 
 					iqm, 
 					kqm,assistExecutor);
+        	qe.setNullContextClassLoader(nullContextClassLoader);
 			return qe;
 		}
 	}
