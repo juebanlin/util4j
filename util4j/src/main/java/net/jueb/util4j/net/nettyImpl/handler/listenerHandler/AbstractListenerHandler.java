@@ -31,13 +31,17 @@ public abstract class AbstractListenerHandler<M,L extends JConnectionListener<M>
 		this.listener=listener;
 	}
 
+	boolean initBuf=false;
+	
 	@Override
 	public final void channelRegistered(ChannelHandlerContext ctx)throws Exception {
-		//TODO 手动初始化ThreadDeathWatcher的监视线程,不让业务线程去创建,避免热更新框架持有该监视线程
-		ByteBuf initBuf=null;
-		initBuf=ctx.alloc().buffer(1);
-//		initBuf=PooledByteBufAllocator.DEFAULT.buffer(1);
-		ReferenceCountUtil.release(initBuf);
+		if(!initBuf)
+		{//TODO 手动初始化ThreadDeathWatcher的监视线程,不让业务线程去创建,避免热更新框架持有该监视线程
+			ByteBuf buf=ctx.alloc().buffer(1);
+//			initBuf=PooledByteBufAllocator.DEFAULT.buffer(1);
+			ReferenceCountUtil.release(buf);
+			initBuf=true;
+		}
 		super.channelRegistered(ctx);
 	}
 	

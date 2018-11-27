@@ -140,10 +140,7 @@ public class NettyConnection implements JConnection{
 
 	@Override
 	public void flush() {
-		if(channel!=null)
-		{
-			channel.flush();
-		}
+		channel.flush();
 	}
 
 	@Override
