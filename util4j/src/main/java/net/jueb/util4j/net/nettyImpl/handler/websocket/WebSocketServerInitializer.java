@@ -28,10 +28,20 @@ public abstract class WebSocketServerInitializer extends ChannelInitializer<Chan
 	
 	protected final String websocketPath;
 	private SslContext  sslCtx;
+	private String subprotocols;
 	
 	public WebSocketServerInitializer(String websocketPath) {
-		this(websocketPath, null);
+		this(websocketPath,null,null);
 	}
+	
+	public WebSocketServerInitializer(String websocketPath,String subprotocols) {
+		this(websocketPath,websocketPath, null);
+	}
+	
+	public WebSocketServerInitializer(String websocketPath,SslContext sslCtx) {
+		this(websocketPath,null, sslCtx);
+	}
+	
 	/**
 	 * <pre>{@code //SslContextBuilder
 	 	SelfSignedCertificate ssc = new SelfSignedCertificate();
@@ -40,8 +50,9 @@ public abstract class WebSocketServerInitializer extends ChannelInitializer<Chan
 	 * @param uri
 	 * @param sslCtx
 	 */
-	public WebSocketServerInitializer(String websocketPath,SslContext sslCtx) {
+	public WebSocketServerInitializer(String websocketPath,String subprotocols,SslContext sslCtx) {
 		this.websocketPath=websocketPath;
+		this.subprotocols=subprotocols;
 		this.sslCtx=sslCtx;
 	}
 
@@ -54,7 +65,7 @@ public abstract class WebSocketServerInitializer extends ChannelInitializer<Chan
 		pipeline.addLast(new HttpServerCodec());
         pipeline.addLast(new ChunkedWriteHandler());
         pipeline.addLast(new HttpObjectAggregator(64*1024));
-        pipeline.addLast(new WebSocketServerProtocolHandler(websocketPath));
+        pipeline.addLast(new WebSocketServerProtocolHandler(websocketPath,subprotocols));
         pipeline.addLast(new WebSocketConnectedServerHandler());//连接成功监听handler
 	}
 	

@@ -31,6 +31,7 @@ public abstract class WebSocketClientInitializer extends ChannelInitializer<Chan
 	protected final InternalLogger log = NetLogFactory.getLogger(getClass());
 	protected final URI webSocketURL;
 	private SslContext sslCtx;
+	private String subprotocol;
 	
 	public WebSocketClientInitializer(URI webSocketURL) {
 		this(webSocketURL,null);
@@ -43,8 +44,13 @@ public abstract class WebSocketClientInitializer extends ChannelInitializer<Chan
 	 * @param sslCtx
 	 */
 	public WebSocketClientInitializer(URI webSocketURL,SslContext sslCtx) {
+		this(webSocketURL,sslCtx,null);
+	}
+
+	public WebSocketClientInitializer(URI webSocketURL,SslContext sslCtx,String subprotocol) {
 		this.webSocketURL=webSocketURL;
 		this.sslCtx=sslCtx;
+		this.subprotocol=subprotocol;
 		init();
 	}
 	
@@ -79,7 +85,7 @@ public abstract class WebSocketClientInitializer extends ChannelInitializer<Chan
 		pipeline.addLast(new HttpClientCodec());
 		pipeline.addLast(new ChunkedWriteHandler());
 		pipeline.addLast(new HttpObjectAggregator(64*1024));
-		pipeline.addLast(new WebSocketClientProtocolHandler(WebSocketClientHandshakerFactory.newHandshaker(webSocketURL, WebSocketVersion.V13, null, false, new DefaultHttpHeaders())));
+		pipeline.addLast(new WebSocketClientProtocolHandler(WebSocketClientHandshakerFactory.newHandshaker(webSocketURL, WebSocketVersion.V13, subprotocol, false, new DefaultHttpHeaders())));
         pipeline.addLast(new WebSocketConnectedClientHandler());//连接成功监听handler
 	}
 	
