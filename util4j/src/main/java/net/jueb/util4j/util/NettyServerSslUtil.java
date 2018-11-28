@@ -83,11 +83,11 @@ public class NettyServerSslUtil {
 	 * @throws Exception
 	 */
 	public static SSLContext createSSLContext(String keyStoreType ,InputStream keyStore ,String password) throws Exception {
-		String pootocol="TLS";
 		KeyStore ks = KeyStore.getInstance(keyStoreType);
 		ks.load(keyStore, password.toCharArray());
 		KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
 		kmf.init(ks, password.toCharArray());
+		String pootocol="TLS";
 		SSLContext sslContext=SSLContext.getInstance(pootocol);
 		sslContext.init(kmf.getKeyManagers(), null, null);
 		return sslContext;
