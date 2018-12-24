@@ -9,28 +9,18 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import net.jueb.util4j.queue.queueExecutor.executor.QueueExecutor;
-import net.jueb.util4j.queue.queueExecutor.groupExecutor.IndexQueueGroupManager;
-import net.jueb.util4j.queue.queueExecutor.groupExecutor.KeyQueueGroupManager;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupExecutorService;
-import net.jueb.util4j.queue.queueExecutor.groupExecutor.IndexQueueGroupManager.IndexGroupEventListener;
-import net.jueb.util4j.queue.queueExecutor.groupExecutor.KeyQueueGroupManager.KeyGroupEventListener;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupManager;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupManager.KeyGroupEventListener;
 
 public class ThreadPoolQueueGroupExecutor extends ThreadPoolExecutor implements QueueGroupExecutorService{
     
 	public static final int DEFAULT_KEEP_ALIVE = 30;
     
-	private final IndexQueueGroupManager iqm;
-	private final KeyQueueGroupManager kqm;
+	private final QueueGroupManager kqm;
 	
 	protected void init()
     {
-    	this.iqm.setGroupEventListener(new IndexGroupEventListener() {
-			@Override
-			public void onQueueHandleTask(short index, Runnable handleTask) {
-				//当sqm有可以处理某队列的任务产生时,丢到系统队列,当系统队列
-				execute(handleTask);
-			}
-		});
     	this.kqm.setGroupEventListener(new KeyGroupEventListener() {
 			@Override
 			public void onQueueHandleTask(String key, Runnable handleTask) {
@@ -42,52 +32,26 @@ public class ThreadPoolQueueGroupExecutor extends ThreadPoolExecutor implements 
 	    
     
     public ThreadPoolQueueGroupExecutor(int corePoolSize, int maximumPoolSize,BlockingQueue<Runnable> workQueue,
-    		IndexQueueGroupManager iqm,KeyQueueGroupManager kqm) {
+    		QueueGroupManager kqm) {
     	super(corePoolSize, maximumPoolSize, DEFAULT_KEEP_ALIVE, TimeUnit.SECONDS,workQueue);
-    	if (iqm==null || kqm==null)
+    	if (kqm==null)
 		{
 			throw new IllegalArgumentException();
 		}
-		this.iqm=iqm;
 		this.kqm=kqm;
 		init();
     }
 
 	public ThreadPoolQueueGroupExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit,
 			BlockingQueue<Runnable> workQueue, ThreadFactory threadFactory, RejectedExecutionHandler handler,
-			IndexQueueGroupManager iqm,KeyQueueGroupManager kqm) {
+			QueueGroupManager kqm) {
 		super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, threadFactory, handler);
-		if (iqm==null || kqm==null)
+		if (kqm==null)
 		{
 			throw new IllegalArgumentException();
 		}
-		this.iqm=iqm;
 		this.kqm=kqm;
 		init();
-	}
-
-	public Iterator<IndexElement<QueueExecutor>> indexIterator() {
-		return iqm.indexIterator();
-	}
-
-	@Override
-	public void execute(short solt, Runnable task) {
-		iqm.getQueueExecutor(solt).execute(task);
-	}
-
-	@Override
-	public void execute(short solt, List<Runnable> tasks) {
-		iqm.getQueueExecutor(solt).execute(tasks);
-	}
-
-	@Override
-	public boolean hasQueueExecutor(short solt) {
-		return iqm.hasQueueExecutor(solt);
-	}
-	
-	@Override
-	public QueueExecutor getQueueExecutor(short solt) {
-		return iqm.getQueueExecutor(solt);
 	}
 
 	@Override

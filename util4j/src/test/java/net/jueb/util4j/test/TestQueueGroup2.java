@@ -9,12 +9,10 @@ import org.jctools.queues.atomic.MpmcAtomicArrayQueue;
 
 import net.jueb.util4j.queue.queueExecutor.QueueFactory;
 import net.jueb.util4j.queue.queueExecutor.RunnableQueue;
-import net.jueb.util4j.queue.queueExecutor.groupExecutor.IndexQueueGroupManager;
-import net.jueb.util4j.queue.queueExecutor.groupExecutor.KeyQueueGroupManager;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupExecutor;
-import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.DefaultIndexQueueManager;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupManager;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.DefaultQueueGroupExecutor;
-import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.DefaultKeyQueueManager;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.DefaultQueueManager;
 import net.jueb.util4j.queue.queueExecutor.queue.RunnableQueueWrapper;
 
 public class TestQueueGroup2 {
@@ -33,11 +31,10 @@ public class TestQueueGroup2 {
 				return new RunnableQueueWrapper(queue);
 			}
 		};
-		IndexQueueGroupManager iqm=new DefaultIndexQueueManager(qf);
-		KeyQueueGroupManager kqm=new DefaultKeyQueueManager(qf);
+		QueueGroupManager kqm=new DefaultQueueManager(qf);
 		DefaultQueueGroupExecutor.Builder b=new DefaultQueueGroupExecutor.Builder();
 		b.setAssistExecutor(Executors.newSingleThreadExecutor());
-		return b.setMaxPoolSize(max).setCorePoolSize(min).setBossQueue(bossQueue).setIndexQueueGroupManager(iqm).setKeyQueueGroupManagerr(kqm).build();
+		return b.setMaxPoolSize(max).setCorePoolSize(min).setBossQueue(bossQueue).setQueueGroupManagerr(kqm).build();
 	}
 	
 	protected QueueGroupExecutor buildByMpMc(int min,int max,int maxPendingTask)
@@ -53,10 +50,9 @@ public class TestQueueGroup2 {
 				return new RunnableQueueWrapper(queue);
 			}
 		};
-		IndexQueueGroupManager iqm=new DefaultIndexQueueManager(qf,false);
-		KeyQueueGroupManager kqm=new DefaultKeyQueueManager(qf);
+		QueueGroupManager kqm=new DefaultQueueManager(qf);
 		DefaultQueueGroupExecutor.Builder b=new DefaultQueueGroupExecutor.Builder();
 		b.setAssistExecutor(Executors.newSingleThreadExecutor());
-		return b.setMaxPoolSize(max).setCorePoolSize(min).setBossQueue(bossQueue).setIndexQueueGroupManager(iqm).setKeyQueueGroupManagerr(kqm).build();
+		return b.setMaxPoolSize(max).setCorePoolSize(min).setBossQueue(bossQueue).setQueueGroupManagerr(kqm).build();
 	}
 }

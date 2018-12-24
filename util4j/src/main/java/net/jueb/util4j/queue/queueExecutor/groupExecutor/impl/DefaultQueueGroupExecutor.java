@@ -22,10 +22,8 @@ import net.jueb.util4j.lock.waiteStrategy.SleepingWaitConditionStrategy;
 import net.jueb.util4j.lock.waiteStrategy.WaitCondition;
 import net.jueb.util4j.lock.waiteStrategy.WaitConditionStrategy;
 import net.jueb.util4j.queue.queueExecutor.executor.QueueExecutor;
-import net.jueb.util4j.queue.queueExecutor.groupExecutor.IndexQueueGroupManager;
-import net.jueb.util4j.queue.queueExecutor.groupExecutor.IndexQueueGroupManager.IndexGroupEventListener;
-import net.jueb.util4j.queue.queueExecutor.groupExecutor.KeyQueueGroupManager;
-import net.jueb.util4j.queue.queueExecutor.groupExecutor.KeyQueueGroupManager.KeyGroupEventListener;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupManager;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupManager.KeyGroupEventListener;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupExecutor;
 import net.jueb.util4j.queue.queueExecutor.queue.RunnableQueueEventWrapper;
 
@@ -38,10 +36,8 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
     private static final int DEFAULT_MAX_THREAD_POOL = 8;
 
     private static final int DEFAULT_KEEP_ALIVE_SEC = 30;
-    
-    private static final IndexQueueGroupManager DEFAULT_IndexQueueGroupManager = new DefaultIndexQueueManager();
    
-    private static final KeyQueueGroupManager DEFAULT_KeyQueueGroupManager = new DefaultKeyQueueManager();
+    private static final QueueGroupManager DEFAULT_QueueGroupManager = new DefaultQueueManager();
     
     private static final Queue<Runnable> DEFAULT_BossQueue = new ConcurrentLinkedQueue<Runnable>();
     
@@ -91,8 +87,7 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
     private volatile boolean shutdown;
 
     private final WaitConditionStrategy waitConditionStrategy;
-    private final IndexQueueGroupManager iqm;
-    private final KeyQueueGroupManager kqm;
+    private final QueueGroupManager queueMananger;
     
     /**
      * 辅助执行器
@@ -115,21 +110,21 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
     protected DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize,Queue<Runnable> bossQueue) {
             this(corePoolSize, maximumPoolSize, DEFAULT_KEEP_ALIVE_SEC, TimeUnit.SECONDS, 
             		Executors.defaultThreadFactory(),DEFAULT_waitConditionStrategy,
-            		bossQueue,DEFAULT_IndexQueueGroupManager,DEFAULT_KeyQueueGroupManager,null);
+            		bossQueue,DEFAULT_QueueGroupManager,null);
         }
     
     protected DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize,
-        	Queue<Runnable> bossQueue,IndexQueueGroupManager indexQM,KeyQueueGroupManager keyQM) {
+        	Queue<Runnable> bossQueue,QueueGroupManager queueMananger) {
             this(corePoolSize, maximumPoolSize, DEFAULT_KEEP_ALIVE_SEC, TimeUnit.SECONDS, 
             		Executors.defaultThreadFactory(),DEFAULT_waitConditionStrategy,
-            		bossQueue,indexQM,keyQM,new DirectExecutor());
+            		bossQueue,queueMananger,new DirectExecutor());
         }
     
     protected DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize,
-    	Queue<Runnable> bossQueue,IndexQueueGroupManager indexQM,KeyQueueGroupManager keyQM,WaitConditionStrategy waitConditionStrategy) {
+    	Queue<Runnable> bossQueue,QueueGroupManager queueMananger,WaitConditionStrategy waitConditionStrategy) {
         this(corePoolSize, maximumPoolSize, DEFAULT_KEEP_ALIVE_SEC, TimeUnit.SECONDS, 
         		Executors.defaultThreadFactory(),waitConditionStrategy,
-        		bossQueue,indexQM,keyQM,new DirectExecutor());
+        		bossQueue,queueMananger,new DirectExecutor());
     }
     
     /**
@@ -148,7 +143,7 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
     public DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize, 
     		long keepAliveTime, TimeUnit unit,ThreadFactory threadFactory,
             WaitConditionStrategy waitConditionStrategy,Queue<Runnable> bossQueue,
-            IndexQueueGroupManager iqm,KeyQueueGroupManager kqm,Executor assistExecutor) {
+            QueueGroupManager queueMananger,Executor assistExecutor) {
 		if (corePoolSize < 0 
 				||maximumPoolSize <= 0 
 				||maximumPoolSize < corePoolSize 
@@ -158,8 +153,7 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 		}
 		Objects.requireNonNull(threadFactory);
 		Objects.requireNonNull(waitConditionStrategy);
-		Objects.requireNonNull(iqm);
-		Objects.requireNonNull(kqm);
+		Objects.requireNonNull(queueMananger);
 		Objects.requireNonNull(bossQueue);
 		this.corePoolSize = corePoolSize;
 		this.maximumPoolSize = maximumPoolSize;
@@ -167,19 +161,10 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 		this.threadFactory=threadFactory;
         this.waitConditionStrategy=waitConditionStrategy;
         this.assistExecutor=assistExecutor;
-        this.iqm=iqm;
-        this.iqm.setGroupEventListener(new IndexGroupEventListener() {
+        this.queueMananger=queueMananger;
+        this.queueMananger.setGroupEventListener(new KeyGroupEventListener() {
 			@Override
-			public void onQueueHandleTask(short solt, Runnable handleTask) {
-				//当sqm有可以处理某队列的任务产生时,丢到系统队列,当系统队列
-				systemExecute(handleTask);
-			}
-		});
-        this.kqm=kqm;
-        this.kqm.setGroupEventListener(new KeyGroupEventListener() {
-			
-			@Override
-			public void onQueueHandleTask(String key, Runnable handleTask) {
+			public void onQueueHandleTask(String queue, Runnable handleTask) {
 				//当sqm有可以处理某队列的任务产生时,丢到系统队列,当系统队列
 				systemExecute(handleTask);
 			}
@@ -589,7 +574,7 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
     }
     
 	public long getCompletedTaskCount() {
-	    return iqm.getToalCompletedTaskCount();
+	    return queueMananger.getToalCompletedTaskCount();
 	}
 	
 	protected void systemExecute(Runnable task)
@@ -611,53 +596,28 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 	}
 
 	@Override
-	public Iterator<IndexElement<QueueExecutor>> indexIterator() {
-		return iqm.indexIterator();
-	}
-	
-	@Override
-	public void execute(short solt, Runnable task) {
-		iqm.getQueueExecutor(solt).execute(task);
-	}
-
-	@Override
-	public void execute(short solt, List<Runnable> tasks) {
-		iqm.getQueueExecutor(solt).execute(tasks);
-	}
-
-	@Override
-	public boolean hasQueueExecutor(short index) {
-		return iqm.hasQueueExecutor(index);
-	}
-	
-	@Override
-	public QueueExecutor getQueueExecutor(short solt) {
-		return iqm.getQueueExecutor(solt);
-	}
-
-	@Override
 	public void execute(String key, Runnable task) {
-		kqm.getQueueExecutor(key).execute(task);
+		queueMananger.getQueueExecutor(key).execute(task);
 	}
 
 	@Override
 	public void execute(String key, List<Runnable> tasks) {
-		kqm.getQueueExecutor(key).execute(tasks);
+		queueMananger.getQueueExecutor(key).execute(tasks);
 	}
 
 	@Override
 	public boolean hasQueueExecutor(String key) {
-		return kqm.hasQueueExecutor(key);
+		return queueMananger.hasQueueExecutor(key);
 	}
 	
 	@Override
 	public QueueExecutor getQueueExecutor(String key) {
-		return kqm.getQueueExecutor(key);
+		return queueMananger.getQueueExecutor(key);
 	}
 
 	@Override
 	public Iterator<KeyElement<QueueExecutor>> keyIterator() {
-		return kqm.keyIterator();
+		return queueMananger.keyIterator();
 	}	
 	
 	public static class Builder{
@@ -668,8 +628,7 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 		ThreadFactory threadFactory=Executors.defaultThreadFactory();
         WaitConditionStrategy waitConditionStrategy=DEFAULT_waitConditionStrategy;
         Queue<Runnable> bossQueue=DEFAULT_BossQueue;
-        IndexQueueGroupManager iqm=DEFAULT_IndexQueueGroupManager;
-        KeyQueueGroupManager kqm=DEFAULT_KeyQueueGroupManager;
+        QueueGroupManager queueMananger=DEFAULT_QueueGroupManager;
         boolean nullContextClassLoader;
         Executor assistExecutor;
 		
@@ -720,15 +679,9 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
         	return this;
         }
         
-        public Builder setIndexQueueGroupManager(IndexQueueGroupManager iqm)
+        public Builder setQueueGroupManagerr(QueueGroupManager queueMananger)
         {
-        	this.iqm=iqm;
-        	return this;
-        }
-        
-        public Builder setKeyQueueGroupManagerr(KeyQueueGroupManager kqm)
-        {
-        	this.kqm=kqm;
+        	this.queueMananger=queueMananger;
         	return this;
         }
         
@@ -751,8 +704,7 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 					threadFactory, 
 					waitConditionStrategy, 
 					bossQueue, 
-					iqm, 
-					kqm,assistExecutor);
+					queueMananger,assistExecutor);
         	qe.setNullContextClassLoader(nullContextClassLoader);
 			return qe;
 		}

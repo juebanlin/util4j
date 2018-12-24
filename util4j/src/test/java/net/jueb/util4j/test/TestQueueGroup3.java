@@ -8,12 +8,10 @@ import org.jctools.queues.atomic.MpmcAtomicArrayQueue;
 
 import net.jueb.util4j.queue.queueExecutor.QueueFactory;
 import net.jueb.util4j.queue.queueExecutor.RunnableQueue;
-import net.jueb.util4j.queue.queueExecutor.groupExecutor.IndexQueueGroupManager;
-import net.jueb.util4j.queue.queueExecutor.groupExecutor.KeyQueueGroupManager;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupExecutor;
-import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.DefaultIndexQueueManager;
-import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.DefaultKeyQueueManager;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupManager;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.DefaultQueueGroupExecutor;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.DefaultQueueManager;
 import net.jueb.util4j.queue.queueExecutor.queue.RunnableQueueWrapper;
 
 public class TestQueueGroup3 {
@@ -32,11 +30,10 @@ public class TestQueueGroup3 {
 				return new RunnableQueueWrapper(queue);
 			}
 		};
-		IndexQueueGroupManager iqm=new DefaultIndexQueueManager(qf,false);
-		KeyQueueGroupManager kqm=new DefaultKeyQueueManager(qf);
+		QueueGroupManager kqm=new DefaultQueueManager(qf);
 		DefaultQueueGroupExecutor.Builder b=new DefaultQueueGroupExecutor.Builder();
 		b.setAssistExecutor(Executors.newSingleThreadExecutor());
-		DefaultQueueGroupExecutor e= b.setMaxPoolSize(max).setCorePoolSize(min).setBossQueue(bossQueue).setIndexQueueGroupManager(iqm).setKeyQueueGroupManagerr(kqm).build();
+		DefaultQueueGroupExecutor e= b.setMaxPoolSize(max).setCorePoolSize(min).setBossQueue(bossQueue).setQueueGroupManagerr(kqm).build();
 		for(int i=0;i<max;i++)
 		{
 			e.wakeUpWorkerIfNecessary();
@@ -47,7 +44,7 @@ public class TestQueueGroup3 {
 	public static void main(String[] args) {
 		QueueGroupExecutor qe=buildByMpMc(4, 4, 10000);
 		
-		qe.execute((short)0,new Runnable() {
+		qe.execute("1",new Runnable() {
 			@Override
 			public void run() {
 				try {

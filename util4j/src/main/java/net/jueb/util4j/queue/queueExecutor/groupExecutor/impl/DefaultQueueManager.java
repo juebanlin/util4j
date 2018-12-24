@@ -13,10 +13,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import net.jueb.util4j.queue.queueExecutor.QueueFactory;
 import net.jueb.util4j.queue.queueExecutor.executor.QueueExecutor;
 import net.jueb.util4j.queue.queueExecutor.executor.impl.RunnableQueueExecutorEventWrapper;
-import net.jueb.util4j.queue.queueExecutor.groupExecutor.KeyQueueGroupManager;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupManager;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupExecutor.KeyElement;
 
-public class DefaultKeyQueueManager extends AbstractQueueMaganer implements KeyQueueGroupManager{
+public class DefaultQueueManager extends AbstractQueueMaganer implements QueueGroupManager{
 
 	private final Map<String,TaskQueue> queues=new HashMap<>();
 	private final AtomicLong totalCompleteTask=new AtomicLong();
@@ -25,11 +25,11 @@ public class DefaultKeyQueueManager extends AbstractQueueMaganer implements KeyQ
 
 	private volatile KeyGroupEventListener listener;
 
-	public DefaultKeyQueueManager() {
+	public DefaultQueueManager() {
 		
 	}
 	
-	public DefaultKeyQueueManager(QueueFactory queueFactory) {
+	public DefaultQueueManager(QueueFactory queueFactory) {
 		super(queueFactory);
 	}
 
@@ -202,7 +202,6 @@ public class DefaultKeyQueueManager extends AbstractQueueMaganer implements KeyQ
 			{
 				if(isLock.compareAndSet(false, true))
 			 	{//一个处理任务产生
-//					onQueueHandleTask(index,new QueueProcessTask(this));
 					onQueueHandleTask(index,this);
 			 	}
 			}
@@ -231,7 +230,7 @@ public class DefaultKeyQueueManager extends AbstractQueueMaganer implements KeyQ
 		}
 		
 		/**
-         * 处理队列任务
+		 * 处理队列任务
          * @param queue
          */
         private void handleQueueTask(TaskQueue queue) {
@@ -259,53 +258,6 @@ public class DefaultKeyQueueManager extends AbstractQueueMaganer implements KeyQ
                 }
             }
         }
-
-		@SuppressWarnings("unused")
-		@Deprecated
-		private class QueueProcessTask implements Runnable{
-			TaskQueue queue;
-			private QueueProcessTask(TaskQueue queue) {
-				this.queue=queue;
-			}
-			@Override
-			public void run() {
-				try {
-					handleQueueTask(queue);
-				} finally {
-					queue.isLock.set(false);
-				}
-			}
-			
-			/**
-		     * 处理队列任务
-		     * @param queue
-		     */
-		    private void handleQueueTask(TaskQueue queue) {
-		    	Thread thread=Thread.currentThread();
-		    	for (;;) 
-		        {
-		    		Runnable task = queue.poll();
-		        	if(task == null)
-		            {//停止处理队列
-		        		break;
-		            }
-		        	beforeExecute(thread, task);
-		            boolean succeed = false;
-		            try {
-		                task.run();
-		                queue.getCompletedTaskCount().incrementAndGet();
-		                totalCompleteTask.incrementAndGet();
-		                succeed = true;
-		                afterExecute(task, null);
-		            } catch (RuntimeException e) {
-		                if (!succeed) {
-		                    afterExecute(task, e);
-		                }
-		                throw e;
-		            }
-		        }
-		    }
-		}
 	}
 	
 	public static class Builder{
@@ -325,9 +277,9 @@ public class DefaultKeyQueueManager extends AbstractQueueMaganer implements KeyQ
 			return this;
 		}
 
-		public DefaultKeyQueueManager build()
+		public DefaultQueueManager build()
 		{
-			return new DefaultKeyQueueManager(queueFactory);
+			return new DefaultQueueManager(queueFactory);
 		}
 	}
 }

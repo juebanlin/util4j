@@ -10,7 +10,7 @@ import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupExecutor.KeyE
  * 队列组
  * @author juebanlin
  */
-public interface KeyQueueGroupManager extends Iterable<QueueExecutor>{
+public interface QueueGroupManager extends Iterable<QueueExecutor>{
 	
 	public boolean hasQueueExecutor(String key);
 	
@@ -37,6 +37,7 @@ public interface KeyQueueGroupManager extends Iterable<QueueExecutor>{
 	
 	public QueueFactory getQueueFactory();
 	
+	@FunctionalInterface
 	public static interface KeyGroupEventListener{
 		/**
 		 * 某队列的处理任务

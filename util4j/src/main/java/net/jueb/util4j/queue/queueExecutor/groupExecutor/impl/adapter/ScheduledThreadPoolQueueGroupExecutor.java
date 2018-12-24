@@ -7,26 +7,16 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
 
 import net.jueb.util4j.queue.queueExecutor.executor.QueueExecutor;
-import net.jueb.util4j.queue.queueExecutor.groupExecutor.IndexQueueGroupManager;
-import net.jueb.util4j.queue.queueExecutor.groupExecutor.KeyQueueGroupManager;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupExecutorService;
-import net.jueb.util4j.queue.queueExecutor.groupExecutor.IndexQueueGroupManager.IndexGroupEventListener;
-import net.jueb.util4j.queue.queueExecutor.groupExecutor.KeyQueueGroupManager.KeyGroupEventListener;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupManager;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupManager.KeyGroupEventListener;
 
 public class ScheduledThreadPoolQueueGroupExecutor extends ScheduledThreadPoolExecutor implements QueueGroupExecutorService{
 
-    private final IndexQueueGroupManager iqm;
-    private final KeyQueueGroupManager kqm;
+    private final QueueGroupManager kqm;
     
     protected void init()
     {
-    	this.iqm.setGroupEventListener(new IndexGroupEventListener() {
-			@Override
-			public void onQueueHandleTask(short index, Runnable handleTask) {
-				//当sqm有可以处理某队列的任务产生时,丢到系统队列,当系统队列
-				execute(handleTask);
-			}
-		});
     	this.kqm.setGroupEventListener(new KeyGroupEventListener() {
 			@Override
 			public void onQueueHandleTask(String key, Runnable handleTask) {
@@ -37,40 +27,16 @@ public class ScheduledThreadPoolQueueGroupExecutor extends ScheduledThreadPoolEx
     }
 	
 	public ScheduledThreadPoolQueueGroupExecutor(int corePoolSize, ThreadFactory threadFactory,RejectedExecutionHandler handler,
-			IndexQueueGroupManager iqm,KeyQueueGroupManager kqm) {
+			QueueGroupManager kqm) {
 		super(corePoolSize, threadFactory, handler);
-		if (iqm==null || kqm==null)
+		if (kqm==null)
 		{
 			throw new IllegalArgumentException();
 		}
-		this.iqm=iqm;
 		this.kqm=kqm;
 		init();
 	}
 	
-	public Iterator<IndexElement<QueueExecutor>> indexIterator() {
-		return iqm.indexIterator();
-	}
-
-	@Override
-	public void execute(short solt, Runnable task) {
-		iqm.getQueueExecutor(solt).execute(task);
-	}
-
-	@Override
-	public void execute(short solt, List<Runnable> tasks) {
-		iqm.getQueueExecutor(solt).execute(tasks);
-	}
-
-	@Override
-	public boolean hasQueueExecutor(short index) {
-		return iqm.hasQueueExecutor(index);
-	}
-	
-	@Override
-	public QueueExecutor getQueueExecutor(short solt) {
-		return iqm.getQueueExecutor(solt);
-	}
 
 	@Override
 	public void execute(String key, Runnable task) {
