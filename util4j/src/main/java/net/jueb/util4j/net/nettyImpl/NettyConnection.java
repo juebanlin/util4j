@@ -77,7 +77,15 @@ public class NettyConnection implements JConnection{
 	}
 	
 	@Override
-	public CompletableFuture<Boolean> close() {
+	public void close() {
+		if(channel!=null && channel.isActive())
+		{
+			channel.close();
+		}
+	}
+	
+	@Override
+	public CompletableFuture<Boolean> closeAsync() {
 		CompletableFuture<Boolean> f=new CompletableFuture<>();
 		if(channel!=null && channel.isActive())
 		{

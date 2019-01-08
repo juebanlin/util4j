@@ -38,7 +38,9 @@ public interface JConnection {
 
 	public void flush();
 
-	public CompletableFuture<Boolean> close();
+	public void close();
+	
+	public CompletableFuture<Boolean> closeAsync();
 	
 	/**
 	 * 获取连接远程地址
