@@ -45,6 +45,18 @@ public class FileUtil {
 		File target=new File(dir,file.getName());
 		copyTo(file, target);
 	}
+	
+	/**
+	 * 寻找目录和子目录下面的jar
+	 * @param dir 根目录
+	 * @param sub 是否搜索子目录
+	 * @return
+	 */
+	public static final Set<File> findJarFileByDirAndSub(File dir)
+	{
+		return findFileByDirAndSubBySuffix(dir, ".jar");
+	}
+	
 	/**
 	 * 寻找目录和子目录下面指定后缀的文件
 	 * @param dir 根目录
@@ -57,6 +69,10 @@ public class FileUtil {
 			@Override
 			public boolean accept(File pathname) 
 				{
+					if(pathname.isDirectory())
+					{
+						return true;
+					}
 					if(pathname.isFile())
 					{
 						for(String s:suffix)
@@ -231,53 +247,6 @@ public class FileUtil {
 				}
 			});
 		return jarFiles;
-	}
-	
-	/**
-	 * 寻找目录和子目录下面的jar
-	 * @param dir 根目录
-	 * @param sub 是否搜索子目录
-	 * @return
-	 */
-	public static final Set<File> findJarFileByDirAndSub(File dir)
-	{
-		Set<File> files=new HashSet<File>();
-		if(dir==null)
-		{
-			throw new NullArgumentException("dir ==null");
-		}
-		if(dir.isFile())
-		{
-			throw new IllegalArgumentException("dir "+dir+" is not a dir");
-		}
-		if(!dir.exists())
-		{
-			throw new IllegalArgumentException("dir "+dir+" not found");
-		}
-		Stack<File> dirs = new Stack<File>();
-		dirs.push(dir);
-		while (!dirs.isEmpty()) 
-		{
-			File path = dirs.pop();
-			File[] fs = path.listFiles(new FileFilter() {
-			@Override
-			public boolean accept(File pathname) 
-				{
-					return pathname.isDirectory() || pathname.getName().endsWith(".jar");
-				}
-			});
-			for (File subFile : fs) 
-			{
-				if (subFile.isDirectory()) 
-				{
-					dirs.push(subFile);
-				} else 
-				{
-					files.add(subFile);
-				}
-			}
-		}
-		return files;
 	}
 	
 	/**

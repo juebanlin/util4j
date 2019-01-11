@@ -75,6 +75,17 @@ public class BufferBuilder{
 		Field[] fields = clazz.getDeclaredFields();
 		for(Field field: fields)
 		{
+			if(Modifier.isFinal(field.getModifiers()) || Modifier.isStatic(field.getModifiers()))
+			{
+				log.warn(clazz.getSimpleName()+"==>base skipField:"+field.getName());
+				continue;
+			}
+			String fname=field.getName();
+			if(fname.startsWith("$") || fname.contains("$SWITCH_TABLE$"))
+			{
+				log.warn(clazz.getSimpleName()+"==>base skipField:"+field.getName());
+				continue;
+			}
 			if(skipField(field))
 			{
 				log.warn(clazz.getSimpleName()+"==>skipField:"+field.getName());
