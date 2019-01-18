@@ -6,13 +6,16 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import net.jueb.util4j.buffer.ByteBuffer;
+import net.jueb.util4j.buffer.tool.demo.JsonFieldBuilderDemo.JsonField;
+import net.jueb.util4j.buffer.tool.demo.JsonFieldBuilderDemo.JsonFieldTable;
 
-public class BuffEntity implements Dto{
+public class BuffEntity implements Dto,JsonFieldTable{
 
 	private int id;
 	private String name;
 	private Date time;
 	private Integer age;
+	@JsonField
 	private int[] array;
 	private List<int[]> listArray;
 	private Set<Integer[]> setArray;
@@ -315,4 +318,20 @@ public class BuffEntity implements Dto{
 	}
 
 //auto write end
+	
+	//JsonField_Begin
+	public String getJsonArray() {
+	int[] var=getArray();
+	if(var==null) {return null;}
+	return new com.google.gson.Gson().toJson(var);
+	}
+
+	public void setJsonArray(String json) {
+	if(json==null||json.isEmpty()){return ;}
+	java.lang.reflect.Type type=new com.google.gson.reflect.TypeToken<int[]>(){}.getType();
+	setArray(new com.google.gson.Gson().fromJson(json, type));
+	}
+
+
+//JsonField_End
 }

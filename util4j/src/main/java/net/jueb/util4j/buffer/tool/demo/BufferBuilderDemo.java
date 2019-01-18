@@ -2,21 +2,17 @@ package net.jueb.util4j.buffer.tool.demo;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
+
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import io.netty.util.CharsetUtil;
 import net.jueb.util4j.buffer.tool.BufferBuilder;
-import net.jueb.util4j.file.FileUtil;
 
-public class BufferBuilderDemo{
+public class BufferBuilderDemo extends AbstractBufferBuilder{
 
 	protected Logger log=LoggerFactory.getLogger(getClass());
 
@@ -72,57 +68,6 @@ public class BufferBuilderDemo{
 		}
 	}
 	
-	/**
-	 * 查找类源码文件
-	 * @param soruceRootDir 源码目录
-	 * @param clazz 类
-	 * @return
-	 */
-	public File findJavaSourceFile(String soruceRootDir,Class<?> clazz)
-	{
-		String url = StringUtils.replace(clazz.getPackage().toString().split(" ")[1], ".",File.separator);
-		String sourceFilename = soruceRootDir+url +File.separator + clazz.getSimpleName() + ".java";
-		File javaSourceFile=new File(sourceFilename);
-		return javaSourceFile;
-	}
-	
-	/**
-	 * 获取源码目录下指定包下的类
-	 * @param root
-	 * @param pkg
-	 * @return
-	 * @throws Exception
-	 */
-	public List<Class<?>> getClassInfo(String root,String pkg) throws Exception
-	{
-		List<Class<?>> list=new ArrayList<Class<?>>();
-		String suffix=".java";
-		File rootDir=new File(root);
-		Set<File> files=FileUtil.findFileByDirAndSubBySuffix(rootDir,suffix);
-		URLClassLoader loader=new URLClassLoader(new URL[]{rootDir.toURI().toURL()});
-		try {
-			// 获取路径长度
-			int clazzPathLen = rootDir.getAbsolutePath().length() + 1;
-			for(File file:files)
-			{
-				String className = file.getAbsolutePath();
-				className = className.substring(clazzPathLen, className.length() - suffix.length());
-				className = className.replace(File.separatorChar, '.');
-				try {
-					Class<?> clazz=loader.loadClass(className);
-					String pkgName=clazz.getPackage().getName();
-					if(pkgName.equals(pkg))
-					{
-						list.add(clazz);
-					}
-				} catch (Exception e) {
-				}
-			}
-		} finally {
-			loader.close();
-		}
-		return list;
-	}
 	
 	/**
 	 * 填充代码
@@ -143,26 +88,6 @@ public class BufferBuilderDemo{
 			javaSource=head+"\n"+bufferCode.toString()+"\n"+til;
 		}
 		return javaSource;
-//		javaSource=javaSource.replaceAll(MATCH_READ,"");
-//		System.out.println(javaSource);
-//		javaSource=javaSource.replaceAll(MATCH_WRITE,"");
-//		System.out.println(javaSource);
-//		char[] array=javaSource.toCharArray();
-//		int index=-1;
-//		for(int i=array.length-1;i>=0;i--)
-//		{
-//			if(array[i]=='}')
-//			{
-//				index=i;break;
-//			}
-//		}
-//		if(index>0)
-//		{
-//			String s1=javaSource.substring(0, index);
-//			System.out.println(s1);
-//			javaSource=s1+"\n"+bufferCode.toString()+"\n}";
-//		}
-//		return javaSource;
 	}
 	
 	
