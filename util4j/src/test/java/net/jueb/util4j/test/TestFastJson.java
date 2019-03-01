@@ -1,5 +1,6 @@
 package net.jueb.util4j.test;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.JsonArray;
 
@@ -36,10 +37,11 @@ public class TestFastJson {
 		TestFastJson entity=new TestFastJson();
 		JSONObject json=new JSONObject();
 		JsonArray list=new JsonArray();
+		list.add(1);
 		json.put("1", 1);
 		json.put("list",list);
 		entity.setJson(json);
-		String str=JSONObject.toJSONString(entity);
+		String str=JSON.toJSONString(entity);
 		System.out.println(str);
 		entity=JSONObject.parseObject(str,TestFastJson.class);
 		System.out.println(entity);

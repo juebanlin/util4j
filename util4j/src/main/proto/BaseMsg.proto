@@ -1,0 +1,9 @@
+option java_package = "net.jueb.util4j.msg";
+option java_outer_classname = "BaseMsg";
+
+//通用消息主体,使用扩展，请不要再修改此文件，扩展类型使用的编号应大于100且不重复。
+message Message
+{
+	extensions 100 to max;//把100以后的序号留给扩展
+	required fixed32 msgId = 1;//消息ID
+}

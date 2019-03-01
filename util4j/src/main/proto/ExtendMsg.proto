@@ -1,0 +1,26 @@
+//导入消息主体
+import "BaseMsg.proto";
+option java_package = "net.jueb.util4j.msg";
+option java_outer_classname = "ExtendMessage";
+
+
+//扩展消息注册到Message消息主体
+extend Message
+{
+	optional Regist regist = 101;
+	optional Login loginm = 102;
+}
+
+//注册请求消息体
+message Regist
+{
+	required string username = 1;
+	required string password = 2;
+	required string mail = 3;
+}
+//登录请求消息体
+message Login
+{
+	required string username = 1;
+	required string password = 2;
+}

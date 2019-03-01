@@ -185,6 +185,15 @@
 			<version>1.2.31</version>
 			<optional>true</optional>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.rabbitmq/amqp-client -->
+		<dependency>
+		    <groupId>com.rabbitmq</groupId>
+		    <artifactId>amqp-client</artifactId>
+		    <version>5.6.0</version>
+		    <optional>true</optional>
+		    <scope>test</scope>
+		</dependency>
+		
 	</dependencies>
 	<build>
 		<!-- 读取系统版本的扩展 -->
