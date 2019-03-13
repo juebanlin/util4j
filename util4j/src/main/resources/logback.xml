@@ -26,9 +26,14 @@
 			<MaxFileSize>10MB</MaxFileSize>
 		</triggeringPolicy>
 	</appender>
+	<!-- 异步输出 -->    
+	<appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">        
+		<discardingThreshold>0</discardingThreshold>        
+		<appender-ref ref="FILE" />    
+	</appender>
 	<!-- 日志输出级别 -->
 	<root level="INFO">
 		<appender-ref ref="STDOUT" />
-		<appender-ref ref="FILE" />
+		<appender-ref ref="ASYNC" />
 	</root>
 </configuration>
