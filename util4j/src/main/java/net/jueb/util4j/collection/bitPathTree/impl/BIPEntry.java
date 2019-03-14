@@ -262,7 +262,9 @@ public class BIPEntry<K,V> implements BitIntPathEntry<K,V>{
 			this.next = next;
 		}
 	}
-
+	private Node<K,V> buildLayOutNode() {
+		return new LayOutNode<K,V>();
+	}
 	/**
 	 * 抵达节点
 	 * @param number
@@ -291,7 +293,7 @@ public class BIPEntry<K,V> implements BitIntPathEntry<K,V>{
 				node=new DataNode<K,V>(number);
 			}else
 			{
-				node=new LayOutNode<K,V>();
+				node=buildLayOutNode();
 			}
 			sub[p]=node;
 		}

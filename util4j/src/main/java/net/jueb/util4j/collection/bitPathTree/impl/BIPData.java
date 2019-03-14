@@ -1,6 +1,8 @@
 package net.jueb.util4j.collection.bitPathTree.impl;
 
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import net.jueb.util4j.collection.bitPathTree.BitIntPathData;
@@ -258,6 +260,10 @@ public class BIPData<V> implements BitIntPathData<V>{
 		}
 	}
 
+	private Node<V> buildLayOutNode() {
+		return new LayOutNode<V>();
+	}
+	
 	/**
 	 * 抵达节点
 	 * @param number
@@ -290,7 +296,7 @@ public class BIPData<V> implements BitIntPathData<V>{
 				node=new DataNode<V>(number);
 			}else
 			{
-				node=new LayOutNode<V>();
+				node=buildLayOutNode();
 			}
 			sub[p]=node;
 		}
@@ -486,9 +492,27 @@ public class BIPData<V> implements BitIntPathData<V>{
 		for(int i=0;i<10;i++)
 		{
 			b.write(i,"i="+i);
+		
 		}
-		b.forEach((v)->{
-			System.out.println(v);
-		});
+		long t=System.nanoTime();
+		Map<Integer,String> map=new HashMap<>(); 
+		map.put(100000000,"");
+		map.put(200000000,"");
+		map.put(300000000,"");
+		map.put(400000000,"");
+		map.put(500000000,"");
+		t=System.nanoTime()-t;
+		System.out.println(t);
+		t=System.nanoTime();
+		b.write(100000000,"");
+		b.write(200000000,"");
+		b.write(300000000,"");
+		b.write(400000000,"");
+		b.write(500000000,"");
+		t=System.nanoTime()-t;
+		System.out.println(t);
+//		b.forEach((v)->{
+//			System.out.println(v);
+//		});
 	}
 }
