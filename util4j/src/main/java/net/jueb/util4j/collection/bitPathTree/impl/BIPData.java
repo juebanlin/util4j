@@ -488,7 +488,7 @@ public class BIPData<V> implements BitIntPathData<V>{
 	}
 	
 	public static void main(String[] args) {
-		BitIntPathData<String> b=new BIPData<>();
+		BitIntPathData<String> b=new BIPData<>(BitMaskEnum.MASK_1111);
 		for(int i=0;i<10;i++)
 		{
 			b.write(i,"i="+i);

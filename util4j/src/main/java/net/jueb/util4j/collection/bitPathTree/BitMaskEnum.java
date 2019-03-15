@@ -10,6 +10,7 @@ public enum BitMaskEnum{
 	MASK_11(0x3),
 	MASK_1111(0xF),
 	MASK_1111_1111(0xFF),
+	MASK_1111_1111_1111_1111(0xFFFF),
 	;
 	private final int value;
 	private BitMaskEnum(int value) {
