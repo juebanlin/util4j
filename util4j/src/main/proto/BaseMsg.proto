@@ -1,3 +1,4 @@
+syntax = "proto2";
 option java_package = "net.jueb.util4j.msg";
 option java_outer_classname = "BaseMsg";
 
