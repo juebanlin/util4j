@@ -7,4 +7,5 @@ message Message
 {
 	extensions 100 to max;//把100以后的序号留给扩展
 	required fixed32 msgId = 1;//消息ID
+	
 }
