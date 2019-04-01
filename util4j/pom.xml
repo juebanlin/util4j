@@ -330,9 +330,11 @@
 							<goal>compile</goal>
 						</goals>
 						<configuration>
-							<!-- 使用本地执行器 -->
+						    <!-- 自定义OS环境变量,当拿不到系统变量时使用环境变量 -->
+					        <protocExecutable>${project.basedir}/src/main/proto/exec/protoc-3.3.0-${env.OS}-x86_64.exe</protocExecutable>
+							<!-- 使用本地执行器 
 							<protocExecutable>${project.basedir}/src/main/proto/exec/protoc-3.3.0-${os.detected.classifier}.exe</protocExecutable>
-							
+							-->
 							<!-- https://repo.maven.apache.org/maven2/com/google/protobuf/protoc/ 
 								自动发现下载exe,需要os-maven-plugin插件解析系统版本 
 							<protocArtifact>com.google.protobuf:protoc:3.3.0:exe:${os.detected.classifier}</protocArtifact>-->
