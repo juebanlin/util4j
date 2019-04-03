@@ -193,7 +193,13 @@
 		    <optional>true</optional>
 		    <scope>test</scope>
 		</dependency>
-		
+		<dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.6</version>
+            <optional>true</optional>
+            <scope>test</scope>
+        </dependency>
 	</dependencies>
 	<build>
 		<!-- 读取系统版本的扩展 -->

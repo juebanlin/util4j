@@ -14,7 +14,7 @@ public interface WaitConditionStrategy
     <T> T waitFor(WaitCondition<T> waitCondition) throws InterruptedException;
 
     /**
-     * 等待一个条件,如果条件成立返回结果,如果超过时间,不管成立与否都返回结果
+          * 等待一个条件,如果条件成立返回结果,如果超过时间,不管成立与否都返回结果
      * @param waitCondition
      * @param timeOut
      * @param unit

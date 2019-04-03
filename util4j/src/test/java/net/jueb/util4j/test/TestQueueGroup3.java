@@ -10,13 +10,12 @@ import net.jueb.util4j.queue.queueExecutor.QueueFactory;
 import net.jueb.util4j.queue.queueExecutor.RunnableQueue;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupExecutor;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupManager;
-import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.DefaultQueueGroupExecutor;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.NioQueueGroupExecutor;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.DefaultQueueManager;
 import net.jueb.util4j.queue.queueExecutor.queue.RunnableQueueWrapper;
 
 public class TestQueueGroup3 {
 
-	
 	protected static QueueGroupExecutor buildByMpMc(int min,int max,int maxPendingTask)
 	{
 		int maxQueueCount=maxPendingTask;
@@ -31,24 +30,54 @@ public class TestQueueGroup3 {
 			}
 		};
 		QueueGroupManager kqm=new DefaultQueueManager(qf);
-		DefaultQueueGroupExecutor.Builder b=new DefaultQueueGroupExecutor.Builder();
+		NioQueueGroupExecutor.Builder b=new NioQueueGroupExecutor.Builder();
 		b.setAssistExecutor(Executors.newSingleThreadExecutor());
-		DefaultQueueGroupExecutor e= b.setMaxPoolSize(max).setCorePoolSize(min).setBossQueue(bossQueue).setQueueGroupManagerr(kqm).build();
+		NioQueueGroupExecutor e= b.setMaxPoolSize(max).setCorePoolSize(min).setBossQueue(bossQueue).setQueueGroupManagerr(kqm)
+				.build();
 		for(int i=0;i<max;i++)
 		{
-			e.wakeUpWorkerIfNecessary();
+			e.addWorkerIfNecessary();
 		}
 		return e;
 	}
 	
 	public static void main(String[] args) {
-		QueueGroupExecutor qe=buildByMpMc(4, 4, 10000);
-		
+		QueueGroupExecutor qe=buildByMpMc(2, 4, 10000);
 		qe.execute("1",new Runnable() {
 			@Override
 			public void run() {
 				try {
-					Thread.sleep(100000000);
+					Thread.sleep(5000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		qe.execute("2",new Runnable() {
+			@Override
+			public void run() {
+				try {
+					Thread.sleep(5000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		qe.execute("3",new Runnable() {
+			@Override
+			public void run() {
+				try {
+					Thread.sleep(5000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		qe.execute("4",new Runnable() {
+			@Override
+			public void run() {
+				try {
+					Thread.sleep(5000);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}

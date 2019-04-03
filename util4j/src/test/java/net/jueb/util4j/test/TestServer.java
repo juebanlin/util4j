@@ -11,7 +11,7 @@ import net.jueb.util4j.net.nettyImpl.listener.HeartAbleConnectionListener;
 import net.jueb.util4j.net.nettyImpl.server.NettyServer;
 import net.jueb.util4j.net.nettyImpl.server.NettyServerConfig;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupExecutor;
-import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.DefaultQueueGroupExecutor;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.NioQueueGroupExecutor;
 
 public class TestServer {
 	public class GameMsg{
@@ -24,7 +24,7 @@ public class TestServer {
 		}
 	}
 	public static void main(String[] args) {
-		final QueueGroupExecutor qe=new DefaultQueueGroupExecutor();
+		final QueueGroupExecutor qe=new NioQueueGroupExecutor();
 		final short mainQueue=1;
 		final ChannelHandler logicHandler=new DefaultIdleListenerHandler<GameMsg>(new HeartAbleConnectionListener<GameMsg>(){
 			@Override

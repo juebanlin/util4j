@@ -11,7 +11,7 @@ import net.jueb.util4j.queue.queueExecutor.QueueFactory;
 import net.jueb.util4j.queue.queueExecutor.RunnableQueue;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupExecutor;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupManager;
-import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.DefaultQueueGroupExecutor;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.NioQueueGroupExecutor;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.DefaultQueueManager;
 import net.jueb.util4j.queue.queueExecutor.queue.RunnableQueueWrapper;
 
@@ -32,7 +32,7 @@ public class TestQueueGroup2 {
 			}
 		};
 		QueueGroupManager kqm=new DefaultQueueManager(qf);
-		DefaultQueueGroupExecutor.Builder b=new DefaultQueueGroupExecutor.Builder();
+		NioQueueGroupExecutor.Builder b=new NioQueueGroupExecutor.Builder();
 		b.setAssistExecutor(Executors.newSingleThreadExecutor());
 		return b.setMaxPoolSize(max).setCorePoolSize(min).setBossQueue(bossQueue).setQueueGroupManagerr(kqm).build();
 	}
@@ -51,7 +51,7 @@ public class TestQueueGroup2 {
 			}
 		};
 		QueueGroupManager kqm=new DefaultQueueManager(qf);
-		DefaultQueueGroupExecutor.Builder b=new DefaultQueueGroupExecutor.Builder();
+		NioQueueGroupExecutor.Builder b=new NioQueueGroupExecutor.Builder();
 		b.setAssistExecutor(Executors.newSingleThreadExecutor());
 		return b.setMaxPoolSize(max).setCorePoolSize(min).setBossQueue(bossQueue).setQueueGroupManagerr(kqm).build();
 	}

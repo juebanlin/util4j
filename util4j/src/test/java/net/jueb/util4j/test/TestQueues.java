@@ -306,7 +306,7 @@ public class TestQueues{
     		 * 多队列多线程测试
     		 */
     		TaskQueuesExecutor ft=new FixedThreadPoolQueuesExecutor(1,8);
-			tq.test(qt*20,20, ft);
+			tq.test(qt*5,10, ft);
 //			队列：1,最后一个任务完成,添加队列耗时:2710,队列总耗时:2976,当前线程ID:15
 //			 队列：3,最后一个任务完成,添加队列耗时:2710,队列总耗时:2976,当前线程ID:16
 //			 队列：5,最后一个任务完成,添加队列耗时:2710,队列总耗时:2976,当前线程ID:15

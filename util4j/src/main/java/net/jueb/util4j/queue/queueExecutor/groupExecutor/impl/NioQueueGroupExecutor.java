@@ -1,6 +1,8 @@
 package net.jueb.util4j.queue.queueExecutor.groupExecutor.impl;
 
 import java.io.IOException;
+import java.nio.channels.Selector;
+import java.nio.channels.spi.SelectorProvider;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.HashSet;
@@ -19,8 +21,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.jueb.util4j.lock.waiteStrategy.SleepingWaitConditionStrategy;
-import net.jueb.util4j.lock.waiteStrategy.WaitCondition;
 import net.jueb.util4j.lock.waiteStrategy.WaitConditionStrategy;
 import net.jueb.util4j.queue.queueExecutor.executor.QueueExecutor;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupExecutor;
@@ -29,7 +29,7 @@ import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupManager.KeyGr
 import net.jueb.util4j.queue.queueExecutor.queue.RunnableQueueEventWrapper;
 import net.jueb.util4j.thread.NamedThreadFactory;
 
-public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
+public class NioQueueGroupExecutor implements QueueGroupExecutor{
     
 	protected Logger log=LoggerFactory.getLogger(getClass());
 	
@@ -42,8 +42,6 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
     private static final QueueGroupManager DEFAULT_QueueGroupManager = new DefaultQueueManager();
     
     private static final Queue<Runnable> DEFAULT_BossQueue = new ConcurrentLinkedQueue<Runnable>();
-    
-    private static final WaitConditionStrategy DEFAULT_waitConditionStrategy=new SleepingWaitConditionStrategy();
     
     private static final ThreadFactory DEFAULT_ThreadFactory=new NamedThreadFactory("queueGroup",true);
     
@@ -90,7 +88,6 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 
     private volatile boolean shutdown;
 
-    private final WaitConditionStrategy waitConditionStrategy;
     private final QueueGroupManager queueMananger;
     
     /**
@@ -103,31 +100,30 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
      */
     private boolean nullContextClassLoader=false;
     
-    public DefaultQueueGroupExecutor() {
+    public NioQueueGroupExecutor() {
         this(DEFAULT_INITIAL_THREAD_POOL_SIZE, DEFAULT_MAX_THREAD_POOL);
     }
 
-    public DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize) {
+    public NioQueueGroupExecutor(int corePoolSize, int maximumPoolSize) {
         this(corePoolSize, maximumPoolSize,DEFAULT_BossQueue);
     }
     
-    protected DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize,Queue<Runnable> bossQueue) {
+    protected NioQueueGroupExecutor(int corePoolSize, int maximumPoolSize,Queue<Runnable> bossQueue) {
             this(corePoolSize, maximumPoolSize, DEFAULT_KEEP_ALIVE_SEC, TimeUnit.SECONDS, 
-            		Executors.defaultThreadFactory(),DEFAULT_waitConditionStrategy,
-            		bossQueue,DEFAULT_QueueGroupManager,null);
+            		Executors.defaultThreadFactory(),bossQueue,DEFAULT_QueueGroupManager,null);
         }
     
-    protected DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize,
+    protected NioQueueGroupExecutor(int corePoolSize, int maximumPoolSize,
         	Queue<Runnable> bossQueue,QueueGroupManager queueMananger) {
             this(corePoolSize, maximumPoolSize, DEFAULT_KEEP_ALIVE_SEC, TimeUnit.SECONDS, 
-            		Executors.defaultThreadFactory(),DEFAULT_waitConditionStrategy,
+            		Executors.defaultThreadFactory(),
             		bossQueue,queueMananger,new DirectExecutor());
         }
     
-    protected DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize,
+    protected NioQueueGroupExecutor(int corePoolSize, int maximumPoolSize,
     	Queue<Runnable> bossQueue,QueueGroupManager queueMananger,WaitConditionStrategy waitConditionStrategy) {
         this(corePoolSize, maximumPoolSize, DEFAULT_KEEP_ALIVE_SEC, TimeUnit.SECONDS, 
-        		Executors.defaultThreadFactory(),waitConditionStrategy,
+        		Executors.defaultThreadFactory(),
         		bossQueue,queueMananger,new DirectExecutor());
     }
     
@@ -144,9 +140,9 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
      * @param kqm 键值队列管理器
      * @param assistExecutor optional 辅助执行器,用于启动工作线程或处理其它逻辑
      */
-    public DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize, 
+    public NioQueueGroupExecutor(int corePoolSize, int maximumPoolSize, 
     		long keepAliveTime, TimeUnit unit,ThreadFactory threadFactory,
-            WaitConditionStrategy waitConditionStrategy,Queue<Runnable> bossQueue,
+            Queue<Runnable> bossQueue,
             QueueGroupManager queueMananger,Executor assistExecutor) {
 		if (corePoolSize < 0 
 				||maximumPoolSize <= 0 
@@ -156,14 +152,12 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 			throw new IllegalArgumentException();
 		}
 		Objects.requireNonNull(threadFactory);
-		Objects.requireNonNull(waitConditionStrategy);
 		Objects.requireNonNull(queueMananger);
 		Objects.requireNonNull(bossQueue);
 		this.corePoolSize = corePoolSize;
 		this.maximumPoolSize = maximumPoolSize;
 		this.keepAliveNanoTime = unit.toNanos(keepAliveTime);
 		this.threadFactory=threadFactory;
-        this.waitConditionStrategy=waitConditionStrategy;
         this.assistExecutor=assistExecutor;
         this.queueMananger=queueMananger;
         this.queueMananger.setGroupEventListener(new KeyGroupEventListener() {
@@ -322,7 +316,7 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 	        {
 	        	systemExecute(exitTask);
 	        }
-	        waitConditionStrategy.signalAllWhenBlocking();
+	        unSafe_singallAllWhenBlockingWorker();
 	    }
 	}
 
@@ -442,6 +436,14 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
      * @author juebanlin
      */
     class Worker implements Runnable {
+    	Selector sel;//默认使用nio阻塞
+    	public Worker() {
+			try {
+				sel=SelectorProvider.provider().openSelector();
+			} catch (Exception e) {
+				log.error("fail create new Selector");
+			}
+		}
     	/**
 		 * 查找任务
 		 * @return
@@ -450,34 +452,6 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 		{
         	return systemQueue.poll();//执行系统任务
 		}
-        WorkerWaitCondition workerWaitCondition=new WorkerWaitCondition();
-        /**
-                  * 等待条件
-         * @author juebanlin
-         */
-        private class WorkerWaitCondition implements WaitCondition<Runnable>
-        {
-        	private volatile Runnable task;
-        	
-        	public void init()
-        	{
-        		task=null;
-        	}
-        	
-        	@Override
-			public Runnable getAttach() {
-				return task;
-			}
-
-			@Override
-			public boolean isComplete() {
-				if(task==null)
-				{
-		        	task= findTask();
-				}
-				return task!=null;
-			}
-        }
         
         /**
                   * 等待任务
@@ -488,15 +462,37 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
          * @throws IOException 
          */
         private Runnable waitTask(long time,TimeUnit unit) throws InterruptedException, IOException {
-        	workerWaitCondition.init();
-    		return waitConditionStrategy.waitFor(workerWaitCondition, time,unit);	
+        	Runnable t=findTask();
+        	if(t!=null)
+        	{
+        		return t;
+        	}
+        	sel.select(unit.toMillis(time));
+        	return findTask();
+        }
+        
+        /**
+                 * 唤醒线程
+         */
+        void wakeUp() {
+        	if(sel!=null)
+        	{
+        		sel.wakeup();
+        	}
         }
         
         /**
                   * 线程结束
          */
         void runEnd(){
-        	
+        	if(sel!=null)
+        	{
+        		try {
+					sel.close();
+				} catch (Exception e) {
+					log.error(e.getMessage(),e);
+				}
+        	}
         }
         
 		public void run() {
@@ -593,11 +589,19 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
     {
     	addWorkerIfNecessary();
 	    //如果有线程阻塞等待,则释放阻塞去处理任务
-	    waitConditionStrategy.signalAllWhenBlocking();
+    	singallAllWhenBlockingWorker();
     }
     
     protected void singallAllWhenBlockingWorker() {
-    	waitConditionStrategy.signalAllWhenBlocking();
+    	synchronized (workers) {
+    		unSafe_singallAllWhenBlockingWorker();
+        }
+    }
+    
+    protected void unSafe_singallAllWhenBlockingWorker() {
+    	for(Worker w:workers) {
+			w.wakeUp();
+		}
     }
     
 	public long getCompletedTaskCount() {
@@ -651,7 +655,6 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 		long keepAliveTime=DEFAULT_KEEP_ALIVE_SEC;
 		TimeUnit unit=TimeUnit.SECONDS;
 		ThreadFactory threadFactory=DEFAULT_ThreadFactory;
-        WaitConditionStrategy waitConditionStrategy=DEFAULT_waitConditionStrategy;
         Queue<Runnable> bossQueue=DEFAULT_BossQueue;
         QueueGroupManager queueMananger=DEFAULT_QueueGroupManager;
         boolean nullContextClassLoader;
@@ -692,12 +695,6 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
         	return this;
         }
         
-        public Builder setWaitConditionStrategy(WaitConditionStrategy waitConditionStrategy)
-        {
-        	this.waitConditionStrategy=waitConditionStrategy;
-        	return this;
-        }
-        
         public Builder setBossQueue(Queue<Runnable> bossQueue)
         {
         	this.bossQueue=bossQueue;
@@ -720,14 +717,13 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 			return this;
 		}
 
-		public DefaultQueueGroupExecutor build()
+		public NioQueueGroupExecutor build()
 		{
-        	DefaultQueueGroupExecutor qe=new DefaultQueueGroupExecutor(corePoolSize, 
+        	NioQueueGroupExecutor qe=new NioQueueGroupExecutor(corePoolSize, 
 					maximumPoolSize, 
 					keepAliveTime, 
 					unit, 
 					threadFactory, 
-					waitConditionStrategy, 
 					bossQueue, 
 					queueMananger,assistExecutor);
         	qe.setNullContextClassLoader(nullContextClassLoader);
