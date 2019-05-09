@@ -20,7 +20,7 @@ import com.rabbitmq.client.AMQP.BasicProperties;
  * 消费者1和消费者2分别获取奇数条消息和偶数条消息，两种获取消息的条数是一样的。
  */
 public class ProducerConsumer {
-    private final static String QUEUE_NAME = "work_queue";
+    private final static String QUEUE_NAME = "work_queue2";
     
     public static ExecutorService es=Executors.newCachedThreadPool();
     
@@ -42,6 +42,11 @@ public class ProducerConsumer {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}});
+    	es.submit(()->{try {
+			pr.consumer3();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}});
     }
     
     public void producer() throws Exception{
@@ -52,7 +57,7 @@ public class ProducerConsumer {
         //3、声明(创建)队列
         channel.queueDeclare(QUEUE_NAME, false, false, false, null);
         //4、定义消息内容(发布多条消息)
-        for(int i = 0 ; i < 10000000 ; i++){
+        for(int i = 0 ; i < 10 ; i++){
             String message = "hello rabbitmq "+i;
             //定义消息头
             Map<String,Object> header=new HashMap<>();
@@ -80,7 +85,7 @@ public class ProducerConsumer {
         //3、声明队列
         channel.queueDeclare(QUEUE_NAME, false, false, false, null);
         //同一时刻服务器只会发送一条消息给消费者(如果设置为N,则当客户端堆积N条消息后服务端不会推送给客户端了)
-        //channel.basicQos(1);//每次处理1个
+        channel.basicQos(1);//每次处理1个
         //4、定义队列的消费者
         //定义消费者
         DefaultConsumer consumer = new DefaultConsumer(channel) {
@@ -89,8 +94,17 @@ public class ProducerConsumer {
                     throws IOException {
                 //获取并转成String
                 String message = new String(body, "UTF-8");
-                System.out.println("-->消费者1号，收到消息,msg :"+message+",header:"+properties.getHeaders().toString());
-                channel.basicAck(envelope.getDeliveryTag(), false);
+                System.out.println("-->消费者1号,收到消息,msg :"+message+",header:"+properties.getHeaders().toString());
+                /**
+                 *     basicAck：成功消费，消息从队列中删除 
+					   basicNack：requeue=true，消息重新进入队列，false被删除 
+					   basicReject：等同于basicNack 
+					   basicRecover：消息重入队列，requeue=true，发送给新的consumer，false发送给相同的consumer 
+                 */
+//                channel.basicAck(envelope.getDeliveryTag(), false);
+//                channel.basicReject(envelope.getDeliveryTag(), false);//拒绝此条消息,并重发到队列(可能再次受到此消息)
+//                channel.basicRecover(true);//消息重发给其它消费者
+                channel.basicNack(envelope.getDeliveryTag(), false, false);
             }
         };
         channel.basicConsume(QUEUE_NAME, autoAck,consumer);
@@ -104,7 +118,7 @@ public class ProducerConsumer {
         //3、声明队列
         channel.queueDeclare(QUEUE_NAME, false, false, false, null);
         //同一时刻服务器只会发送一条消息给消费者(如果设置为N,则当客户端堆积N条消息后服务端不会推送给客户端了)
-        //channel.basicQos(1);//每次只从服务器取1个处理
+        channel.basicQos(1);//每次只从服务器取1个处理
         //4、定义队列的消费者
         DeliverCallback deliverCallback = (consumerTag, delivery) -> {
             String message = new String(delivery.getBody(), "UTF-8");
@@ -114,4 +128,21 @@ public class ProducerConsumer {
         channel.basicConsume(QUEUE_NAME, autoAck, deliverCallback, consumerTag -> { });
 	}	
     
+    public void consumer3() throws Exception {
+		//1、获取连接
+        Connection connection =RabbitMqConnectionFactoy.getConnection();
+        //2、声明通道
+        Channel channel = connection.createChannel();
+        //3、声明队列
+        channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+        //同一时刻服务器只会发送一条消息给消费者(如果设置为N,则当客户端堆积N条消息后服务端不会推送给客户端了)
+        channel.basicQos(1);//每次只从服务器取1个处理
+        //4、定义队列的消费者
+        DeliverCallback deliverCallback = (consumerTag, delivery) -> {
+            String message = new String(delivery.getBody(), "UTF-8");
+            System.out.println("-->消费者3号，收到消息,msg :"+message+",header:"+delivery.getProperties().getHeaders().toString());
+            channel.basicAck( delivery.getEnvelope().getDeliveryTag(), false);
+        };
+        channel.basicConsume(QUEUE_NAME, autoAck, deliverCallback, consumerTag -> { });
+	}	
 }

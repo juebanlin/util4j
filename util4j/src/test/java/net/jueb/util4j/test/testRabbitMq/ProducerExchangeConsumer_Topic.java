@@ -6,13 +6,13 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.rabbitmq.client.AMQP.BasicProperties;
+import com.rabbitmq.client.BuiltinExchangeType;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.DeliverCallback;
 import com.rabbitmq.client.Envelope;
-import com.rabbitmq.client.AMQP.BasicProperties;
-import com.rabbitmq.client.BuiltinExchangeType;
 
 /**
  * 通配符模式。
@@ -20,6 +20,7 @@ import com.rabbitmq.client.BuiltinExchangeType;
  * 交换器主要有四种类型:direct(路由)、fanout(广播)、topic、headers
  * 设置模糊的绑定方式，“*”操作符将“.”视为分隔符，匹配单个字符；“#”操作符没有分块的概念，它将任意“.”均视为关键字的匹配部分，能够匹配多个字符。
  * 如果交换机下面有相同通配符的队列,则数据会复制到这些队列中
+ * 如果一个队列下面有2个消费者,那么这个队列的消息会被消费者分摊消费
  */
 public class ProducerExchangeConsumer_Topic {
 	
@@ -38,7 +39,12 @@ public class ProducerExchangeConsumer_Topic {
 			e.printStackTrace();
 		}});
     	es.submit(()->{try {
-			pr.consumer1();
+			pr.consumer1A();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}});
+    	es.submit(()->{try {
+			pr.consumer1B();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}});
@@ -89,7 +95,7 @@ public class ProducerExchangeConsumer_Topic {
 	
     public boolean autoAck=false;
     
-    public void consumer1() throws Exception {
+    public void consumer1A() throws Exception {
 		//1、获取连接
         Connection connection =RabbitMqConnectionFactoy.getConnection();
         //2、声明通道
@@ -108,12 +114,38 @@ public class ProducerExchangeConsumer_Topic {
                     throws IOException {
                 //获取并转成String
                 String message = new String(body, "UTF-8");
-                System.out.println("-->消费者1号，收到消息,msg :"+message+",header:"+properties.getHeaders().toString());
+                System.out.println("-->消费者1A号，收到消息,msg :"+message+",header:"+properties.getHeaders().toString());
                 channel.basicAck(envelope.getDeliveryTag(), false);
             }
         };
         channel.basicConsume(QUEUE_NAME1, autoAck,consumer);
-	}	
+	}
+    
+    public void consumer1B() throws Exception {
+		//1、获取连接
+        Connection connection =RabbitMqConnectionFactoy.getConnection();
+        //2、声明通道
+        Channel channel = connection.createChannel();
+        //3、声明队列
+        channel.queueDeclare(QUEUE_NAME1, false, false, false, null);
+        //绑定队列到交换机
+        channel.queueBind(QUEUE_NAME1, EXCHANGE_NAME,"test.a");//只收到基数
+        //同一时刻服务器只会发送一条消息给消费者(如果设置为N,则当客户端堆积N条消息后服务端不会推送给客户端了)
+        //channel.basicQos(1);//每次处理1个
+        //4、定义队列的消费者
+        //定义消费者
+        DefaultConsumer consumer = new DefaultConsumer(channel) {
+            @Override
+            public void handleDelivery(String consumerTag, Envelope envelope,BasicProperties properties, byte[] body)
+                    throws IOException {
+                //获取并转成String
+                String message = new String(body, "UTF-8");
+                System.out.println("-->消费者1B号，收到消息,msg :"+message+",header:"+properties.getHeaders().toString());
+                channel.basicAck(envelope.getDeliveryTag(), false);
+            }
+        };
+        channel.basicConsume(QUEUE_NAME1, autoAck,consumer);
+	}
     
     public void consumer2() throws Exception {
 		//1、获取连接

@@ -10,8 +10,8 @@ public class RabbitMqConnectionFactoy {
 
 	public static Connection getConnection() throws IOException, TimeoutException {
     	ConnectionFactory factory = new ConnectionFactory();
-    	factory.setHost("home.jueb.net");
-	   	factory.setPort(32381);
+    	factory.setHost("127.0.0.1");
+	   	factory.setPort(5672);
 	   	factory.setVirtualHost("/");
 	   	factory.setUsername("guest");
 	   	factory.setPassword("guest");
