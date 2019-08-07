@@ -349,15 +349,13 @@ public class AssistTimedMapImpl<K,V> implements AssistTimedMap<K, V>{
 			AssistTimedEntry<K, V> e=entryMap.get(key);
 			if(e!=null)
 			{
-				e.setLastActiveTime(System.currentTimeMillis());
-				
-				
 				if(e.isTimeOut())
 				{
 					remove=true;
 				}else
 				{
 					result=e.getValue();
+					e.setLastActiveTime(System.currentTimeMillis());
 				}
 			}
 		} catch (Exception e) {

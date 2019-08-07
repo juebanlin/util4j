@@ -388,13 +388,13 @@ public class TimedMapImpl<K,V> implements TimedMap<K, V>{
 			TimedEntry<K, V> e=entryMap.get(key);
 			if(e!=null)
 			{
-				e.setLastActiveTime(System.currentTimeMillis());
 				if(e.isTimeOut())
 				{
 					remove=true;
 				}else
 				{
 					result=e.getValue();
+					e.setLastActiveTime(System.currentTimeMillis());
 				}
 			}
 		} catch (Exception e) {
