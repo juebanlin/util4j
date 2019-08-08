@@ -5,7 +5,7 @@
 
 	<groupId>net.jueb</groupId>
 	<artifactId>util4j</artifactId>
-	<version>4.3.2</version>
+	<version>4.3.3</version>
 	<packaging>jar</packaging>
 
 	<name>${project.groupId}:${project.artifactId}</name>
@@ -237,6 +237,14 @@
 						<goals>
 							<goal>sign</goal>
 						</goals>
+						<!-- 改为maven settings配置 
+                        <configuration> 
+                        	<homedir>${gpg.homedir}</homedir>
+                        	<executable>gpg</executable>  
+                            <keyname>${gpg.keyname}</keyname> 
+                            <passphrase>${gpg.passphrase}</passphrase> 
+                        </configuration>
+                        -->
 					</execution>
 				</executions>
 			</plugin>
