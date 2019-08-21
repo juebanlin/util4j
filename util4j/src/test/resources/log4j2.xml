@@ -8,8 +8,8 @@
         <!-- 控制台日志级别 -->
         <property name="LOG_LEVEL_CONSOLE">debug</property>  
         <!-- logstash网络日志输出 -->
-        <property name="LOG_LEVEL_SOKCET_HOST">127.0.0.1</property>         
-        <property name="LOG_LEVEL_SOKCET_PORT">12201</property>    
+        <property name="LOG_LEVEL_SOKCET_HOST">47.99.210.227</property>         
+        <property name="LOG_LEVEL_SOKCET_PORT">5602</property>    
     </properties>
 	<!--定义所有的appender-->  
     <appenders>  
@@ -46,10 +46,24 @@
 			<version>1.11.0</version>
 		</dependency>
 		logstash配置：
+		logstash -e 'input { gelf { host => '0.0.0.0' port => 5001 } } output { elasticsearch { hosts => ["127.0.0.1:9200"] index => "logstash-%{+YYYY.MM.dd}" } }'
+		logstash -e 'input {
+		 gelf {
+		    host => '0.0.0.0'
+		    port => 5001
+		  }
+		}
+		output {
+		  elasticsearch {
+		    hosts => ["127.0.0.1:9200"]
+		    index => "logstash-%{+YYYY.MM.dd}"
+		  }
+		}'
+		
 		input {
 		 gelf {
 		    host => '0.0.0.0'
-		    port => 12201
+		    port => 5001
 		  }
 		}
 		output {
@@ -97,10 +111,12 @@
     		<appender-ref ref="Console" />
     		<appender-ref ref="LogFile" />
     		<appender-ref ref="ErrorLogFile" />
+    		<appender-ref ref="Logstash" />
     	</AsyncLogger>
     	<!-- 所有包范围的日志都以trace级别输出控制台 -->
    	 	<AsyncRoot level="trace">  
             <appender-ref ref="Console" /><!--所有包的日志输出会到LogFile,除了特别声明的logger-->
+            <appender-ref ref="Logstash" />
         </AsyncRoot> 
     </loggers>  
 </configuration>

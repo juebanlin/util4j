@@ -17,7 +17,7 @@ public class Node {
 	 */
 	public void initWeight()
 	{
-		Arrays.fill(w, 0);
+		Arrays.fill(w, 0.5);
 	}
 	
     /**
