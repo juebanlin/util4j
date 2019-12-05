@@ -53,7 +53,7 @@ public class ThreadPoolQueueGroupExecutor extends ThreadPoolExecutor implements 
 		this.kqm=kqm;
 		init();
 	}
-	
+
 	@Override
 	public QueueGroupManager getQueueGroupManager() {
 		return kqm;
