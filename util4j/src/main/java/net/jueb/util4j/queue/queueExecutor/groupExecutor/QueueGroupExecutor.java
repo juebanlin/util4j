@@ -10,19 +10,21 @@ import net.jueb.util4j.queue.queueExecutor.executor.QueueExecutor;
  * @author juebanlin
  */
 public interface QueueGroupExecutor{
-	
-	public static interface KeyElement<T>{
-		public String getKey();
-		public T getValue();
+
+	QueueGroupManager getQueueGroupManager();
+
+	interface KeyElement<T>{
+		String getKey();
+		T getValue();
 	}
 	
-	public void execute(String key,Runnable task);
+	void execute(String key,Runnable task);
 	
-	public void execute(String key,List<Runnable> tasks);
+	void execute(String key,List<Runnable> tasks);
 	
-	public boolean hasQueueExecutor(String key);
+	boolean hasQueueExecutor(String key);
 	
-	public QueueExecutor getQueueExecutor(String key);
+	QueueExecutor getQueueExecutor(String key);
 	
 	Iterator<KeyElement<QueueExecutor>> keyIterator();
 }

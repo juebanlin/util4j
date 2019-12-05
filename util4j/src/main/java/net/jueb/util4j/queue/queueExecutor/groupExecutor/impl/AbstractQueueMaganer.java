@@ -33,9 +33,7 @@ public abstract class AbstractQueueMaganer {
 	{
 		this.queueFactory=queueFactory;
 	}
-	
-	public static final QueueFactory DefaultQueueFactory=QueueFactory.DEFAULT_QUEUE_FACTORY;
-	
+
 	public QueueFactory queueFactory;
 
 	/**
@@ -43,6 +41,6 @@ public abstract class AbstractQueueMaganer {
 	 * @return
 	 */
 	public final QueueFactory getDefaultQueueFactory() {
-		return DefaultQueueFactory;
+		return QueueFactory.DEFAULT_QUEUE_FACTORY;
 	}
 }

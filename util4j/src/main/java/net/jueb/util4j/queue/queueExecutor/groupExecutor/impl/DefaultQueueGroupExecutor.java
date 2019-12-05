@@ -16,6 +16,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import net.jueb.util4j.lock.waiteStrategy.BlockingWaitConditionStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,14 +40,6 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 
     private static final int DEFAULT_KEEP_ALIVE_SEC = 30;
    
-    private static final QueueGroupManager DEFAULT_QueueGroupManager = new DefaultQueueManager();
-    
-    private static final Queue<Runnable> DEFAULT_BossQueue = new ConcurrentLinkedQueue<Runnable>();
-    
-    private static final WaitConditionStrategy DEFAULT_waitConditionStrategy=new SleepingWaitConditionStrategy();
-    
-    private static final ThreadFactory DEFAULT_ThreadFactory=new NamedThreadFactory("queueGroup",true);
-    
 	private volatile ThreadFactory threadFactory;
     
     /**
@@ -102,25 +95,41 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
       * 设置worker线程上下文classloder为null
      */
     private boolean nullContextClassLoader=false;
+
+
+	private static DefaultQueueManager default_QueueGroupManager(){
+		return new DefaultQueueManager();
+	}
+
+	private static final Queue<Runnable> default_BossQueue(){
+		return new ConcurrentLinkedQueue<>();
+	}
+
+	private static final WaitConditionStrategy default_waitConditionStrategy(){
+		return new BlockingWaitConditionStrategy();
+	}
+	private static final ThreadFactory default_ThreadFactory(){
+		return new NamedThreadFactory("queueGroup",true);
+	}
     
     public DefaultQueueGroupExecutor() {
         this(DEFAULT_INITIAL_THREAD_POOL_SIZE, DEFAULT_MAX_THREAD_POOL);
     }
 
     public DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize) {
-        this(corePoolSize, maximumPoolSize,DEFAULT_BossQueue);
+        this(corePoolSize, maximumPoolSize,default_BossQueue());
     }
     
     protected DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize,Queue<Runnable> bossQueue) {
             this(corePoolSize, maximumPoolSize, DEFAULT_KEEP_ALIVE_SEC, TimeUnit.SECONDS, 
-            		Executors.defaultThreadFactory(),DEFAULT_waitConditionStrategy,
-            		bossQueue,DEFAULT_QueueGroupManager,null);
+            		Executors.defaultThreadFactory(),default_waitConditionStrategy(),
+            		bossQueue,default_QueueGroupManager(),null);
         }
     
     protected DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize,
         	Queue<Runnable> bossQueue,QueueGroupManager queueMananger) {
             this(corePoolSize, maximumPoolSize, DEFAULT_KEEP_ALIVE_SEC, TimeUnit.SECONDS, 
-            		Executors.defaultThreadFactory(),DEFAULT_waitConditionStrategy,
+            		Executors.defaultThreadFactory(),default_waitConditionStrategy(),
             		bossQueue,queueMananger,new DirectExecutor());
         }
     
@@ -140,8 +149,7 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
      * @param threadFactory 线程工厂
      * @param waitConditionStrategy 线程等待机制
      * @param bossQueue 主队列
-     * @param iqm 索引队列管理器
-     * @param kqm 键值队列管理器
+     * @param queueMananger 键值队列管理器
      * @param assistExecutor optional 辅助执行器,用于启动工作线程或处理其它逻辑
      */
     public DefaultQueueGroupExecutor(int corePoolSize, int maximumPoolSize, 
@@ -587,7 +595,6 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
     /**
      * 队列添加事件执行之后
      * @param queue
-     * @param offered
      */
     protected void systemTaskOfferAfter(SystemQueue queue)
     {
@@ -620,6 +627,10 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
     	}
 	}
 
+	public QueueGroupManager getQueueGroupManager() {
+		return queueMananger;
+	}
+
 	@Override
 	public void execute(String key, Runnable task) {
 		queueMananger.getQueueExecutor(key).execute(task);
@@ -650,10 +661,10 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 		int maximumPoolSize=DEFAULT_MAX_THREAD_POOL;
 		long keepAliveTime=DEFAULT_KEEP_ALIVE_SEC;
 		TimeUnit unit=TimeUnit.SECONDS;
-		ThreadFactory threadFactory=DEFAULT_ThreadFactory;
-        WaitConditionStrategy waitConditionStrategy=DEFAULT_waitConditionStrategy;
-        Queue<Runnable> bossQueue=DEFAULT_BossQueue;
-        QueueGroupManager queueMananger=DEFAULT_QueueGroupManager;
+		ThreadFactory threadFactory=default_ThreadFactory();
+        WaitConditionStrategy waitConditionStrategy=default_waitConditionStrategy();
+        Queue<Runnable> bossQueue=default_BossQueue();
+        QueueGroupManager queueMananger=default_QueueGroupManager();
         boolean nullContextClassLoader;
         Executor assistExecutor=new DirectExecutor();
 		

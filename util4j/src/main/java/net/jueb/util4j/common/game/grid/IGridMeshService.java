@@ -1,8 +1,8 @@
 package net.jueb.util4j.common.game.grid;
 
-import lombok.Data;
-
-import java.util.*;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -17,265 +17,6 @@ import java.util.stream.Collectors;
 * @Version:        1.0
  */
 public interface IGridMeshService {
-
-	class GridUtil{
-		/**
-		 * 格子坐标位数
-		 */
-		static final transient int GRID_LOC_DIG = 5;
-		/**
-		 * 索引坐标位置转换为单个数字
-		 *
-		 * @param x
-		 * @param y
-		 * @return
-		 */
-		static int locToNumber(int x, int y) {
-			int value = (int) Math.pow(10, GRID_LOC_DIG);
-			int id = (int) ((int) x * value + y);
-			return id;
-		}
-
-		/**
-		 * 单个数字转换为格子索引坐标
-		 * @param number
-		 * @return
-		 */
-		static int[] numberToLoc(int number) {
-			int value = (int) Math.pow(10, GRID_LOC_DIG);
-			int x = number / value;
-			int y = number % value;
-			return new int[]{x, y};
-		}
-
-		/**
-		 * 左下角求余索引id转格子id
-		 * @param indexId
-		 * @param xMaxGrid
-		 * @return
-		 */
-		static int leftDownIndexIdToGridId(int indexId,int xMaxGrid){
-			int yLoc=indexId/xMaxGrid;
-			int xLoc=indexId%xMaxGrid;
-			return locToNumber(xLoc,yLoc);
-		}
-
-		/**
-		 * 左上角求余索引id转格子id
-		 * @param indexId
-		 * @param xMaxGrid x轴最大格子数量
-		 * @param yMaxGrid y轴最大格子数量
-		 * @return
-		 */
-		static int leftUpIndexIdToGridId(int indexId,int xMaxGrid,int yMaxGrid){
-			int num=indexId/xMaxGrid;
-			int yLoc=yMaxGrid-num-1;
-			int xLoc=indexId%xMaxGrid;
-			return locToNumber(xLoc,yLoc);
-		}
-
-		/**
-		 * 格子ID转换为左下角求余索引
-		 * @param gridId
-		 * @param xMaxGrid x轴最大格子数量
-		 * @return
-		 */
-		static int gridIdToLeftDownIndexId(int gridId,int xMaxGrid){
-			int xLoc=numberToLoc(gridId)[0];
-			int yLoc=numberToLoc(gridId)[1];
-			int indexId=xLoc+yLoc*xMaxGrid;
-			return indexId;
-		}
-
-		/**
-		 * 格子ID转换为左上角求余索引
-		 * @param gridId
-		 * @param xMaxGrid x轴最大格子数量
-		 * @param yMaxGrid y轴最大格子数量
-		 * @return
-		 */
-		static int gridIdToLeftUpIndexId(int gridId,int xMaxGrid,int yMaxGrid){
-			int xLoc=numberToLoc(gridId)[0];
-			int yLoc=numberToLoc(gridId)[1];
-			int num=yMaxGrid-yLoc-1;
-			int indexId=xLoc+num*xMaxGrid;
-			return indexId;
-		}
-
-		/**
-		 * 取格子的左下角顶点坐标
-		 * @return
-		 */
-		static float[] getGridIdLeftLowerPos(int gridId,float gridWidth,float gridHeight) {
-			float[] loc = new float[2];
-			int[] locXy = numberToLoc(gridId);
-			int gridX = locXy[0];
-			int gridY = locXy[1];
-			loc[0] = gridX * gridWidth;
-			loc[1] = gridY * gridHeight;
-			return loc;
-		}
-
-		/**
-		 * 根据格子ID取格子的左上角顶点坐标
-		 * @param gridId
-		 * @return
-		 */
-		static float[] getGridIdLeftUpperPos(int gridId,float gridWidth,float gridHeight) {
-			float[] loc = new float[2];
-			int[] locXy = numberToLoc(gridId);
-			int gridX = locXy[0];
-			int gridY = locXy[1]+1;
-			loc[0] = gridX * gridWidth;
-			loc[1] = gridY * gridHeight;
-			return loc;
-		}
-
-		/**
-		 * 根据格子ID取格子的右上角顶点坐标
-		 * @param gridId
-		 * @return
-		 */
-		static float[] getGridIdRightUpperPos(int gridId,float gridWidth,float gridHeight) {
-			float[] loc = new float[2];
-			int[] locXy = numberToLoc(gridId);
-			int gridX = locXy[0]+1;
-			int gridY = locXy[1]+1;
-			loc[0] = gridX * gridWidth;
-			loc[1] = gridY * gridHeight;
-			return loc;
-		}
-
-
-		/**
-		 * 根据格子ID取格子的右下角顶点坐标
-		 * @param gridId
-		 * @return
-		 */
-		static float[] getGridIdRightLowerPos(int gridId,float gridWidth,float gridHeight) {
-			float[] loc = new float[2];
-			int[] locXy = numberToLoc(gridId);
-			int gridX = locXy[0]+1;
-			int gridY = locXy[1];
-			loc[0] = gridX * gridWidth;
-			loc[1] = gridY * gridHeight;
-			return loc;
-		}
-	}
-
-	@Data
-	class Grid{
-
-		/**
-		 * 唯一id(格子索引坐标方式合成的number)
-		 */
-		final int id;
-		/**
-		 * 格子在X轴方向的索引
-		 */
-		final int locX;
-		/**
-		 * 格子在Y轴方向的索引
-		 */
-		final int locY;
-
-		/**
-		 * 格子宽
-		 */
-		final float width;
-
-		/**
-		 * 格子高
-		 */
-		final float height;
-
-		/**
-		 * 所在网格X轴最大格子数量
-		 */
-		final int limitXNum;
-		/**
-		 * 所在网格Y轴最大格子数量
-		 */
-		final int limitYNum;
-
-		/**
-		 * 左下角开始求余的索引id
-		 */
-		final int leftDownIndexId;
-
-		/**
-		 * 左上角开始求余的索引id
-		 */
-		final int leftUpIndexId;
-
-		/**
-		 * @param locX 格子在X轴方向的索引
-		 * @param locY 格子在Y轴方向的索引
-		 * @param limitXNum 所在网格X轴最大格子数量
-		 * @param limitYNum 所在网格Y轴最大格子数量
-		 */
-		public Grid(int locX,int locY, int limitXNum,int limitYNum,float width,float height) {
-			this.id = GridUtil.locToNumber(locX,locY);
-			this.locX=locX;
-			this.locY=locY;
-			this.limitXNum = limitXNum;
-			this.limitYNum = limitYNum;
-			this.width=width;
-			this.height=height;
-			this.leftUpIndexId=GridUtil.gridIdToLeftUpIndexId(id,limitXNum,limitYNum);
-			this.leftDownIndexId=GridUtil.gridIdToLeftDownIndexId(id,limitXNum);
-		}
-
-		/**
-		 * @param locX 格子在X轴方向的索引
-		 * @param locY 格子在Y轴方向的索引
-		 * @param ownerMesh 格子所属网格
-		 */
-		public Grid(int locX,int locY,IGridMeshService ownerMesh) {
-			this(locX,locY,ownerMesh.getGridNumWithWidth(),ownerMesh.getGridNumWithHeight(),ownerMesh.getGridWidthLength(),ownerMesh.getGridHeightLength());
-		}
-
-		/**
-		 * @param id id(格子索引坐标方式合成的number)
-		 * @param ownerMesh 格子所在网格
-		 */
-		public Grid(int id,IGridMeshService ownerMesh) {
-			this(GridUtil.numberToLoc(id)[0],GridUtil.numberToLoc(id)[1],ownerMesh);
-		}
-
-		/**
-		 * 取格子的左下角顶点坐标
-		 * @return
-		 */
-		public float[] getGridIdLeftLowerPos() {
-			return GridUtil.getGridIdLeftLowerPos(id,getWidth(),getHeight());
-		}
-
-		/**
-		 * 根据格子ID取格子的左上角顶点坐标
-		 * @return
-		 */
-		public float[] getGridIdLeftUpperPos() {
-			return GridUtil.getGridIdLeftUpperPos(id,getWidth(),getHeight());
-		}
-
-		/**
-		 * 根据格子ID取格子的右上角顶点坐标
-		 * @return
-		 */
-		public float[] getGridIdRightUpperPos() {
-			return GridUtil.getGridIdRightUpperPos(id,getWidth(),getHeight());
-		}
-
-
-		/**
-		 * 根据格子ID取格子的右下角顶点坐标
-		 * @return
-		 */
-		public float[] getGridIdRightLowerPos() {
-			return GridUtil.getGridIdRightLowerPos(id,getWidth(),getHeight());
-		}
-	}
 
 	/**
 	 * 世界宽
@@ -340,9 +81,9 @@ public interface IGridMeshService {
 	 * @return
 	 */
 	default Grid getGrid(float x, float y) {
-		int gridX = (int) Math.ceil(x / getGridWidthLength()) - 1;//x轴格子坐标
-		int gridY = (int) Math.ceil(y / getGridHeightLength()) - 1;//y轴格子坐标
-		Grid grid=new Grid(gridX,gridY,this);
+		int gridX = Math.max(0, (int) Math.floor(x / getGridWidthLength()));//x轴格子坐标
+		int gridY = Math.max(0, (int) Math.floor(y / getGridHeightLength()));//y轴格子坐标
+		Grid grid = new Grid(gridX, gridY, this);
 		return grid;
 	}
 
@@ -362,7 +103,7 @@ public interface IGridMeshService {
 	 * @return
 	 */
 	default Grid getGridByLeftDownIndexId(int indexId) {
-		int gridId=GridUtil.leftDownIndexIdToGridId(indexId,getGridNumWithWidth());
+		int gridId= GridUtil.leftDownIndexIdToGridId(indexId,getGridNumWithWidth());
 		Grid grid=new Grid(gridId,this);
 		return grid;
 	}
@@ -373,7 +114,7 @@ public interface IGridMeshService {
 	 * @return
 	 */
 	default Grid getGridByLeftUpIndexId(int indexId) {
-		int gridId=GridUtil.leftUpIndexIdToGridId(indexId,getGridNumWithWidth(),getGridNumWithHeight());
+		int gridId= GridUtil.leftUpIndexIdToGridId(indexId,getGridNumWithWidth(),getGridNumWithHeight());
 		Grid grid=new Grid(gridId,this);
 		return grid;
 	}
@@ -408,7 +149,7 @@ public interface IGridMeshService {
 	 * @param yNumRange y轴格子数量范围
 	 * @return
 	 */
-	default Set<Grid> getGrids(float x, float y, int xNumRange,int yNumRange) {
+	default Set<Grid> getGrids(float x, float y, int xNumRange, int yNumRange) {
 		return getGrids(getGridId(x,y),xNumRange,yNumRange);
 	}
 
@@ -459,7 +200,7 @@ public interface IGridMeshService {
 	 * @param yNumRange y轴格子数量范围
 	 * @return
 	 */
-	default Set<Integer> getGridIds(float x, float y, int xNumRange,int yNumRange) {
+	default Set<Integer> getGridIds(float x, float y, int xNumRange, int yNumRange) {
 		return getGridIds(getGridId(x,y), xNumRange,yNumRange);
 	}
 
@@ -525,7 +266,7 @@ public interface IGridMeshService {
 	 * @param yNumRange y轴格子数量范围
 	 * @return
 	 */
-	default Set<Grid> getGrids(int gridId, int xNumRange,int yNumRange) {
+	default Set<Grid> getGrids(int gridId, int xNumRange, int yNumRange) {
 		Set<Grid> grids = new LinkedHashSet<>();
 		Set<Integer> ids=getGridIds(gridId,xNumRange,yNumRange);
 		for(Integer id:ids){
@@ -554,7 +295,7 @@ public interface IGridMeshService {
 	 * @param yNumRange y轴格子数量范围
 	 * @return
 	 */
-	default Set<Integer> getGridIds(int gridId, int xNumRange,int yNumRange) {
+	default Set<Integer> getGridIds(int gridId, int xNumRange, int yNumRange) {
 		Set<Integer> indexes = new HashSet<>();
 		int[] locXym = GridUtil.numberToLoc(gridId);
 		int gridX = locXym[0];
@@ -603,8 +344,8 @@ public interface IGridMeshService {
 	 * @return
 	 */
 	default boolean isNearByWithLeftDownIndexId(int indexId1, int range1, int indexId2, int range2) {
-		int gridId1=GridUtil.leftDownIndexIdToGridId(indexId1,getGridNumWithWidth());
-		int gridId2=GridUtil.leftDownIndexIdToGridId(indexId2,getGridNumWithWidth());
+		int gridId1= GridUtil.leftDownIndexIdToGridId(indexId1,getGridNumWithWidth());
+		int gridId2= GridUtil.leftDownIndexIdToGridId(indexId2,getGridNumWithWidth());
 		return isNearBy(gridId1,range1,gridId2,range2);
 	}
 
@@ -697,8 +438,8 @@ public interface IGridMeshService {
 		}
 		int oid=getGridId(ox,oy);//起点格子id
 		int tid=getGridId(tx,ty);//结束点格子id
-		int[] oidLoc=GridUtil.numberToLoc(oid);//起点格子索引坐标
-		int[] tidLoc=GridUtil.numberToLoc(tid);//目标点格子索引坐标
+		int[] oidLoc= GridUtil.numberToLoc(oid);//起点格子索引坐标
+		int[] tidLoc= GridUtil.numberToLoc(tid);//目标点格子索引坐标
 		int oidIndexX=oidLoc[0];
 		int oidIndexY=oidLoc[1];
 		int tidIndexX=tidLoc[0];
@@ -708,8 +449,8 @@ public interface IGridMeshService {
 		Set<Integer> gridIds=getGridIds(oid,xRange,yRange);
 		for(Integer gridId:gridIds)
 		{
-			float[] leftUp=GridUtil.getGridIdLeftUpperPos(gridId,getGridWidthLength(),getGridHeightLength());
-			float[] rightDown=GridUtil.getGridIdRightLowerPos(gridId,getGridWidthLength(),getGridHeightLength());
+			float[] leftUp= GridUtil.getGridIdLeftUpperPos(gridId,getGridWidthLength(),getGridHeightLength());
+			float[] rightDown= GridUtil.getGridIdRightLowerPos(gridId,getGridWidthLength(),getGridHeightLength());
 			if(isLineIntersectRectangle(ox,oy,tx,ty,leftUp[0],leftUp[1],rightDown[0],rightDown[1])){
 				indexes.add(gridId);
 			}
@@ -723,7 +464,7 @@ public interface IGridMeshService {
 	 * @param y
 	 * @return
 	 */
-	default boolean inWorld(float x,float y){
+	default boolean inWorld(float x, float y){
 		return x<0||x>getWorldWidthLength()||y<0||y>getWorldHeightLength();
 	}
 
@@ -744,7 +485,7 @@ public interface IGridMeshService {
 	 * @return 是否相交
 	 */
 	static boolean isLineIntersectRectangle(float linePointX1, float linePointY1, float linePointX2, float linePointY2, float rectangleLeftTopX, float rectangleLeftTopY,
-											float rectangleRightBottomX, float rectangleRightBottomY) {
+                                            float rectangleRightBottomX, float rectangleRightBottomY) {
 		float lineHeight = linePointY1 - linePointY2;
 		float lineWidth = linePointX2 - linePointX1; // 计算叉乘
 		float c = linePointX1 * linePointY2 - linePointX2 * linePointY1;

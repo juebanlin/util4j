@@ -18,11 +18,15 @@ public class SimpleMemoryCompiler implements MemoryCompiler {
      * @param javaCodes javaCodes
      * @return Class
      */
-    public synchronized Class<?> compile(String className, String javaCodes) throws Exception {
-        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-        JavaFileManager manager = new MemoryFileManager(compiler.getStandardFileManager(null, null, null));
+    public Class<?> compile(String className, String javaCodes) throws Exception {
         List<String> options = new ArrayList<>();
         options.addAll(Arrays.asList("-classpath", System.getProperty("java.class.path")));
+        return compile(className,javaCodes,options);
+    }
+
+    public synchronized Class<?> compile(String className, String javaCodes,List<String> options) throws Exception {
+        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+        JavaFileManager manager = new MemoryFileManager(compiler.getStandardFileManager(null, null, null));
         List<JavaFileObject> files = new ArrayList<>();
         files.add(new MemoryJavaFileObject(className, javaCodes));
         compiler.getTask(null, manager, null, options, null, files).call();

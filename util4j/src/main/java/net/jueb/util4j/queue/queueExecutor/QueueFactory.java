@@ -12,17 +12,17 @@ public interface QueueFactory {
 	/**
 	 * 默认队列工厂
 	 */
-	public static final QueueFactory DEFAULT_QUEUE_FACTORY=()->{return new RunnableQueueWrapper(new ConcurrentLinkedQueue<>());};
+	QueueFactory DEFAULT_QUEUE_FACTORY=()->new RunnableQueueWrapper(new ConcurrentLinkedQueue<>());
 	
 	/**
 	 * 多生产单消费者队列工厂,适合同一时刻,多个线程往队列丢任务,单个线程处理队列任务
 	 */
-	public static final QueueFactory MPSC_QUEUE_FACTORY=()->{return new RunnableQueueWrapper(MpscLinkedQueue.newMpscLinkedQueue());};
+	QueueFactory MPSC_QUEUE_FACTORY=()->new RunnableQueueWrapper(MpscLinkedQueue.newMpscLinkedQueue());
 	
 	/**
 	 * 多生产单多消费者队列工厂,适合同一时刻,多个线程往队列丢任务,多个线程处理队列任务
 	 */
-	public static final QueueFactory MPMC_QUEUE_FACTORY=()->{return new RunnableQueueWrapper(new MpmcAtomicArrayQueue<>(Short.MAX_VALUE));};
+	QueueFactory MPMC_QUEUE_FACTORY=()->new RunnableQueueWrapper(new MpmcAtomicArrayQueue<>(Short.MAX_VALUE));
 	
 	
 	RunnableQueue buildQueue(); 

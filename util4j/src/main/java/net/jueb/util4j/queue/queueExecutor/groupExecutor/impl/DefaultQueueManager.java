@@ -1,20 +1,15 @@
 package net.jueb.util4j.queue.queueExecutor.groupExecutor.impl;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Queue;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-
 import net.jueb.util4j.queue.queueExecutor.QueueFactory;
 import net.jueb.util4j.queue.queueExecutor.executor.QueueExecutor;
 import net.jueb.util4j.queue.queueExecutor.executor.impl.RunnableQueueExecutorEventWrapper;
-import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupManager;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupExecutor.KeyElement;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupManager;
+
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class DefaultQueueManager extends AbstractQueueMaganer implements QueueGroupManager{
 
@@ -78,6 +73,8 @@ public class DefaultQueueManager extends AbstractQueueMaganer implements QueueGr
 		}
 		return qe;
 	}
+
+
 
 	/**
 	 * 获取总完成任务数量
@@ -261,7 +258,7 @@ public class DefaultQueueManager extends AbstractQueueMaganer implements QueueGr
 	}
 	
 	public static class Builder{
-		QueueFactory queueFactory=DefaultQueueFactory;
+		QueueFactory queueFactory=QueueFactory.DEFAULT_QUEUE_FACTORY;
 		
 		public Builder setQueueFactory(QueueFactory queueFactory) {
 			Objects.requireNonNull(queueFactory);

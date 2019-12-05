@@ -44,7 +44,7 @@ public abstract class RunnableQueueEventWrapper extends RunnableQueueWrapper{
 		
 	/**
 	 * 任务添加之后
-	 * @param bool
+	 * @param offeredSucceed
 	 */
 	protected abstract void onAddAfter(boolean offeredSucceed);
 }

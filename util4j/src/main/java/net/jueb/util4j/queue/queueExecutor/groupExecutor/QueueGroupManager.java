@@ -12,37 +12,38 @@ import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupExecutor.KeyE
  */
 public interface QueueGroupManager extends Iterable<QueueExecutor>{
 	
-	public boolean hasQueueExecutor(String key);
+	boolean hasQueueExecutor(String key);
 	
 	/**
 	 * 获取任务执行器,此队列的名字等于队列别名
-	 * @param queue
+	 * @param
 	 * @return
 	 */
-	public QueueExecutor getQueueExecutor(String key);
+	QueueExecutor getQueueExecutor(String key);
 
 	/**
 	 * 迭代执行器
 	 */
 	@Override
-	public Iterator<QueueExecutor> iterator();
+	Iterator<QueueExecutor> iterator();
 	
-	public Iterator<KeyElement<QueueExecutor>> keyIterator();
+	Iterator<KeyElement<QueueExecutor>> keyIterator();
 	
-	public long getToalCompletedTaskCount();
+	long getToalCompletedTaskCount();
 	
-	public long getToalCompletedTaskCount(String key);
+	long getToalCompletedTaskCount(String key);
 	
-	public void setGroupEventListener(KeyGroupEventListener listener);
+	void setGroupEventListener(KeyGroupEventListener listener);
 	
-	public QueueFactory getQueueFactory();
+	QueueFactory getQueueFactory();
 	
 	@FunctionalInterface
-	public static interface KeyGroupEventListener{
+	interface KeyGroupEventListener{
 		/**
 		 * 某队列的处理任务
-		 * @param task
+		 * @param key
+		 * @param handleTask
 		 */
-		public void onQueueHandleTask(String key,Runnable handleTask);
+		void onQueueHandleTask(String key,Runnable handleTask);
 	}
 }
