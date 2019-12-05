@@ -36,7 +36,11 @@ public class ScheduledThreadPoolQueueGroupExecutor extends ScheduledThreadPoolEx
 		this.kqm=kqm;
 		init();
 	}
-	
+
+	@Override
+	public QueueGroupManager getQueueGroupManager() {
+		return kqm;
+	}
 
 	@Override
 	public void execute(String key, Runnable task) {

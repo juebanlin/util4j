@@ -20,7 +20,6 @@ import net.jueb.util4j.lock.waiteStrategy.BlockingWaitConditionStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.jueb.util4j.lock.waiteStrategy.SleepingWaitConditionStrategy;
 import net.jueb.util4j.lock.waiteStrategy.WaitCondition;
 import net.jueb.util4j.lock.waiteStrategy.WaitConditionStrategy;
 import net.jueb.util4j.queue.queueExecutor.executor.QueueExecutor;
