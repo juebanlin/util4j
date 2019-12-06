@@ -71,8 +71,8 @@ public class NettyServer extends AbstractNettyServer{
 	
 	protected void initServerOptions(ServerOptionConfiger configer){
 		configer.option(ChannelOption.SO_BACKLOG, 1024);//设置连接等待最大队列
-		configer.option(ChannelOption.TCP_NODELAY,true);
-		configer.option(ChannelOption.SO_KEEPALIVE, true);//设置保持连接
+		configer.childOption(ChannelOption.TCP_NODELAY,true);
+		configer.childOption(ChannelOption.SO_KEEPALIVE, true);//设置保持连接
 	}
 	
 	public ServerOptionConfiger optionConfig()
