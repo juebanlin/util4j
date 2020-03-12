@@ -23,11 +23,15 @@ public abstract class GZipUtils {
 	public static byte[] compress(byte[] data) throws Exception {
 		ByteArrayInputStream bais = new ByteArrayInputStream(data);
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		compress(bais, baos);
-		byte[] output = baos.toByteArray();
-		baos.flush();
-		baos.close();
-		bais.close();
+		byte[] output;
+		try {
+			compress(bais, baos);
+			output = baos.toByteArray();
+		}finally {
+			baos.flush();
+			baos.close();
+			bais.close();
+		}
 		return output;
 	}
 
@@ -50,12 +54,15 @@ public abstract class GZipUtils {
 	public static void compress(File file, boolean delete) throws Exception {
 		FileInputStream fis = new FileInputStream(file);
 		FileOutputStream fos = new FileOutputStream(file.getPath() + EXT);
-		compress(fis, fos);
-		fis.close();
-		fos.flush();
-		fos.close();
-		if (delete) {
-			file.delete();
+		try {
+			compress(fis, fos);
+			if (delete) {
+				file.delete();
+			}
+		}finally {
+			fis.close();
+			fos.flush();
+			fos.close();
 		}
 	}
 
@@ -67,14 +74,17 @@ public abstract class GZipUtils {
 	 */
 	public static void compress(InputStream is, OutputStream os) throws Exception {
 		GZIPOutputStream gos = new GZIPOutputStream(os);
-		int count;
-		byte data[] = new byte[BUFFER];
-		while ((count = is.read(data, 0, BUFFER)) != -1) {
-			gos.write(data, 0, count);
+		try {
+			int count;
+			byte data[] = new byte[BUFFER];
+			while ((count = is.read(data, 0, BUFFER)) != -1) {
+				gos.write(data, 0, count);
+			}
+		}finally {
+			gos.finish();
+			gos.flush();
+			gos.close();
 		}
-		gos.finish();
-		gos.flush();
-		gos.close();
 	}
 
 	/**
@@ -106,11 +116,14 @@ public abstract class GZipUtils {
 	public static byte[] decompress(byte[] data) throws Exception {
 		ByteArrayInputStream bais = new ByteArrayInputStream(data);
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		decompress(bais, baos);
-		data = baos.toByteArray();
-		baos.flush();
-		baos.close();
-		bais.close();
+		try {
+			decompress(bais, baos);
+			data = baos.toByteArray();
+		}finally {
+			baos.flush();
+			baos.close();
+			bais.close();
+		}
 		return data;
 	}
 
@@ -132,12 +145,15 @@ public abstract class GZipUtils {
 	public static void decompress(File file, boolean delete) throws Exception {
 		FileInputStream fis = new FileInputStream(file);
 		FileOutputStream fos = new FileOutputStream(file.getPath().replace(EXT, ""));
-		decompress(fis, fos);
-		fis.close();
-		fos.flush();
-		fos.close();
-		if (delete) {
-			file.delete();
+		try {
+			decompress(fis, fos);
+			if (delete) {
+				file.delete();
+			}
+		}finally {
+			fis.close();
+			fos.flush();
+			fos.close();
 		}
 	}
 
@@ -149,12 +165,15 @@ public abstract class GZipUtils {
 	 */
 	public static void decompress(InputStream is, OutputStream os) throws Exception {
 		GZIPInputStream gis = new GZIPInputStream(is);
-		int count;
-		byte data[] = new byte[BUFFER];
-		while ((count = gis.read(data, 0, BUFFER)) != -1) {
-			os.write(data, 0, count);
+		try {
+			int count;
+			byte data[] = new byte[BUFFER];
+			while ((count = gis.read(data, 0, BUFFER)) != -1) {
+				os.write(data, 0, count);
+			}
+		}finally {
+			gis.close();
 		}
-		gis.close();
 	}
 
 	/**

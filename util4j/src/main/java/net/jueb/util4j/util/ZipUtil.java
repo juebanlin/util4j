@@ -74,7 +74,6 @@ public class ZipUtil {
 	private static void compressbyType(File src, ZipOutputStream zos,String baseDir) throws IOException {
 		if (!src.exists())
 			return;
-		System.out.println("压缩" + baseDir + src.getName());
 		if (src.isDirectory()) {
 			File[] files = src.listFiles();
 			zos.putNextEntry(new ZipEntry(baseDir + src.getName()+ File.separator));
@@ -90,7 +89,8 @@ public class ZipUtil {
 	
 	/**
 	 * 压缩目录下的文件列表
-	 * @param dir
+	 * @param dirPath
+	 * @param outFile
 	 * @param filter
 	 * @throws Exception 
 	 */
@@ -134,7 +134,6 @@ public class ZipUtil {
 						}
 						data=Files.readAllBytes(Paths.get(subFile.getPath()));
 					}
-					System.out.println("添加压缩文件:"+subPath);
 					ZipEntry entry = new ZipEntry(subPath);
 					zos.putNextEntry(entry);
 					zos.write(data);
