@@ -205,6 +205,19 @@
 			<version>1.11.0</version>
 			<scope>test</scope>
 		</dependency>
+		<!--springboot执行代码热更 -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-loader</artifactId>
+			<version>2.1.1.RELEASE</version>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>com.taobao.arthas</groupId>
+			<artifactId>arthas-memorycompiler</artifactId>
+			<version>3.1.7</version>
+			<optional>true</optional>
+		</dependency>
 	</dependencies>
 	<build>
 		<!-- 读取系统版本的扩展 -->
