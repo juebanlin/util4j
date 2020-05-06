@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 
+import net.jueb.util4j.buffer.tool.ClassFileUitl;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import io.netty.util.CharsetUtil;
 import net.jueb.util4j.buffer.tool.BufferBuilder;
 
-public class BufferBuilderDemo extends AbstractBufferBuilder{
+public class BufferBuilderDemo {
 
 	protected Logger log=LoggerFactory.getLogger(getClass());
 
@@ -50,7 +51,7 @@ public class BufferBuilderDemo extends AbstractBufferBuilder{
 			return false;
 		});
 		
-		List<Class<?>> fileList = getClassInfo(soruceRootDir, pkg);
+		List<Class<?>> fileList =ClassFileUitl.getClassInfo(soruceRootDir, pkg);
 		for(Class<?> clazz:fileList)
 		{
 			if(!Dto.class.isAssignableFrom(clazz))
@@ -62,7 +63,7 @@ public class BufferBuilderDemo extends AbstractBufferBuilder{
 			bb.build(clazz,writeSb,readSb);
 			writeSb.append("\n");
 			writeSb.append(readSb.toString());
-			File javaSourceFile=findJavaSourceFile(soruceRootDir, clazz);
+			File javaSourceFile=ClassFileUitl.findJavaSourceFile(soruceRootDir, clazz);
 			String javaSource=fillCode(javaSourceFile, writeSb);
 			FileUtils.writeByteArrayToFile(javaSourceFile,javaSource.getBytes(CharsetUtil.UTF_8));
 		}

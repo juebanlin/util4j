@@ -9,13 +9,15 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.util.List;
+
+import net.jueb.util4j.buffer.tool.ClassFileUitl;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.netty.util.CharsetUtil;
 
-public class JsonFieldBuilderDemo extends AbstractBufferBuilder {
+public class JsonFieldBuilderDemo{
 
 	@Target({ElementType.FIELD})
 	@Retention(RetentionPolicy.RUNTIME)
@@ -39,7 +41,7 @@ public class JsonFieldBuilderDemo extends AbstractBufferBuilder {
 	
 	public void build(String path,String pkg,Class<?> buildClassType)throws Exception
 	{
-		List<Class<?>> fileList = getClassInfo(path,pkg);
+		List<Class<?>> fileList = ClassFileUitl.getClassInfo(path,pkg);
 		for(Class<?> clazz:fileList)
 		{
 			if(!buildClassType.isAssignableFrom(clazz))
@@ -55,7 +57,7 @@ public class JsonFieldBuilderDemo extends AbstractBufferBuilder {
 				}
 				buildGetSet(f, appender);
 			}
-			File javaSourceFile=findJavaSourceFile(path, clazz);
+			File javaSourceFile=ClassFileUitl.findJavaSourceFile(path, clazz);
 			String javaSource=fillCode(javaSourceFile, appender);
 			FileUtils.writeByteArrayToFile(javaSourceFile,javaSource.getBytes(CharsetUtil.UTF_8));
 			log.info("complete==>"+clazz.getName());
