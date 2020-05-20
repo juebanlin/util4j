@@ -25,34 +25,17 @@ import java.util.Map;
  *
  */
 public class SpringBootScriptRunner {
-    List<String> paths=new ArrayList<>();
 
-    public SpringBootScriptRunner(String ...jarPath){
-        for (String s : jarPath) {
-            paths.add(s);
-        }
-    }
+    String path;
+    ScriptUtil scriptUtil;
 
-    public SpringBootScriptRunner(){
-        //默认取当前类所在的jar
-        String path1=Thread.currentThread().getContextClassLoader().getClass().getProtectionDomain().getCodeSource().getLocation().getFile();
-        String path2=getClass().getProtectionDomain().getCodeSource().getLocation().getFile();
-        paths.add(path1);
-        paths.add(path2);
+    public SpringBootScriptRunner (String path){
+        this.path=path;
+        scriptUtil=new ScriptUtil(path);
     }
 
     public String runScript(String className,String script)throws Exception{
-        URL[] urls=new URL[paths.size()];
-        for (int i = 0; i < paths.size(); i++) {
-            String path=paths.get(i);
-            URL url=new File(path).toURI().toURL();
-            urls[i]=url;
-        }
-        LaunchedURLClassLoader classLoader = new LaunchedURLClassLoader(urls, Thread.currentThread().getContextClassLoader());
-        DynamicCompiler dynamicCompiler = new DynamicCompiler(classLoader);
-        dynamicCompiler.addSource(className,script);
-        Map<String,Class<?>> map=dynamicCompiler.build();
-        Class<?> clazz=map.get(className);
+        Class<?> clazz=scriptUtil.buildClass(className,script);
         if(clazz==null){
             return "#not found class byClassName";
         }

@@ -218,6 +218,14 @@
 			<version>3.1.7</version>
 			<optional>true</optional>
 		</dependency>
+		<dependency>
+			<groupId>com.sun</groupId>
+			<artifactId>tools</artifactId>
+			<version>1.8.0</version>
+			<scope>system</scope>
+			<systemPath>${env.JAVA_HOME}/lib/tools.jar</systemPath>
+			<optional>true</optional>
+		</dependency>
 	</dependencies>
 	<build>
 		<!-- 读取系统版本的扩展 -->
