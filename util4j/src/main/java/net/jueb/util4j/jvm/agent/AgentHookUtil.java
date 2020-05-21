@@ -20,6 +20,14 @@ public class AgentHookUtil {
     private static AgentHook agentHook;
 
     public synchronized static AgentHook getAgentHook() throws IOException, AttachNotSupportedException, AgentLoadException, AgentInitializationException {
+        return  getAgentHook(null,true);
+    }
+
+    public synchronized static AgentHook getAgentHook(boolean deleteOndetach) throws IOException, AttachNotSupportedException, AgentLoadException, AgentInitializationException {
+        return  getAgentHook(null,false);
+    }
+
+    public synchronized static AgentHook getAgentHook(String agentTmpPath,boolean deleteOndetach) throws IOException, AttachNotSupportedException, AgentLoadException, AgentInitializationException {
         if(agentHook!=null){
             return agentHook;
         }
@@ -29,7 +37,17 @@ public class AgentHookUtil {
         try {
             InputStream resourceAsStream = AgentHookUtil.class.getClassLoader().getResourceAsStream(agentName);
             byte[] agentData=InputStreamUtils.getBytes(resourceAsStream);
-            tempFile = File.createTempFile("agent_tmp", ".jar");
+            if(agentTmpPath!=null){
+               try {
+                   tempFile=new File(agentTmpPath);
+                   tempFile.createNewFile();
+               }catch (Exception e){
+                   log.error(e.getMessage(),e);
+               }
+            }
+            if(tempFile==null){
+                tempFile = File.createTempFile("agent_tmp", ".jar");
+            }
             fos=new FileOutputStream(tempFile);
             fos.write(agentData);
             fos.close();
@@ -40,17 +58,19 @@ public class AgentHookUtil {
             virtualMachine = VmUtil.getVirtualMachine();
             String arg=AgentHookImpl.class.getName();
             virtualMachine.loadAgent(path,arg);
-            agentHook=AgentHookImpl.agentHook;
+            agentHook=AgentHookImpl.getInstance();
             return agentHook;
         }finally {
             if(virtualMachine!=null){
                 virtualMachine.detach();
                 log.info("detach agent");
             }
-            if(tempFile!=null){
-                tempFile.delete();
-                if(tempFile.exists()){
-                    tempFile.deleteOnExit();
+            if(deleteOndetach){
+                if(tempFile!=null){
+                    tempFile.delete();
+                    if(tempFile.exists()){
+                        tempFile.deleteOnExit();
+                    }
                 }
             }
         }

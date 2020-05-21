@@ -1,18 +1,19 @@
-package com.rgt.agent;
+package net.jueb.agent;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
  * Manifest-Version: 1.0
  * Can-Redefine-Classes: true
- * Agent-Class: cn.think.in.java.clazz.loader.asm.agent.AgentMainTraceAgent
+ * Agent-Class: net.jueb.agent.JavaAgent
  * Can-Retransform-Classes: true
  */
-public class GameAgent {
+public class JavaAgent {
 
    public static Instrumentation INST;
 
@@ -28,16 +29,12 @@ public class GameAgent {
         System.out.println("agentmain----,clazz:"+clazz);
         if(clazz!=null){
             try {
-                Constructor constructor = clazz.getDeclaredConstructors()[0];
-                constructor.setAccessible(true);
-                Object hook= constructor.newInstance();
-                System.out.println("agentmain------,getAgentHook:"+hook);
-                Consumer<Instrumentation> consumer= (Consumer<Instrumentation>) hook;
-                consumer.accept(inst);
-                System.out.println("agentmain------,hookInstrumentation success");
-                Supplier<ClassFileTransformer> supplier= (Supplier<ClassFileTransformer>) hook;
-                ClassFileTransformer classFileTransformer = supplier.get();
-                if(inst.isRetransformClassesSupported()){
+                Method initMethod=clazz.getDeclaredMethod("init", new Class[]{Instrumentation.class});
+                initMethod.setAccessible(true);
+                Object result = initMethod.invoke(null, inst);
+                System.out.println("agentmain------,initSuccess");
+                if(inst.isRetransformClassesSupported() && result!=null){
+                    ClassFileTransformer classFileTransformer=(ClassFileTransformer)result;
                     inst.addTransformer(classFileTransformer,true);
                     System.out.println("agentmain------,hookClassFileTransformer success");
                 }

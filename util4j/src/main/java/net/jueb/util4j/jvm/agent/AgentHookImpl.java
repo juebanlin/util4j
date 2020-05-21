@@ -4,14 +4,12 @@ import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
-public class AgentHookImpl implements Consumer<Instrumentation>, Supplier<ClassFileTransformer>, AgentHook {
+public class AgentHookImpl implements AgentHook {
 
     private static Instrumentation INST;
 
-    static AgentHook agentHook;
+    private static AgentHook agentHook;
 
     private final static ClassFileTransformer classFileTransformer = new ClassFileTransformer() {
         @Override
@@ -29,22 +27,21 @@ public class AgentHookImpl implements Consumer<Instrumentation>, Supplier<ClassF
     }
 
     @Override
-    public final void accept(Instrumentation instrumentation) {
-        INST = instrumentation;
-    }
-
-    @Override
     public final void updateClassFileTransformer(ClassFileTransformer classFileTransformer) {
         this.runTimeClassFileTransformer = classFileTransformer;
     }
 
     @Override
-    public ClassFileTransformer get() {
-        return classFileTransformer;
-    }
-
-    @Override
     public Instrumentation getInstrumentation() {
         return INST;
+    }
+
+    public static AgentHook getInstance(){
+        return new AgentHookImpl().agentHook;
+    }
+
+    private static ClassFileTransformer init(Instrumentation arg){
+        INST=arg;
+        return classFileTransformer;
     }
 }
