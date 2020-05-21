@@ -1,16 +1,11 @@
-package net.jueb.agent;
-
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 /**
  * Manifest-Version: 1.0
  * Can-Redefine-Classes: true
- * Agent-Class: net.jueb.agent.JavaAgent
+ * Agent-Class: JavaAgent
  * Can-Retransform-Classes: true
  */
 public class JavaAgent {

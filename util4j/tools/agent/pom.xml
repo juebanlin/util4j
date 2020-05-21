@@ -36,7 +36,7 @@
 <!--                            <addClasspath>true</addClasspath>-->
 <!--                        </manifest>-->
                         <manifestEntries>
-                            <Agent-Class>net.jueb.agent.JavaAgent</Agent-Class>
+                            <Agent-Class>JavaAgent</Agent-Class>
                             <Can-Redefine-Classes>true</Can-Redefine-Classes>
                             <Can-Retransform-Classes>true</Can-Retransform-Classes>
                         </manifestEntries>
