@@ -43,11 +43,15 @@ public class AgentHookUtil {
             agentHook=AgentHookImpl.agentHook;
             return agentHook;
         }finally {
-            if(tempFile!=null){
-                tempFile.delete();
-            }
             if(virtualMachine!=null){
                 virtualMachine.detach();
+                log.info("detach agent");
+            }
+            if(tempFile!=null){
+                tempFile.delete();
+                if(tempFile.exists()){
+                    tempFile.deleteOnExit();
+                }
             }
         }
     }
