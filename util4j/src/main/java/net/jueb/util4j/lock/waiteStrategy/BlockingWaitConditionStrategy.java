@@ -19,7 +19,10 @@ public final class BlockingWaitConditionStrategy implements WaitConditionStrateg
 	private final Condition processorNotifyCondition;
 
 	public BlockingWaitConditionStrategy() {
-		this.lock = new ReentrantLock();
+		this(false);
+	}
+	public BlockingWaitConditionStrategy(boolean fairSync) {
+		this.lock = new ReentrantLock(fairSync);
 		this.processorNotifyCondition = this.lock.newCondition();
 	}
 
