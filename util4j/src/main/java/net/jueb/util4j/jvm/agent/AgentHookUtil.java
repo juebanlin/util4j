@@ -24,9 +24,19 @@ public class AgentHookUtil {
     }
 
     public synchronized static AgentHook getAgentHook(boolean deleteOndetach) throws IOException, AttachNotSupportedException, AgentLoadException, AgentInitializationException {
-        return  getAgentHook(null,false);
+        return  getAgentHook(null,deleteOndetach);
     }
 
+    /**
+     * 指定一个../xx.jar的临时文件路径用于agent的加载
+     * @param agentTmpPath String path = File.createTempFile("agent_tmp", ".jar", new   File("").getAbsoluteFile()).getPath();
+     * @param deleteOndetach
+     * @return
+     * @throws IOException
+     * @throws AttachNotSupportedException
+     * @throws AgentLoadException
+     * @throws AgentInitializationException
+     */
     public synchronized static AgentHook getAgentHook(String agentTmpPath,boolean deleteOndetach) throws IOException, AttachNotSupportedException, AgentLoadException, AgentInitializationException {
         if(agentHook!=null){
             return agentHook;

@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import net.jueb.util4j.lock.waiteStrategy.BlockingWaitConditionStrategy;
+import net.jueb.util4j.queue.queueExecutor.QueueFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,7 +98,7 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 
 
 	private static DefaultQueueManager default_QueueGroupManager(){
-		return new DefaultQueueManager();
+		return new DefaultQueueManager(QueueFactory.MPSC_QUEUE_FACTORY);
 	}
 
 	private static final Queue<Runnable> default_BossQueue(){

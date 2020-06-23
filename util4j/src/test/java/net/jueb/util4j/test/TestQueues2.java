@@ -3,6 +3,7 @@ package net.jueb.util4j.test;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -28,11 +29,11 @@ public class TestQueues2{
     		 return new Task() {
 				@Override
 				public void run() {
-					CdkeyFactoryRandomImpl cd=new CdkeyFactoryRandomImpl();
-					cd.build();
-					cd.build();
-					cd.build();
-					cd.build();
+//					CdkeyFactoryRandomImpl cd=new CdkeyFactoryRandomImpl();
+//					cd.build();
+//					cd.build();
+//					cd.build();
+//					cd.build();
 				}
 				
 				@Override
@@ -50,7 +51,9 @@ public class TestQueues2{
     	 */
 		public void test(final int taskCount,final int queueCount,final QueueGroupExecutor o)
     	{
-    		 final Map<Integer,Long> startTime=new HashMap<>();
+			CountDownLatch countDownLatch=new CountDownLatch(queueCount);
+			final long[] startTimes=new long[queueCount];
+			final int[] resultQueueCount=new int[queueCount];
     		 final AtomicLong addTime=new AtomicLong();
     		 Runnable t=new Runnable() {
  				public void run() {
@@ -58,11 +61,12 @@ public class TestQueues2{
 					for(int i=1;i<=queueCount;i++)
 					{
 						final int queueName=i;
+						final int queueIndex=i-1;
 						long t=System.currentTimeMillis();
 						o.execute(queueName+"", new Task() {
 							@Override
 							public void run() {
-								startTime.put(queueName, System.currentTimeMillis());
+								startTimes[queueIndex]=System.currentTimeMillis();
 							}
 							@Override
 							public String name() {
@@ -77,6 +81,8 @@ public class TestQueues2{
  					{
  						Task t=buildTask();
  						int queue=RandomUtils.nextInt(queueCount)+1;//随机加入队列
+						final int queueIndex=queue-1;
+						resultQueueCount[queueIndex]++;
  						long time=System.currentTimeMillis();
  						o.execute(queue+"",t);
  						time=System.currentTimeMillis()-time;
@@ -86,11 +92,14 @@ public class TestQueues2{
  					for(int i=1;i<=queueCount;i++)
  					{
  						final int queueName=i;
+						final int queueIndex=i-1;
  						o.execute(queueName+"", new Task() {
 							@Override
 							public void run() {
-								long time= System.currentTimeMillis()-startTime.get(queueName);
-								System.err.println("队列："+queueName+",最后一个任务完成,添加队列耗时:"+addTime.get()+",队列总耗时:"+time+",当前线程ID:"+Thread.currentThread().getId());
+								long time=System.currentTimeMillis()-startTimes[queueIndex];;
+								int num = resultQueueCount[queueIndex];
+								System.err.println("队列："+queueName+",最后一个任务完成,添加队列耗时:"+addTime.get()+",得到任务数量:"+num+",队列总耗时:"+time+",当前线程ID:"+Thread.currentThread().getId());
+								countDownLatch.countDown();
 							}
 							@Override
 							public String name() {
@@ -101,6 +110,11 @@ public class TestQueues2{
  				}
  			};
  			new Thread(t).start();
+			try {
+				countDownLatch.await();
+			}catch (Exception e){
+
+			}
     	 }
     	 
     	 public void testOrder(final TaskQueueExecutor o)
@@ -248,14 +262,16 @@ public class TestQueues2{
     	 
     	 public static void main(String[] args) throws InterruptedException {
     		 TestQueues2 tq=new TestQueues2();
-    		 int qt=1000000;//每个队列测试任务数量 
+    		 int qt=10000*1000;//每个队列测试任务数量
 			 Thread.sleep(5000);
 			 System.out.println("队列测试开始");
     		/**
     		 * 多队列多线程测试
     		 */
-			QueueGroupExecutor ft=new TestQueueGroup2().buildByMpMc(2,10,10000);
-			tq.test(qt*5,10, ft);
+			QueueGroupExecutor ft=new TestQueueGroup2().buildByMpMc(10,10,11,2000000);
+			System.out.println("#########1");
+			tq.test(qt,10, ft);//1000W随机分配到10个队列
+
 //			队列：6,最后一个任务完成,添加队列耗时:1343,队列总耗时:27089,当前线程ID:21
 //			队列：10,最后一个任务完成,添加队列耗时:1343,队列总耗时:28280,当前线程ID:25
 //			队列：2,最后一个任务完成,添加队列耗时:1343,队列总耗时:28353,当前线程ID:17

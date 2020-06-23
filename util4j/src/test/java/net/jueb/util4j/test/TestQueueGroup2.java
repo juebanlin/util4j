@@ -4,6 +4,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 
+import org.jctools.queues.MpscArrayQueue;
 import org.jctools.queues.MpscLinkedQueue;
 import org.jctools.queues.atomic.MpmcAtomicArrayQueue;
 
@@ -37,11 +38,10 @@ public class TestQueueGroup2 {
 		return b.setMaxPoolSize(max).setCorePoolSize(min).setBossQueue(bossQueue).setQueueGroupManagerr(kqm).build();
 	}
 	
-	protected QueueGroupExecutor buildByMpMc(int min,int max,int maxPendingTask)
+	protected QueueGroupExecutor buildByMpMc(int minThread,int maxThread,int maxQueue,int maxPendingTask)
 	{
-		int maxQueueCount=maxPendingTask;
 		//多生产多消费者队列(线程竞争队列)
-		Queue<Runnable> bossQueue=new MpmcAtomicArrayQueue<>(maxQueueCount);
+		Queue<Runnable> bossQueue=new MpscArrayQueue<>(maxQueue);
 		QueueFactory qf=new QueueFactory() {
 			@Override
 			public RunnableQueue buildQueue() {
@@ -53,6 +53,6 @@ public class TestQueueGroup2 {
 		QueueGroupManager kqm=new DefaultQueueManager(qf);
 		NioQueueGroupExecutor.Builder b=new NioQueueGroupExecutor.Builder();
 		b.setAssistExecutor(Executors.newSingleThreadExecutor());
-		return b.setMaxPoolSize(max).setCorePoolSize(min).setBossQueue(bossQueue).setQueueGroupManagerr(kqm).build();
+		return b.setMaxPoolSize(minThread).setCorePoolSize(maxThread).setBossQueue(bossQueue).setQueueGroupManagerr(kqm).build();
 	}
 }

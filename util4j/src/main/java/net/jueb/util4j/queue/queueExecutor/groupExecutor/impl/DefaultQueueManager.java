@@ -20,12 +20,25 @@ public class DefaultQueueManager extends AbstractQueueMaganer implements QueueGr
 
 	private volatile KeyGroupEventListener listener;
 
+	/**
+	 * 单次处理数量,<=0则一直处理
+	 */
+	private int batchCount;
+
 	public DefaultQueueManager() {
-		
 	}
 	
 	public DefaultQueueManager(QueueFactory queueFactory) {
 		super(queueFactory);
+	}
+
+	/**
+	 * @param queueFactory
+	 * @param batchCount 队列被线程单次处理的数量,防止在线程不足的情况下一直消费此线程,其它队列得不到处理
+	 */
+	public DefaultQueueManager(QueueFactory queueFactory,int batchCount) {
+		super(queueFactory);
+		this.batchCount=batchCount;
 	}
 
 	public void execute(String index, Runnable task) {
@@ -216,12 +229,17 @@ public class DefaultQueueManager extends AbstractQueueMaganer implements QueueGr
 		public void run() {
 			TaskQueue queue=this;
 			if(queue.processLock.compareAndSet(false, true))
-			{//如果此runnable未被执行则执行,已执行则不可再次执行
+			{//如果此runnable未被执行则执行,已执行则不可再次执行(防止task事件被多个监听,有且只能有一个消费者可以获得执行能力)
+				Runnable task=null;
 				try {
-					handleQueueTask(queue);
+					task=handleQueueTask(queue);
 				} finally {
 					queue.processLock.set(false);
 					queue.isLock.set(false);
+					if(task!=null && isLock.compareAndSet(false, true)){
+						//如果onAddAfter没有触发,那么就由当前线程再次处理
+						task.run();
+					}
 				}
 			}
 		}
@@ -230,10 +248,21 @@ public class DefaultQueueManager extends AbstractQueueMaganer implements QueueGr
 		 * 处理队列任务
          * @param queue
          */
-        private void handleQueueTask(TaskQueue queue) {
+        private Runnable handleQueueTask(TaskQueue queue) {
         	Thread thread=Thread.currentThread();
+        	int num=0;
         	for (;;) 
             {
+				if(batchCount>0 && num>=batchCount){
+					//停止处理队列
+					if(queue.peek()!=null){
+						//抛出事件,下次处理
+						return ()->{
+							onQueueHandleTask(index,this);
+						};
+					}
+					break;
+				}
         		Runnable task = queue.poll();
             	if(task == null)
                 {//停止处理队列
@@ -242,6 +271,7 @@ public class DefaultQueueManager extends AbstractQueueMaganer implements QueueGr
             	beforeExecute(thread, task);
                 boolean succeed = false;
                 try {
+                	num++;
                     task.run();
                     queue.getCompletedTaskCount().incrementAndGet();
                     totalCompleteTask.incrementAndGet();
@@ -254,6 +284,7 @@ public class DefaultQueueManager extends AbstractQueueMaganer implements QueueGr
                     throw e;
                 }
             }
+        	return null;
         }
 	}
 	
