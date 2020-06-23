@@ -40,7 +40,7 @@ public final class BlockingWaitConditionStrategy implements WaitConditionStrateg
 		if (!waitCondition.isComplete()) {
 			this.lock.lock();
 			try {
-				while (!waitCondition.isComplete()) {
+				if (!waitCondition.isComplete()) {
 					this.processorNotifyCondition.await();
 				}
 			} finally {
@@ -57,7 +57,7 @@ public final class BlockingWaitConditionStrategy implements WaitConditionStrateg
 			this.lock.lock();
 			try {
 		    	long waitTime = unit.toNanos(timeOut);
-				while (!waitCondition.isComplete()) {
+				if(!waitCondition.isComplete()) {
 					this.processorNotifyCondition.awaitNanos(waitTime);
 				}
 			} finally {

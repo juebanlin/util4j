@@ -1,6 +1,8 @@
 package net.jueb.util4j.test;
 
 import lombok.extern.slf4j.Slf4j;
+import net.jueb.util4j.lock.waiteStrategy.BlockingWaitConditionStrategy;
+import net.jueb.util4j.lock.waiteStrategy.SleepingWaitConditionStrategy;
 import net.jueb.util4j.queue.queueExecutor.QueueFactory;
 import net.jueb.util4j.queue.queueExecutor.RunnableQueue;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupExecutor;
@@ -16,6 +18,7 @@ import org.jctools.queues.MpscArrayQueue;
 import org.jctools.queues.MpscLinkedQueue;
 import org.jctools.queues.atomic.MpmcAtomicArrayQueue;
 
+import java.sql.Time;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
@@ -258,7 +261,7 @@ public class TestDefaultQueues {
     			QueueGroupManager kqm=new DefaultQueueManager(qf,0);
     			DefaultQueueGroupExecutor.Builder b=new DefaultQueueGroupExecutor.Builder();
     			b.setAssistExecutor(Executors.newSingleThreadExecutor());
-    			return b.setMaxPoolSize(max).setCorePoolSize(min).setBossQueue(bossQueue).setQueueGroupManagerr(kqm).build();
+    			return b.setMaxPoolSize(max).setCorePoolSize(min).setKeepAliveTime(3, TimeUnit.SECONDS).setBossQueue(bossQueue).setQueueGroupManagerr(kqm).setWaitConditionStrategy(new SleepingWaitConditionStrategy()).build();
     		}
     	 
     	 public static void main(String[] args) throws InterruptedException {
@@ -268,7 +271,7 @@ public class TestDefaultQueues {
     		/**
     		 * 多队列多线程测试
     		 */
-			QueueGroupExecutor ft=buildStageByMpMc(2,6,5,100000);
+			QueueGroupExecutor ft=buildStageByMpMc(2,10,10,100000);
 			System.out.println("#########1");
 			tq.test(1000,10,11, ft);//1000W随机分配到10个队列
 
@@ -296,6 +299,6 @@ public class TestDefaultQueues {
 //			队列：4,最后一个任务完成,添加队列耗时:1214,队列总耗时:28781,当前线程ID:17
 //			队列：9,最后一个任务完成,添加队列耗时:1214,队列总耗时:28796,当前线程ID:18
 			
-    		Thread.sleep(100000);
+    		Thread.sleep(10000000);
 		}
 }
