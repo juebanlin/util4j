@@ -5,9 +5,12 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import lombok.extern.slf4j.Slf4j;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.adapter.CoroutineQueueGroupExecutor;
 import org.apache.commons.lang.math.RandomUtils;
 import org.jctools.queues.MpscLinkedQueue;
 import org.jctools.queues.atomic.MpmcAtomicArrayQueue;
@@ -23,6 +26,7 @@ import net.jueb.util4j.queue.queueExecutor.queue.RunnableQueueWrapper;
 import net.jueb.util4j.queue.taskQueue.Task;
 import net.jueb.util4j.queue.taskQueue.TaskQueueExecutor;
 
+@Slf4j
 public class TestQueues2{
     	 public Task buildTask()
     	 {
@@ -241,34 +245,50 @@ public class TestQueues2{
  			new Thread(t).start();
     	 }
     	 
-    	 protected static QueueGroupExecutor buildStageByMpMc(int min,int max,int maxPendingTask)
-    		{
-    			int maxQueueCount=maxPendingTask;
-    			//多生产多消费者队列(线程竞争队列)
-    			Queue<Runnable> bossQueue=new MpmcAtomicArrayQueue<>(maxQueueCount);
-    			QueueFactory qf=new QueueFactory() {
-    				@Override
-    				public RunnableQueue buildQueue() {
-    					//多生产单消费者队列(PS:bossQueue决定了一个队列只能同时被一个线程处理)
-    					Queue<Runnable> queue=MpscLinkedQueue.newMpscLinkedQueue();
-    					return new RunnableQueueWrapper(queue);
-    				}
-    			};
-    			QueueGroupManager kqm=new DefaultQueueManager(qf);
-    			DefaultQueueGroupExecutor.Builder b=new DefaultQueueGroupExecutor.Builder();
-    			b.setAssistExecutor(Executors.newSingleThreadExecutor());
-    			return b.setMaxPoolSize(max).setCorePoolSize(min).setBossQueue(bossQueue).setQueueGroupManagerr(kqm).build();
-    		}
+    	 protected static QueueGroupExecutor buildStageByMpMc(int min,int max,int maxPendingTask) {
+			 int maxQueueCount=maxPendingTask;
+			 //多生产多消费者队列(线程竞争队列)
+			 Queue<Runnable> bossQueue=new MpmcAtomicArrayQueue<>(maxQueueCount);
+			 QueueFactory qf=new QueueFactory() {
+				 @Override
+				 public RunnableQueue buildQueue() {
+					 //多生产单消费者队列(PS:bossQueue决定了一个队列只能同时被一个线程处理)
+					 Queue<Runnable> queue=MpscLinkedQueue.newMpscLinkedQueue();
+					 return new RunnableQueueWrapper(queue);
+				 }
+			 };
+			 QueueGroupManager kqm=new DefaultQueueManager(qf);
+			 DefaultQueueGroupExecutor.Builder b=new DefaultQueueGroupExecutor.Builder();
+			 b.setAssistExecutor(Executors.newSingleThreadExecutor());
+			 return b.setMaxPoolSize(max).setCorePoolSize(min).setBossQueue(bossQueue).setQueueGroupManagerr(kqm).build();
+		 }
+
+	protected static QueueGroupExecutor buildCoroutineQueueGroupExecutor() {
+		QueueFactory qf=new QueueFactory() {
+			@Override
+			public RunnableQueue buildQueue() {
+				//多生产单消费者队列(PS:bossQueue决定了一个队列只能同时被一个线程处理)
+				Queue<Runnable> queue=MpscLinkedQueue.newMpscLinkedQueue();
+				return new RunnableQueueWrapper(queue);
+			}
+		};
+		QueueGroupManager kqm=new DefaultQueueManager(qf);
+		DefaultQueueGroupExecutor.Builder b=new DefaultQueueGroupExecutor.Builder();
+		b.setAssistExecutor(Executors.newSingleThreadExecutor());
+		CoroutineQueueGroupExecutor executor=new CoroutineQueueGroupExecutor(new LinkedBlockingQueue(),kqm)	;
+		return executor;
+	}
     	 
     	 public static void main(String[] args) throws InterruptedException {
     		 TestQueues2 tq=new TestQueues2();
-    		 int qt=10000*1000;//每个队列测试任务数量
+    		 int qt=1000;//每个队列测试任务数量
 			 Thread.sleep(5000);
 			 System.out.println("队列测试开始");
     		/**
     		 * 多队列多线程测试
     		 */
-			QueueGroupExecutor ft=new TestQueueGroup2().buildByMpMc(10,10,11,2000000);
+//			QueueGroupExecutor ft=new TestQueueGroup2().buildByMpMc(10,10,11,2000000);
+			QueueGroupExecutor ft=buildCoroutineQueueGroupExecutor();
 			System.out.println("#########1");
 			tq.test(qt,10, ft);//1000W随机分配到10个队列
 

@@ -10,6 +10,13 @@ fun execInCustomerThread(tasks: Collection<Runnable>,dispatcher: CoroutineDispat
         }
     }
 }
+fun execInCustomerThread(tasks: Iterator<Runnable>,dispatcher: CoroutineDispatcher) = runBlocking {
+    tasks.forEach {
+        launch(context = dispatcher) {
+            it.run()
+        }
+    }
+}
 fun execInCustomerThread(vararg tasks: Runnable,dispatcher: CoroutineDispatcher) = runBlocking {
     tasks.forEach {
         launch(context = dispatcher) {
@@ -20,6 +27,13 @@ fun execInCustomerThread(vararg tasks: Runnable,dispatcher: CoroutineDispatcher)
 
 //Dispatchers.Main	主线程，和UI交互，执行轻量任务	1.call suspend functions。2. call UI functions。 3. Update LiveData
 fun execInMainThread(tasks: Collection<Runnable>) = runBlocking {
+    tasks.forEach {
+        launch(context = Dispatchers.Main) {
+            it.run()
+        }
+    }
+}
+fun execInMainThread(tasks: Iterator<Runnable>) = runBlocking {
     tasks.forEach {
         launch(context = Dispatchers.Main) {
             it.run()
@@ -43,6 +57,13 @@ fun execInIoThread(tasks: Collection<Runnable>) = runBlocking {
         }
     }
 }
+fun execInIoThread(tasks: Iterator<Runnable>) = runBlocking {
+    tasks.forEach {
+        launch(context = Dispatchers.IO) {
+            it.run()
+        }
+    }
+}
 //Dispatchers.IO	用于网络请求和文件访问	1. Database。 2.Reading/writing files。3. Networking
 fun execInIoThread(vararg tasks: Runnable) = runBlocking {
     tasks.forEach {
@@ -60,15 +81,20 @@ fun execInCalcThread(tasks: Collection<Runnable>) = runBlocking {
         }
     }
 }
-
-fun execInCalcThreadV2(tasks: Collection<Runnable>) = runBlocking {
+fun execInCalcThread(tasks: Iterator<Runnable>) = runBlocking {
+    tasks.forEach {
+        launch(context = Dispatchers.Default) {
+            it.run()
+        }
+    }
+}
+fun execInCalcThreadV2(tasks: Iterator<Runnable>) = runBlocking {
     tasks.forEach {
         async(context = Dispatchers.Default) {
             it.run()
         }
     }
 }
-
 //Dispatchers.Default	CPU密集型任务	1. Sorting a list。 2.Parsing JSON。 3.DiffUtils
 fun execInCalcThread(vararg tasks: Runnable) = runBlocking {
     tasks.forEach {
@@ -80,6 +106,13 @@ fun execInCalcThread(vararg tasks: Runnable) = runBlocking {
 
 //Dispatchers.Unconfined	不限制任何制定线程	高级调度器，不应该在常规代码里使用
 fun execInCurrThread(tasks: Collection<Runnable>) = runBlocking {
+    tasks.forEach {
+        launch(context = Dispatchers.Unconfined) {
+            it.run()
+        }
+    }
+}
+fun execInCurrThread(tasks: Iterator<Runnable>) = runBlocking {
     tasks.forEach {
         launch(context = Dispatchers.Unconfined) {
             it.run()
