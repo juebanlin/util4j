@@ -49,10 +49,37 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<JDK.VERSION>1.8</JDK.VERSION>
+		<kotlin.version>1.4.0-rc</kotlin.version>
+		<kotlin.coroutines.version>1.3.8-1.4.0-rc</kotlin.coroutines.version>
 	</properties>
 	<repositories>
-
+		<repository>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+			<id>bintray.kotlin.eap</id>
+			<name>Bintray Kotlin EAP Repository</name>
+			<url>https://dl.bintray.com/kotlin/kotlin-eap</url>
+		</repository>
 	</repositories>
+
+	<pluginRepositories>
+		<pluginRepository>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+			<id>bintray.kotlin.eap</id>
+			<name>Bintray Kotlin EAP Repository</name>
+			<url>https://dl.bintray.com/kotlin/kotlin-eap</url>
+		</pluginRepository>
+	</pluginRepositories>
+
 	<dependencies>
 		<dependency>
 			<groupId>junit</groupId>
@@ -226,6 +253,19 @@
 			<systemPath>${env.JAVA_HOME}/lib/tools.jar</systemPath>
 			<optional>true</optional>
 		</dependency>
+
+		<dependency>
+			<groupId>org.jetbrains.kotlin</groupId>
+			<artifactId>kotlin-stdlib-jdk8</artifactId>
+			<version>${kotlin.version}</version>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.jetbrains.kotlinx</groupId>
+			<artifactId>kotlinx-coroutines-jdk8</artifactId>
+			<version>${kotlin.coroutines.version}</version>
+			<optional>true</optional>
+		</dependency>
 	</dependencies>
 	<build>
 		<!-- 读取系统版本的扩展 -->
@@ -374,6 +414,31 @@
 						</configuration>
 					</execution>
 				</executions>
+			</plugin>
+			<!-- kotlin编译插件 -->
+			<plugin>
+				<groupId>org.jetbrains.kotlin</groupId>
+				<artifactId>kotlin-maven-plugin</artifactId>
+				<version>${kotlin.version}</version>
+				<executions>
+					<execution>
+						<id>compile</id>
+						<phase>compile</phase>
+						<goals>
+							<goal>compile</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>test-compile</id>
+						<phase>test-compile</phase>
+						<goals>
+							<goal>test-compile</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<jvmTarget>1.8</jvmTarget>
+				</configuration>
 			</plugin>
 		</plugins>
 		<!-- classes 目录资源过滤 -->
