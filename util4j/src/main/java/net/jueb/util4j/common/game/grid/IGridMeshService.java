@@ -1,8 +1,6 @@
 package net.jueb.util4j.common.game.grid;
 
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -214,7 +212,11 @@ public interface IGridMeshService {
 	 * @return
 	 */
 	default Set<Integer> getGridIds(float x, float y, float xRange, float yRange) {
-		Set<Integer> indexes = new LinkedHashSet<>();
+		return new HashSet<>(getGridIdList(x,y,xRange,yRange));
+	}
+
+	default List<Integer> getGridIdList(float x, float y, float xRange, float yRange) {
+		List<Integer> indexes = new ArrayList<>();
 		int id = getGridId(x, y);
 		int[] locXy = GridUtil.numberToLoc(id);
 		int gridX = locXy[0];

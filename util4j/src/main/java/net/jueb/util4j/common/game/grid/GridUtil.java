@@ -9,6 +9,8 @@ public class GridUtil {
      */
     public static final transient int GRID_LOC_DIG = 5;
 
+    private static final  int OFFSET = (int) Math.pow(10, GRID_LOC_DIG);
+
     /**
      * 索引坐标位置转换为单个数字
      *
@@ -17,8 +19,8 @@ public class GridUtil {
      * @return
      */
     public static int locToNumber(int x, int y) {
-        int value = (int) Math.pow(10, GRID_LOC_DIG);
-        int id = (int) ((int) x * value + y);
+        int value=OFFSET;
+        int id = (x * value + y);
         return id;
     }
 
@@ -29,7 +31,7 @@ public class GridUtil {
      * @return
      */
     public static int[] numberToLoc(int number) {
-        int value = (int) Math.pow(10, GRID_LOC_DIG);
+        int value=OFFSET;
         int x = number / value;
         int y = number % value;
         return new int[]{x, y};
