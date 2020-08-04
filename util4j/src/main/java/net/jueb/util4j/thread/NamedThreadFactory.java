@@ -15,6 +15,7 @@ public class NamedThreadFactory implements ThreadFactory {
 	private final String mPrefix;
 
 	private final boolean mDaemo;
+	private final int mPriority;
 
 	private final ThreadGroup mGroup;
 
@@ -27,8 +28,13 @@ public class NamedThreadFactory implements ThreadFactory {
 	}
 
 	public NamedThreadFactory(String prefix, boolean daemo) {
+		this(prefix,daemo,Thread.NORM_PRIORITY);
+	}
+
+	public NamedThreadFactory(String prefix, boolean daemo,int priority) {
 		mPrefix = prefix + "-thread-";
 		mDaemo = daemo;
+		mPriority=priority;
 		SecurityManager s = System.getSecurityManager();
 		mGroup = (s == null) ? Thread.currentThread().getThreadGroup() : s
 				.getThreadGroup();
@@ -38,6 +44,7 @@ public class NamedThreadFactory implements ThreadFactory {
 		String name = mPrefix + mThreadNum.getAndIncrement();
 		Thread ret = new Thread(mGroup, runnable, name, 0);
 		ret.setDaemon(mDaemo);
+		ret.setPriority(mPriority);
 		return ret;
 	}
 
