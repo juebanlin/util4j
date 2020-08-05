@@ -239,10 +239,6 @@ public abstract class HeartAbleConnectionListener<T> implements JConnectionIdleL
 	 */
 	protected abstract void onMessageArrived(JConnection conn,T msg);
 
-	/**
-	 * 如果要配置心跳请重写initHeartConfig方法
-	 * @param connection
-	 */
 	protected abstract void onConnectionOpened(JConnection connection);
 
 	protected abstract void onConnectionClosed(JConnection connection);
