@@ -10,96 +10,96 @@ import java.util.concurrent.CompletableFuture;
  */
 public interface JConnection {
 
-	public int getId();
+	int getId();
 	
 	/**
 	 * 是否活跃打开
 	 * @return
 	 */
-	public boolean isActive();
+	boolean isActive();
 	
 	/**
 	 * 是否可写,如果不可写则底层可能出现消息堆积
 	 * @return
 	 */
-	public boolean isWritable();
+	boolean isWritable();
 	
-	public void write(Object obj);
+	void write(Object obj);
 
-	public void write(byte[] bytes);
+	void write(byte[] bytes);
 
-	public void writeAndFlush(Object obj);
+	void writeAndFlush(Object obj);
 
-	public void writeAndFlush(byte[] bytes);
+	void writeAndFlush(byte[] bytes);
 	
-	public CompletableFuture<JConnection> writeAndFlushFutureAble(byte[] bytes);
+	CompletableFuture<JConnection> writeAndFlushFutureAble(byte[] bytes);
 	
-	public CompletableFuture<JConnection> writeAndFlushFutureAble(Object bytes);
+	CompletableFuture<JConnection> writeAndFlushFutureAble(Object bytes);
 
-	public void flush();
+	void flush();
 
-	public void close();
+	void close();
 	
-	public CompletableFuture<Boolean> closeAsync();
+	CompletableFuture<Boolean> closeAsync();
 	
 	/**
 	 * 获取连接远程地址
 	 * @return
 	 */
-	public InetSocketAddress getRemoteAddress();
+	InetSocketAddress getRemoteAddress();
 
 	/**
 	 * 获取连接本地地址
 	 * @return
 	 */
-	public InetSocketAddress getLocalAddress();
+	InetSocketAddress getLocalAddress();
 
 	/**
 	 * 是否有属性
 	 * @param key
 	 * @return
 	 */
-	public boolean hasAttribute(String key);
+	boolean hasAttribute(String key);
 	
 	/**
 	 * 设置属性
 	 * @param key
 	 * @param value
 	 */
-	public void setAttribute(String key,Object value);
+	void setAttribute(String key,Object value);
 	
 	/**
 	 * 获取属性key集合
 	 * @return
 	 */
-	public Set<String> getAttributeNames();
+	Set<String> getAttributeNames();
 	/**
 	 * 获取属性
 	 * @param key
 	 * @return
 	 */
-	public Object getAttribute(String key);
+	Object getAttribute(String key);
 	
 	/**
 	 * 移除属性
 	 * @param key
 	 * @return
 	 */
-	public Object removeAttribute(String key);
+	Object removeAttribute(String key);
 	/**
 	 * 清空属性
 	 */
-	public void clearAttributes();
+	void clearAttributes();
 	
 	/**
 	 * 获取附件
 	 * @return
 	 */
-	public <T> T getAttachment();
+	<T> T getAttachment();
 	
 	/**
 	 * 设置附件
 	 * @param attachment
 	 */
-	public <T> void setAttachment(T attachment);
+	<T> void setAttachment(T attachment);
 }

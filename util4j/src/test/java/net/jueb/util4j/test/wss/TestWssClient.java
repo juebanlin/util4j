@@ -40,23 +40,23 @@ public class TestWssClient {
 	public static class Listener extends HeartAbleConnectionListener<String>{
 
 		@Override
-		public void connectionOpened(JConnection connection) {
+		public void onConnectionOpened(JConnection connection) {
 			System.out.println("connectionOpened:"+connection);
 			connection.writeAndFlush("hello server");
 		}
 
 		@Override
-		public void connectionClosed(JConnection connection) {
+		public void onConnectionClosed(JConnection connection) {
 			System.out.println("connectionClosed:"+connection);
 		}
 
 		@Override
-		protected void sendHeartReq(JConnection connection) {
+		protected void doSendHeartReq(JConnection connection) {
 			
 		}
 
 		@Override
-		protected void sendHeartRsp(JConnection connection) {
+		protected void doSendHeartRsp(JConnection connection) {
 			
 		}
 
@@ -66,7 +66,12 @@ public class TestWssClient {
 		}
 
 		@Override
-		protected void doMessageArrived(JConnection conn, String msg) {
+		protected boolean isHeartRsp(String msg) {
+			return false;
+		}
+
+		@Override
+		protected void onMessageArrived(JConnection conn, String msg) {
 			System.out.println("doMessageArrived:"+msg);
 		}
 	}

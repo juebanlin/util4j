@@ -10,12 +10,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import lombok.extern.slf4j.Slf4j;
-import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.adapter.CoroutineQueueGroupExecutor;
 import org.apache.commons.lang.math.RandomUtils;
 import org.jctools.queues.MpscLinkedQueue;
 import org.jctools.queues.atomic.MpmcAtomicArrayQueue;
 
-import net.jueb.util4j.common.game.cdkey.CdkeyFactoryRandomImpl;
 import net.jueb.util4j.queue.queueExecutor.QueueFactory;
 import net.jueb.util4j.queue.queueExecutor.RunnableQueue;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupExecutor;
@@ -263,22 +261,7 @@ public class TestQueues2{
 			 return b.setMaxPoolSize(max).setCorePoolSize(min).setBossQueue(bossQueue).setQueueGroupManagerr(kqm).build();
 		 }
 
-	protected static QueueGroupExecutor buildCoroutineQueueGroupExecutor() {
-		QueueFactory qf=new QueueFactory() {
-			@Override
-			public RunnableQueue buildQueue() {
-				//多生产单消费者队列(PS:bossQueue决定了一个队列只能同时被一个线程处理)
-				Queue<Runnable> queue=MpscLinkedQueue.newMpscLinkedQueue();
-				return new RunnableQueueWrapper(queue);
-			}
-		};
-		QueueGroupManager kqm=new DefaultQueueManager(qf);
-		DefaultQueueGroupExecutor.Builder b=new DefaultQueueGroupExecutor.Builder();
-		b.setAssistExecutor(Executors.newSingleThreadExecutor());
-		CoroutineQueueGroupExecutor executor=new CoroutineQueueGroupExecutor(new LinkedBlockingQueue(),kqm)	;
-		return executor;
-	}
-    	 
+
     	 public static void main(String[] args) throws InterruptedException {
     		 TestQueues2 tq=new TestQueues2();
     		 int qt=1000;//每个队列测试任务数量
@@ -287,8 +270,7 @@ public class TestQueues2{
     		/**
     		 * 多队列多线程测试
     		 */
-//			QueueGroupExecutor ft=new TestQueueGroup2().buildByMpMc(10,10,11,2000000);
-			QueueGroupExecutor ft=buildCoroutineQueueGroupExecutor();
+			QueueGroupExecutor ft=new TestQueueGroup2().buildByMpMc(10,10,11,2000000);
 			System.out.println("#########1");
 			tq.test(qt,10, ft);//1000W随机分配到10个队列
 

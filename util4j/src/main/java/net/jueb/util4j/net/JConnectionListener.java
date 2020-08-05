@@ -2,9 +2,9 @@ package net.jueb.util4j.net;
 
 public interface JConnectionListener<M> {
 	
-    public void messageArrived(JConnection conn,M msg);
+    void messageArrived(JConnection conn,M msg);
     
-	public void connectionOpened(JConnection connection);
+	void connectionOpened(JConnection connection);
 
-	public void connectionClosed(JConnection connection);
+	void connectionClosed(JConnection connection);
 }

@@ -1,6 +1,5 @@
 package net.jueb.util4j.net.nettyImpl.listener;
 
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -25,41 +24,38 @@ public abstract class HeartAbleConnectionListener<T> implements JConnectionIdleL
 	protected final Logger _log = LoggerFactory.getLogger(getClass());
 	
 	/**
-	 * 心跳验证间隔(仅当空闲时)
+	 * 默认心跳验证间隔(仅当空闲时)
 	 */
-	public final static long HeartIntervalMills=TimeUnit.SECONDS.toMillis(5);
-	
+	public final static long DEFAULT_HEART_INTERVAL_MILLS =TimeUnit.SECONDS.toMillis(5);
 	/**
-	 * 心跳开关
+	 * 最后异常读消息时间
 	 */
-	private boolean heartEnable;
+	private final static String KEY_LAST_READ_TIME_MILLS ="LastReadTimeMills";
+	/**
+	 * 心跳配置
+	 */
+	private final static String KEY_HEART_CONFIG ="HeartConfig";
 
-	public boolean isHeartEnable() {
-		return heartEnable;
+	/**
+	 * 全局心跳开关(超时后触发心跳请求回复和连接断开)
+	 */
+	private boolean globalHeartEnable;
+
+	public boolean isGlobalHeartEnable() {
+		return globalHeartEnable;
 	}
 
-	public void setHeartEnable(boolean heartEnable) {
-		this.heartEnable = heartEnable;
+	public final void setGlobalHeartEnable(boolean heartEnable) {
+		this.globalHeartEnable = globalHeartEnable;
 	}
 	
-	/**
-	 * 链路心跳配置
-	 * @param connection
-	 * @param config
-	 */
-	public void heartConfig (JConnection connection,HeartConfig config)
-	{
-		Objects.requireNonNull(config);
-		connection.setAttribute(IdleConnectionKey.HeartConfig, config);
-	}
-
 	/**
 	 * 心跳配置
 	 * @author Administrator
 	 */
 	public static class HeartConfig{
 		public static final int DefaultCloseMaxSeq=2;//最大发送序号(最多发送几次心跳验证)
-		private int seq;//发送序号
+		private int seq;//发送序号(超时计次)
 		private int closeMaxSeq=DefaultCloseMaxSeq;//最大关闭序号
 		public int getSeq() {
 			return seq;
@@ -79,45 +75,9 @@ public abstract class HeartAbleConnectionListener<T> implements JConnectionIdleL
 		}
 	}
 
-	public interface IdleConnectionKey {
-		/**
-		 * 最后异常读消息时间
-		 */
-		public static final String LastReadTimeMills="LastReadTimeMills";
-		/**
-		 * 心跳配置
-		 */
-		public static final String HeartConfig="HeartConfig";
-	}
-	
-	/**
-	 * 主动心跳请求发送
-	 */
-	@Override
-	public long getWriterIdleTimeMills() {
-		return HeartIntervalMills;
-	}
-	
-	/**
-	 * (保证5-10秒内有消息来回)
-	 * 没有任何请求或者3次心跳请求没有回复则关闭连接(2次会有临界点,如果回复比较快)
-	 */
-	@Override
-	public long getReaderIdleTimeMills() {
-		return HeartIntervalMills;
-	}
-	
-	/**
-	 * 3次心跳时间没有操作则关闭连接
-	 */
-	@Override
-	public long getAllIdleTimeMills() {
-		return getWriterIdleTimeMills()*4;
-	}
-
 	@Override
 	public final void event_AllIdleTimeOut(JConnection connection) {
-		if(!isHeartEnable())
+		if(!isGlobalHeartEnable())
 		{
 			return ;
 		}
@@ -128,79 +88,131 @@ public abstract class HeartAbleConnectionListener<T> implements JConnectionIdleL
 
 	@Override
 	public final void event_ReadIdleTimeOut(JConnection connection) {
-		if(!isHeartEnable())
+		if(!isGlobalHeartEnable())
 		{
 			return ;
 		}
-		connection.getAttribute(IdleConnectionKey.HeartConfig);
-		HeartConfig hc=null;
-		if(connection.hasAttribute(IdleConnectionKey.HeartConfig))
+		if(connection.hasAttribute(KEY_HEART_CONFIG))
 		{
-			hc=(HeartConfig) connection.getAttribute(IdleConnectionKey.HeartConfig);
-		}else
-		{
-			hc=new HeartConfig();
-			connection.setAttribute(IdleConnectionKey.HeartConfig,hc);
+			HeartConfig hc=(HeartConfig) connection.getAttribute(KEY_HEART_CONFIG);
+			if(hc.getSeq()>=hc.getCloseMaxSeq())
+			{
+				_log.warn("读超时,hc:"+hc+",关闭链路:"+connection+",LastReadTimeMills="+connection.getAttribute(KEY_LAST_READ_TIME_MILLS));
+				connection.close();
+				return ;
+			}
+			doSendHeartReq(connection);
+			hc.setSeq(hc.getSeq()+1);
+			_log.trace("读超时,hc:"+hc+",发送心跳请求:"+connection);
 		}
-		if(hc.getSeq()>=hc.getCloseMaxSeq())
-		{
-			_log.warn("读超时,hc:"+hc+",关闭链路:"+connection+",LastReadTimeMills="+connection.getAttribute(IdleConnectionKey.LastReadTimeMills));
-			connection.close();
-			return ;
-		}
-		sendHeartReq(connection);
-		hc.setSeq(hc.getSeq()+1);
-		_log.trace("读超时,hc:"+hc+",发送心跳请求:"+connection);
 	}
 	
 	@Override
 	public final void event_WriteIdleTimeOut(JConnection connection) {
-		if(!isHeartEnable())
+		if(!isGlobalHeartEnable())
 		{
 			return ;
 		}
 		_log.trace("写超时,发送心跳请求:"+connection);
-		sendHeartReq(connection);
+		doSendHeartReq(connection);
 	}
 	
 	@Override
 	public final void messageArrived(JConnection conn,T msg) {
 		try {
-			conn.setAttribute(IdleConnectionKey.LastReadTimeMills,System.currentTimeMillis());
+			conn.setAttribute(KEY_LAST_READ_TIME_MILLS,System.currentTimeMillis());
 			resetHeartSeq(conn);
 		}catch (Exception e) {
 			_log.error(e.getMessage(),e);
 		}
 		if(isHeartReq(msg))
 		{
-			responseHeartReq(msg, conn);
-			return;
+			if(autoResponseHeartReq(msg,conn)){
+				return;
+			}
 		}
-		doMessageArrived(conn, msg);
+		onMessageArrived(conn, msg);
 	}
-	
+
+	@Override
+	public final void connectionOpened(JConnection connection) {
+		onHeartConfigInit(connection);
+		onConnectionOpened(connection);
+	}
+
+	@Override
+	public final void connectionClosed(JConnection connection) {
+		onConnectionClosed(connection);
+	}
+
 	/**
 	 * 重置心跳发送序号
 	 * @param conn
 	 */
 	protected final void resetHeartSeq(JConnection conn)
 	{
-		if(conn.hasAttribute(IdleConnectionKey.HeartConfig))
+		if(conn.hasAttribute(KEY_HEART_CONFIG))
 		{//重置心跳序号
-			HeartConfig hc=(HeartConfig) conn.getAttribute(IdleConnectionKey.HeartConfig);
+			HeartConfig hc=(HeartConfig) conn.getAttribute(KEY_HEART_CONFIG);
 			hc.setSeq(0);
 		}
 	}
 
 	/**
+	 * 主动心跳请求发送
+	 */
+	@Override
+	public long getWriterIdleTimeMills() {
+		return DEFAULT_HEART_INTERVAL_MILLS;
+	}
+
+	/**
+	 * (保证5-10秒内有消息来回)
+	 * 没有任何请求或者3次心跳请求没有回复则关闭连接(2次会有临界点,如果回复比较快)
+	 */
+	@Override
+	public long getReaderIdleTimeMills() {
+		return DEFAULT_HEART_INTERVAL_MILLS;
+	}
+
+	/**
+	 * 3次心跳时间没有操作则关闭连接
+	 */
+	@Override
+	public long getAllIdleTimeMills() {
+		return getWriterIdleTimeMills()*4;
+	}
+
+	/**
+	 * 设置链路心跳配置
+	 * @param connection
+	 */
+	protected final void setHeartConfig(JConnection connection,HeartConfig heartConfig)
+	{
+		if(heartConfig!=null){
+			connection.setAttribute(KEY_HEART_CONFIG,heartConfig);
+		}
+	}
+
+	/**
+	 * 自动回复心跳请求
+	 * @param req
+	 * @param connection
+	 */
+	protected boolean autoResponseHeartReq(T req,JConnection connection) {
+		doSendHeartRsp(connection);
+		return true;
+	}
+
+	/**
 	 * 发送心跳请求
 	 */
-	protected abstract void sendHeartReq(JConnection connection);
+	protected abstract void doSendHeartReq(JConnection connection);
 
 	/**
 	 * 发送心跳回复
 	 */
-	protected abstract void sendHeartRsp(JConnection connection);
+	protected abstract void doSendHeartRsp(JConnection connection);
 	
 	/**
 	 * 是否是心跳请求
@@ -208,20 +220,30 @@ public abstract class HeartAbleConnectionListener<T> implements JConnectionIdleL
 	 * @return
 	 */
 	protected abstract boolean isHeartReq(T msg);
-	
+
 	/**
-	 * 回复心跳请求
-	 * @param req
-	 * @param connection
+	 * 是否是心跳请求
+	 * @param msg
+	 * @return
 	 */
-	protected void responseHeartReq(T req,JConnection connection) {
-		sendHeartRsp(connection);
+	protected abstract boolean isHeartRsp(T msg);
+
+	protected void onHeartConfigInit(JConnection connection){
+		setHeartConfig(connection,new HeartConfig());
 	}
-	
+
 	/**
 	 * 处理收到的消息
 	 * @param conn
 	 * @param msg
 	 */
-	protected abstract void doMessageArrived(JConnection conn,T msg);
+	protected abstract void onMessageArrived(JConnection conn,T msg);
+
+	/**
+	 * 如果要配置心跳请重写initHeartConfig方法
+	 * @param connection
+	 */
+	protected abstract void onConnectionOpened(JConnection connection);
+
+	protected abstract void onConnectionClosed(JConnection connection);
 }

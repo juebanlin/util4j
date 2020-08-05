@@ -11,37 +11,37 @@ public interface JConnectionIdleListener<M> extends JConnectionListener<M>{
 	 * 读超时时间
 	 * @return
 	 */
-	public long getReaderIdleTimeMills();
+	long getReaderIdleTimeMills();
 	/**
 	 * 写超时时间
 	 * @return
 	 */
-    public long getWriterIdleTimeMills();
+    long getWriterIdleTimeMills();
     /**
      * 读写超时时间
      * @return
      */
-    public long getAllIdleTimeMills();
+    long getAllIdleTimeMills();
     
     /**
      * 读写空闲超时事件
      * @param connection
      */
-    public void event_AllIdleTimeOut(JConnection connection);
+    void event_AllIdleTimeOut(JConnection connection);
     /**
      * 读空闲超时
      * @param connection
      */
-    public void event_ReadIdleTimeOut(JConnection connection);
+    void event_ReadIdleTimeOut(JConnection connection);
     /**
      * 写空闲超时
      * @param connection
      */
-    public void event_WriteIdleTimeOut(JConnection connection);
+    void event_WriteIdleTimeOut(JConnection connection);
     
-    public void messageArrived(JConnection conn,M msg);
+    void messageArrived(JConnection conn,M msg);
     
-	public void connectionOpened(JConnection connection);
+	void connectionOpened(JConnection connection);
 
-	public void connectionClosed(JConnection connection);
+	void connectionClosed(JConnection connection);
 }
