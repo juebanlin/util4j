@@ -12,10 +12,9 @@ import net.jueb.util4j.net.JConnectionIdleListener;
  * 具有心跳监测机制的链路监听器
  * 如果你想使用心跳:
  * {@code public void connectionOpened(NetConnection connection) {
-		//设置心跳配置
-		HeartConfig heart=new HeartConfig();
-		connection.setAttribute(IdleConnectionKey.HeartConfig, heart);
-		setHeartEnable(true);
+		//设置心跳配置 或者重写
+		setHeartConfig(connection,new HeartConfig());
+		setGlobalHeartEnable(true);
  * }
  * @author Administrator
  */
@@ -75,6 +74,30 @@ public abstract class HeartAbleConnectionListener<T> implements JConnectionIdleL
 		}
 	}
 
+	/**
+	 * 获取链路心跳配置
+	 * @param connection
+	 * @return
+	 */
+	protected final HeartConfig getHeartConfig(JConnection connection){
+		HeartConfig hc=null;
+		if(connection.hasAttribute(KEY_HEART_CONFIG)){
+			hc=(HeartConfig) connection.getAttribute(KEY_HEART_CONFIG);
+		}
+		return hc;
+	}
+
+	/**
+	 * 设置链路心跳配置
+	 * @param connection
+	 */
+	protected final void setHeartConfig(JConnection connection,HeartConfig heartConfig)
+	{
+		if(heartConfig!=null){
+			connection.setAttribute(KEY_HEART_CONFIG,heartConfig);
+		}
+	}
+
 	@Override
 	public final void event_AllIdleTimeOut(JConnection connection) {
 		if(!isGlobalHeartEnable())
@@ -131,6 +154,11 @@ public abstract class HeartAbleConnectionListener<T> implements JConnectionIdleL
 				return;
 			}
 		}
+		if(isHeartRsp(msg)){
+			if(autoShieldHeartRsp(msg,conn)){
+				return;
+			}
+		}
 		onMessageArrived(conn, msg);
 	}
 
@@ -184,23 +212,22 @@ public abstract class HeartAbleConnectionListener<T> implements JConnectionIdleL
 	}
 
 	/**
-	 * 设置链路心跳配置
-	 * @param connection
-	 */
-	protected final void setHeartConfig(JConnection connection,HeartConfig heartConfig)
-	{
-		if(heartConfig!=null){
-			connection.setAttribute(KEY_HEART_CONFIG,heartConfig);
-		}
-	}
-
-	/**
 	 * 自动回复心跳请求
 	 * @param req
 	 * @param connection
 	 */
 	protected boolean autoResponseHeartReq(T req,JConnection connection) {
 		doSendHeartRsp(connection);
+		return true;
+	}
+
+	/**
+	 * 自动屏蔽心跳回复
+	 * @param rsp
+	 * @param connection
+	 * @return
+	 */
+	protected boolean autoShieldHeartRsp(T rsp,JConnection connection) {
 		return true;
 	}
 
@@ -222,13 +249,14 @@ public abstract class HeartAbleConnectionListener<T> implements JConnectionIdleL
 	protected abstract boolean isHeartReq(T msg);
 
 	/**
-	 * 是否是心跳请求
+	 * 是否是心跳回复
 	 * @param msg
 	 * @return
 	 */
 	protected abstract boolean isHeartRsp(T msg);
 
 	protected void onHeartConfigInit(JConnection connection){
+		//设置默认的心跳配置(仅当全局心跳配置开启时生效)
 		setHeartConfig(connection,new HeartConfig());
 	}
 
