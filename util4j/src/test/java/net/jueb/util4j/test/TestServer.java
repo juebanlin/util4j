@@ -28,23 +28,27 @@ public class TestServer {
 		final short mainQueue=1;
 		final ChannelHandler logicHandler=new DefaultIdleListenerHandler<GameMsg>(new HeartAbleConnectionListener<GameMsg>(){
 			@Override
-			public void connectionOpened(JConnection connection) {//连接打开
+			public void onConnectionOpened(JConnection connection) {//连接打开
 			}
 			@Override
-			public void connectionClosed(JConnection connection) {//连接关闭
+			public void onConnectionClosed(JConnection connection) {//连接关闭
 			}
 			@Override
-			protected void sendHeartReq(JConnection connection) {//发送心跳
+			protected void doSendHeartReq(JConnection connection) {//发送心跳
 			}
 			@Override
-			protected void sendHeartRsp(JConnection connection) {//回复心跳
+			protected void doSendHeartRsp(JConnection connection) {//回复心跳
 			}
 			@Override
 			protected boolean isHeartReq(GameMsg msg) {//是否是心跳消息
 				return false;
 			}
 			@Override
-			protected void doMessageArrived(JConnection conn, GameMsg msg) {//处理消息 
+			protected boolean isHeartRsp(GameMsg msg) {
+				return false;
+			}
+			@Override
+			protected void onMessageArrived(JConnection conn, GameMsg msg) {//处理消息
 				int msgcode=msg.getCode();
 //				qe.execute(mainQueue,ScripManger.getInstance.buildScript(msgcode,conn,msg));//热更新脚本管理器取出消息对应处理逻辑并放入队列执行
 			}
