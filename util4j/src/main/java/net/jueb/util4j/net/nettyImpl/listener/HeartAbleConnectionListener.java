@@ -2,6 +2,7 @@ package net.jueb.util4j.net.nettyImpl.listener;
 
 import java.util.concurrent.TimeUnit;
 
+import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,25 +53,21 @@ public abstract class HeartAbleConnectionListener<T> implements JConnectionIdleL
 	 * 心跳配置
 	 * @author Administrator
 	 */
+	@Data
 	public static class HeartConfig{
 		public static final int DefaultCloseMaxSeq=2;//最大发送序号(最多发送几次心跳验证)
-		private int seq;//发送序号(超时计次)
-		private int closeMaxSeq=DefaultCloseMaxSeq;//最大关闭序号
-		public int getSeq() {
-			return seq;
-		}
-		public void setSeq(int seq) {
-			this.seq = seq;
-		}
-		public int getCloseMaxSeq() {
-			return closeMaxSeq;
-		}
-		public void setCloseMaxSeq(int closeMaxSeq) {
-			this.closeMaxSeq = closeMaxSeq;
-		}
+		/**
+		 * 读超时计次
+		 */
+		private int readTimeOutCount;
+		/**
+		 * 读超时关闭次数
+		 */
+		private int readTimeOutCountLimit=DefaultCloseMaxSeq;
+
 		@Override
 		public String toString() {
-			return "HeartConfig [seq=" + seq + ", closeMaxSeq=" + closeMaxSeq + "]";
+			return "HeartConfig [seq=" + readTimeOutCount + ", closeMaxSeq=" + readTimeOutCountLimit + "]";
 		}
 	}
 
@@ -104,9 +101,8 @@ public abstract class HeartAbleConnectionListener<T> implements JConnectionIdleL
 		{
 			return ;
 		}
-		//如果心跳超时则关闭连接
-		_log.warn("读写超时,关闭链路:"+connection);
-		connection.close();
+		_log.warn("读写超时:"+connection);
+		onAllIdleTimeOut(connection);
 	}
 
 	@Override
@@ -115,21 +111,36 @@ public abstract class HeartAbleConnectionListener<T> implements JConnectionIdleL
 		{
 			return ;
 		}
-		if(connection.hasAttribute(KEY_HEART_CONFIG))
-		{
-			HeartConfig hc=(HeartConfig) connection.getAttribute(KEY_HEART_CONFIG);
-			if(hc.getSeq()>=hc.getCloseMaxSeq())
+		HeartConfig heartConfig = getHeartConfig(connection);
+		if(heartConfig!=null){
+			heartConfig.setReadTimeOutCount(heartConfig.getReadTimeOutCountLimit()+1);
+			if(heartConfig.getReadTimeOutCount()>=heartConfig.getReadTimeOutCountLimit())
 			{
-				_log.warn("读超时,hc:"+hc+",关闭链路:"+connection+",LastReadTimeMills="+connection.getAttribute(KEY_LAST_READ_TIME_MILLS));
-				connection.close();
+				_log.warn("读超时达到上限,heartConfig:"+heartConfig+",conn:"+connection+",LastReadTimeMills="+connection.getAttribute(KEY_LAST_READ_TIME_MILLS));
+				onReadTimeOutContLimit(connection);
 				return ;
 			}
+			_log.trace("读超时,hc:"+heartConfig+",发送心跳请求:"+connection);
 			doSendHeartReq(connection);
-			hc.setSeq(hc.getSeq()+1);
-			_log.trace("读超时,hc:"+hc+",发送心跳请求:"+connection);
 		}
 	}
-	
+
+	/**
+	 * 当读超时达次数到上限则默认关闭连接
+	 * @param connection
+	 */
+	protected void onReadTimeOutContLimit(JConnection connection){
+		connection.close();
+	}
+
+	/**
+	 * 读写超时
+	 * @param connection
+	 */
+	protected void onAllIdleTimeOut(JConnection connection){
+
+	}
+
 	@Override
 	public final void event_WriteIdleTimeOut(JConnection connection) {
 		if(!isGlobalHeartEnable())
@@ -144,7 +155,7 @@ public abstract class HeartAbleConnectionListener<T> implements JConnectionIdleL
 	public final void messageArrived(JConnection conn,T msg) {
 		try {
 			conn.setAttribute(KEY_LAST_READ_TIME_MILLS,System.currentTimeMillis());
-			resetHeartSeq(conn);
+			resetHeartReadTimeOut(conn);
 		}catch (Exception e) {
 			_log.error(e.getMessage(),e);
 		}
@@ -177,17 +188,17 @@ public abstract class HeartAbleConnectionListener<T> implements JConnectionIdleL
 	 * 重置心跳发送序号
 	 * @param conn
 	 */
-	protected final void resetHeartSeq(JConnection conn)
+	protected final void resetHeartReadTimeOut(JConnection conn)
 	{
 		if(conn.hasAttribute(KEY_HEART_CONFIG))
 		{//重置心跳序号
 			HeartConfig hc=(HeartConfig) conn.getAttribute(KEY_HEART_CONFIG);
-			hc.setSeq(0);
+			hc.setReadTimeOutCount(0);
 		}
 	}
 
 	/**
-	 * 主动心跳请求发送
+	 * 写超时
 	 */
 	@Override
 	public long getWriterIdleTimeMills() {
@@ -195,8 +206,7 @@ public abstract class HeartAbleConnectionListener<T> implements JConnectionIdleL
 	}
 
 	/**
-	 * (保证5-10秒内有消息来回)
-	 * 没有任何请求或者3次心跳请求没有回复则关闭连接(2次会有临界点,如果回复比较快)
+	 * 读超时
 	 */
 	@Override
 	public long getReaderIdleTimeMills() {
@@ -204,11 +214,11 @@ public abstract class HeartAbleConnectionListener<T> implements JConnectionIdleL
 	}
 
 	/**
-	 * 3次心跳时间没有操作则关闭连接
+	 * 3秒读超时+5秒写超时=8秒没有读写就触发读写超时
 	 */
 	@Override
 	public long getAllIdleTimeMills() {
-		return getWriterIdleTimeMills()*4;
+		return (getWriterIdleTimeMills()+getReaderIdleTimeMills());
 	}
 
 	/**
