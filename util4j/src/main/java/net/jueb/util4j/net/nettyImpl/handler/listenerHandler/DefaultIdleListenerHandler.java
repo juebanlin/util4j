@@ -7,6 +7,7 @@ import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
+import lombok.extern.slf4j.Slf4j;
 import net.jueb.util4j.net.JConnection;
 import net.jueb.util4j.net.JConnectionIdleListener;
 
@@ -17,6 +18,7 @@ import net.jueb.util4j.net.JConnectionIdleListener;
  * @param <M>
  */
 @Sharable
+@Slf4j
 public class DefaultIdleListenerHandler<M> extends AbstractListenerHandler<M,JConnectionIdleListener<M>>{
 
 	public DefaultIdleListenerHandler(JConnectionIdleListener<M> listener) {
