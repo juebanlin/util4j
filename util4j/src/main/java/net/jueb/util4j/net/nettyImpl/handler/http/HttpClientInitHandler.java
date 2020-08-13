@@ -4,19 +4,12 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.codec.http.HttpObjectAggregator;
-import io.netty.handler.codec.http.HttpRequestEncoder;
-import io.netty.handler.codec.http.HttpResponse;
-import io.netty.handler.codec.http.HttpResponseDecoder;
+import io.netty.handler.codec.http.*;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
-import io.netty.util.internal.logging.InternalLogger;
 import lombok.extern.slf4j.Slf4j;
 import net.jueb.util4j.net.JConnection;
 import net.jueb.util4j.net.JConnectionListener;
-import net.jueb.util4j.net.nettyImpl.NetLogFactory;
-import net.jueb.util4j.net.nettyImpl.NettyConnection;
 import net.jueb.util4j.net.nettyImpl.handler.listenerHandler.DefaultListenerHandler;
 
 @Slf4j

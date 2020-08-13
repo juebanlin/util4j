@@ -4,10 +4,8 @@ import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.socket.ServerSocketChannel;
-import io.netty.util.internal.logging.InternalLogger;
 import lombok.extern.slf4j.Slf4j;
 import net.jueb.util4j.net.JNetServer;
-import net.jueb.util4j.net.nettyImpl.NetLogFactory;
 
 import java.net.InetSocketAddress;
 

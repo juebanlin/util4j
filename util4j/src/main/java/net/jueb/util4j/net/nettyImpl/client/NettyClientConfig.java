@@ -1,16 +1,7 @@
 package net.jueb.util4j.net.nettyImpl.client;
 
-import java.net.InetSocketAddress;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.epoll.Epoll;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollSocketChannel;
@@ -18,13 +9,15 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.logging.LogLevel;
-import io.netty.util.internal.logging.InternalLogger;
 import lombok.extern.slf4j.Slf4j;
-import net.jueb.util4j.net.nettyImpl.NetLogFactory;
 import net.jueb.util4j.net.nettyImpl.OptionConfiger;
 import net.jueb.util4j.net.nettyImpl.handler.LoggerHandler;
 import net.jueb.util4j.net.nettyImpl.handler.ShareableChannelInboundHandler;
 import net.jueb.util4j.thread.NamedThreadFactory;
+
+import java.net.InetSocketAddress;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 默认都是后台线程

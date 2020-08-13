@@ -1,20 +1,18 @@
 package net.jueb.util4j.net.nettyImpl.handler.listenerHandler;
 
-import java.io.IOException;
-import java.util.Objects;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.ReferenceCountUtil;
-import io.netty.util.internal.logging.InternalLogger;
 import lombok.extern.slf4j.Slf4j;
 import net.jueb.util4j.net.JConnection;
 import net.jueb.util4j.net.JConnectionListener;
-import net.jueb.util4j.net.nettyImpl.NetLogFactory;
 import net.jueb.util4j.net.nettyImpl.NettyConnection;
 import net.jueb.util4j.net.nettyImpl.listener.MsgListenerHandler;
+
+import java.io.IOException;
+import java.util.Objects;
 
 /**
  * 负责chanel与JConnectionListener的绑定

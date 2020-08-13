@@ -1,22 +1,17 @@
 package net.jueb.util4j.net.nettyImpl.client;
 
-import java.net.InetSocketAddress;
-import java.util.TimerTask;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.EventLoopGroup;
-import io.netty.util.internal.logging.InternalLogLevel;
-import io.netty.util.internal.logging.InternalLogger;
 import lombok.extern.slf4j.Slf4j;
 import net.jueb.util4j.net.JNetClient;
-import net.jueb.util4j.net.nettyImpl.NetLogFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import java.net.InetSocketAddress;
+import java.util.TimerTask;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 抽象netty客户端 已实现断线重连逻辑
