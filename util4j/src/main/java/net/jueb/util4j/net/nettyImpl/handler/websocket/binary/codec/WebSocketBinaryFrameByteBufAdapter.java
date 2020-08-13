@@ -6,6 +6,7 @@ import io.netty.handler.codec.MessageToMessageCodec;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.util.internal.logging.InternalLogger;
+import lombok.extern.slf4j.Slf4j;
 import net.jueb.util4j.net.nettyImpl.NetLogFactory;
 
 import java.util.List;
@@ -22,8 +23,8 @@ import java.util.List;
  * 
  * @author Administrator
  */
+@Slf4j
 public class WebSocketBinaryFrameByteBufAdapter extends MessageToMessageCodec<WebSocketFrame, ByteBuf>{
-	protected final InternalLogger log = NetLogFactory.getLogger(getClass());
 	/**
 	 * 将webSocket消息转换为bytebuf类型,以适配后面的解码器
 	 */

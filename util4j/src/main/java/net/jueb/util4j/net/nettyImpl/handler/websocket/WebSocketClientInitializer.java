@@ -17,6 +17,7 @@ import io.netty.handler.codec.http.websocketx.WebSocketVersion;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.util.internal.logging.InternalLogger;
+import lombok.extern.slf4j.Slf4j;
 import net.jueb.util4j.net.nettyImpl.NetLogFactory;
 
 /**
@@ -26,9 +27,8 @@ import net.jueb.util4j.net.nettyImpl.NetLogFactory;
  * @author Administrator
  */
 @Sharable
+@Slf4j
 public abstract class WebSocketClientInitializer extends ChannelInitializer<Channel> implements WebSocketClientAdapterHandler{
-	
-	protected final InternalLogger log = NetLogFactory.getLogger(getClass());
 	protected final URI webSocketURL;
 	private SslContext sslCtx;
 	private String subprotocol;
@@ -40,7 +40,7 @@ public abstract class WebSocketClientInitializer extends ChannelInitializer<Chan
 	 * <pre>{@code //SslContextBuilder
 	 	sslCtx = SslContextBuilder.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE).build();
            }</pre>
-	 * @param url
+	 * @param webSocketURL
 	 * @param sslCtx
 	 */
 	public WebSocketClientInitializer(URI webSocketURL,SslContext sslCtx) {
@@ -94,7 +94,7 @@ public abstract class WebSocketClientInitializer extends ChannelInitializer<Chan
 	 * 注意此方法加入的handler需要手动触发
 	 * ctx.fireChannelActive()
 	 * ctx.fireChannelRegistered()
-	 * @param channel
+	 * @param ctx
 	 * @throws Exception
 	 */
 	protected abstract void webSocketHandComplete(ChannelHandlerContext ctx);

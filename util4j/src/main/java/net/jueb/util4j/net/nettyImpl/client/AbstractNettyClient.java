@@ -12,8 +12,12 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.EventLoopGroup;
 import io.netty.util.internal.logging.InternalLogLevel;
 import io.netty.util.internal.logging.InternalLogger;
+import lombok.extern.slf4j.Slf4j;
 import net.jueb.util4j.net.JNetClient;
 import net.jueb.util4j.net.nettyImpl.NetLogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * 抽象netty客户端 已实现断线重连逻辑
  * 只关心状态,重连,地址,不关心启动器和线程
@@ -21,11 +25,9 @@ import net.jueb.util4j.net.nettyImpl.NetLogFactory;
  *@email juebanlin@gmail.com
  *@createTime 2015年4月25日 下午2:12:07
  */
+@Slf4j
 public abstract class AbstractNettyClient implements JNetClient{
 
-	protected final InternalLogger log = NetLogFactory.getLogger(getClass()); 
-	
-	protected InternalLogLevel logLevel=InternalLogLevel.DEBUG;
 	/**
 	 * 子类屏蔽的线程池和起动器
 	 */
@@ -46,18 +48,6 @@ public abstract class AbstractNettyClient implements JNetClient{
 		this.target=target;
 	}
 	
-	
-	public final InternalLogLevel getLogLevel() {
-		return logLevel;
-	}
-
-	public final void setLogLevel(InternalLogLevel logLevel) {
-		if(logLevel!=null)
-		{
-			this.logLevel = logLevel;
-		}
-	}
-
 	/**
 	 * 获取客户端使用的起动器
 	 * @return
@@ -84,37 +74,37 @@ public abstract class AbstractNettyClient implements JNetClient{
 	 * @param target
 	 * @return
 	 */
-	protected final boolean connect(InetSocketAddress target)
+	protected final boolean connect(InetSocketAddress target,boolean reconect)
 	{
 		boolean isConnect=false;
 		try {
-			log.log(logLevel,getName()+"连接中("+target+")……");
+			log.info("{}--->{},链接中,reconect:{}",getName(),target,reconect);
 			ChannelFuture cf=doConnect(target);
 			if(cf==null)
 			{//如果阻塞则使用系统调度器执行
-				log.log(logLevel,getName()+"连接繁忙("+target+")!稍后重连:"+isReconnect());
+				log.info("{}--->{},连接繁忙!稍后重连,reconect:{}",getName(),target,reconect);
 				doReconect();//这里不能占用IO线程池
-			}else
-			{
-				isConnect=cf.isDone() && cf.isSuccess();
-				if(isConnect)
-				{//连接成功
-					log.log(logLevel,getName()+"连接成功("+target+")!"+cf.channel());
-//					this.channel=cf.channel();//子类去设置,通过initHandler的channelRegistered去设置更及时
-					//给通道加上断线重连监听器
-					cf.channel().closeFuture().removeListener(reconectListener);
-					cf.channel().closeFuture().addListener(reconectListener);
-				}else
-				{//连接不成功则10秒再执行一次连接
-					log.log(logLevel,getName()+"连接失败("+target+")!"+cf.channel());
-					doReconect();//这里不能占用IO线程池
-				}
+				return isConnect;
 			}
+			isConnect=cf.isDone() && cf.isSuccess();
+			if(!isConnect)
+			{
+				log.info("{}--->{},连接失败,reconect:{}",getName(),target,reconect);
+				doReconect();//这里不能占用IO线程池
+				return isConnect;
+			}
+			//连接成功
+			log.info("{}--->{},连接成功,reconect:{}",getName(),target,reconect);
+//			this.channel=cf.channel();//子类去设置,通过initHandler的channelRegistered去设置更及时
+			//给通道加上断线重连监听器
+			cf.channel().closeFuture().removeListener(reconectListener);
+			cf.channel().closeFuture().addListener(reconectListener);
 		} catch (Exception e) {
 			log.error(e.getMessage(),e);
 		}
 		return isConnect;
 	}
+
 	/**
 	 * 调用启动器发起连接
 	 * @param target
@@ -133,7 +123,6 @@ public abstract class AbstractNettyClient implements JNetClient{
 	/**
 	 * 执行重连 timer.schedule(new ReConnectTask(), reconectTimeOut);
 	 * 执行多次会把channel顶掉
-	 * @param time 触发时间
 	 */
 	protected final void doReconect()
 	{
@@ -146,7 +135,7 @@ public abstract class AbstractNettyClient implements JNetClient{
 	{
 		@Override
 		public void operationComplete(ChannelFuture future) throws Exception {
-			log.log(logLevel,getName()+"通道:"+future.channel()+"断开连接!,是否重连:"+isReconnect());
+			log.info(getName()+"通道:"+future.channel()+"断开连接!,是否重连:"+isReconnect());
 			doReconect();//这里不能占用IO线程池
 		}
 	}
@@ -160,7 +149,7 @@ public abstract class AbstractNettyClient implements JNetClient{
 		@Override
 		public void run() {
 			try {
-				connect(target);
+				connect(target,true);
 			} catch (Exception e) {
 				log.error(e.getMessage(),e);
 			}
@@ -173,7 +162,7 @@ public abstract class AbstractNettyClient implements JNetClient{
 		{
 			stop();
 		}
-		connect(target);
+		connect(target,false);
 	}
 	
 	@Override

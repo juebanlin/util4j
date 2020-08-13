@@ -19,6 +19,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.util.internal.logging.InternalLogger;
+import lombok.extern.slf4j.Slf4j;
 import net.jueb.util4j.net.nettyImpl.NetLogFactory;
 import net.jueb.util4j.net.nettyImpl.OptionConfiger;
 import net.jueb.util4j.net.nettyImpl.handler.LoggerHandler;
@@ -29,8 +30,8 @@ import net.jueb.util4j.thread.NamedThreadFactory;
  * 默认都是后台线程
  * @author Administrator
  */
+@Slf4j
 public class NettyClientConfig {
-	protected final InternalLogger log = NetLogFactory.getLogger(getClass()); 
 	protected final Class<? extends SocketChannel> channelClass;
 	protected final EventLoopGroup ioWorkers;
 	/**

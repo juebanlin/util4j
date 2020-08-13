@@ -7,6 +7,7 @@ import io.netty.handler.codec.MessageToMessageCodec;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.util.internal.logging.InternalLogger;
+import lombok.extern.slf4j.Slf4j;
 import net.jueb.util4j.net.nettyImpl.NetLogFactory;
 
 /**
@@ -25,8 +26,8 @@ import net.jueb.util4j.net.nettyImpl.NetLogFactory;
  * 
  * @author Administrator
  */
+@Slf4j
 public class WebSocketTextFrameStringAdapter extends MessageToMessageCodec<WebSocketFrame, String>{
-	protected final InternalLogger log = NetLogFactory.getLogger(getClass());
 	/**
 	 * 将webSocket消息转换为bytebuf类型,以适配后面的解码器
 	 */

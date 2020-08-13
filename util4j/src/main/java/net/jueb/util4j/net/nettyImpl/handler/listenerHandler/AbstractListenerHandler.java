@@ -9,6 +9,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.internal.logging.InternalLogger;
+import lombok.extern.slf4j.Slf4j;
 import net.jueb.util4j.net.JConnection;
 import net.jueb.util4j.net.JConnectionListener;
 import net.jueb.util4j.net.nettyImpl.NetLogFactory;
@@ -20,10 +21,9 @@ import net.jueb.util4j.net.nettyImpl.listener.MsgListenerHandler;
  * @author Administrator
  * @param <M>
  */
+@Slf4j
 public abstract class AbstractListenerHandler<M,L extends JConnectionListener<M>> extends ChannelInboundHandlerAdapter implements MsgListenerHandler{
 
-	protected final InternalLogger log = NetLogFactory.getLogger(getClass());
-	
 	protected final L listener;
 
 	public AbstractListenerHandler(L listener) {

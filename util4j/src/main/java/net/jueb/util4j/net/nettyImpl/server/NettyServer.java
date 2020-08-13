@@ -1,5 +1,19 @@
 package net.jueb.util4j.net.nettyImpl.server;
 
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.*;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.DefaultChannelGroup;
+import io.netty.handler.logging.LogLevel;
+import io.netty.util.concurrent.ImmediateEventExecutor;
+import lombok.extern.slf4j.Slf4j;
+import net.jueb.util4j.net.JConnection;
+import net.jueb.util4j.net.nettyImpl.NettyConnection;
+import net.jueb.util4j.net.nettyImpl.ServerOptionConfiger;
+import net.jueb.util4j.net.nettyImpl.handler.LoggerHandler;
+import net.jueb.util4j.net.nettyImpl.handler.ShareableChannelInboundHandler;
+import net.jueb.util4j.net.nettyImpl.handler.websocket.WebSocketServerAdapterHandler;
+
 import java.net.InetSocketAddress;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -7,34 +21,13 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.group.ChannelGroup;
-import io.netty.channel.group.DefaultChannelGroup;
-import io.netty.handler.logging.LogLevel;
-import io.netty.util.concurrent.ImmediateEventExecutor;
-import io.netty.util.internal.logging.InternalLogger;
-import net.jueb.util4j.net.JConnection;
-import net.jueb.util4j.net.nettyImpl.NetLogFactory;
-import net.jueb.util4j.net.nettyImpl.NettyConnection;
-import net.jueb.util4j.net.nettyImpl.ServerOptionConfiger;
-import net.jueb.util4j.net.nettyImpl.handler.LoggerHandler;
-import net.jueb.util4j.net.nettyImpl.handler.ShareableChannelInboundHandler;
-import net.jueb.util4j.net.nettyImpl.handler.websocket.WebSocketServerAdapterHandler;
-
+@Slf4j
 public class NettyServer extends AbstractNettyServer{
 
 	protected final ChannelGroup channelGroup=new DefaultChannelGroup(getName()+"ChannelGroup",ImmediateEventExecutor.INSTANCE);
 	protected final NettyServerConfig config;
 	protected final ServerBootstrap booter=new ServerBootstrap();
-	private static final InternalLogger log = NetLogFactory.getLogger(AbstractNettyServer.class); 
-	
+
 	protected final ChannelHandler handler;
 	
 	public NettyServer(String host,int port,ChannelHandler handler) {

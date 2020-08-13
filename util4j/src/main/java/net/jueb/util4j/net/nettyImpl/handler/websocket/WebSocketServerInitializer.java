@@ -13,6 +13,7 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler.Han
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.util.internal.logging.InternalLogger;
+import lombok.extern.slf4j.Slf4j;
 import net.jueb.util4j.net.nettyImpl.NetLogFactory;
 
 /**
@@ -22,10 +23,9 @@ import net.jueb.util4j.net.nettyImpl.NetLogFactory;
  * @author Administrator
  */
 @Sharable
+@Slf4j
 public abstract class WebSocketServerInitializer extends ChannelInitializer<Channel> implements WebSocketServerAdapterHandler{
-	
-	protected final InternalLogger log = NetLogFactory.getLogger(getClass());
-	
+
 	protected final String websocketPath;
 	private SslContext  sslCtx;
 	private String subprotocols;
@@ -47,7 +47,7 @@ public abstract class WebSocketServerInitializer extends ChannelInitializer<Chan
 	 	SelfSignedCertificate ssc = new SelfSignedCertificate();
            sslCtx = SslContextBuilder.forServer(ssc.certificate(), ssc.privateKey()).build();
            }</pre>
-	 * @param uri
+	 * @param websocketPath
 	 * @param sslCtx
 	 */
 	public WebSocketServerInitializer(String websocketPath,String subprotocols,SslContext sslCtx) {
@@ -83,7 +83,7 @@ public abstract class WebSocketServerInitializer extends ChannelInitializer<Chan
 		ctx.fireChannelRegistered();
 		ctx.fireChannelActive();	 			
 	 *}}</pre>
-	 * @param channel
+	 * @param ctx
 	 * @throws Exception
 	 */
 	protected abstract void webSocketHandComplete(ChannelHandlerContext ctx);

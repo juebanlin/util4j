@@ -14,15 +14,16 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.AttributeKey;
 import io.netty.util.internal.logging.InternalLogger;
+import lombok.extern.slf4j.Slf4j;
 import net.jueb.util4j.net.JConnection;
 
 /**
  * 实现的连接
  * @author Administrator
  */
+@Slf4j
 public class NettyConnection implements JConnection{
 	public static AttributeKey<NettyConnection> CHANNEL_KEY=AttributeKey.newInstance("NettyConnection");
-	protected InternalLogger log=NetLogFactory.getLogger(NettyConnection.class);
 	protected final Map<String,Object> attributes=new HashMap<String,Object>();
 	protected final ChannelHandlerContext ctx;
 	protected final Channel channel;

@@ -5,6 +5,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.socket.ServerSocketChannel;
 import io.netty.util.internal.logging.InternalLogger;
+import lombok.extern.slf4j.Slf4j;
 import net.jueb.util4j.net.JNetServer;
 import net.jueb.util4j.net.nettyImpl.NetLogFactory;
 
@@ -15,9 +16,9 @@ import java.net.InetSocketAddress;
  * 实现服务端生命周期和绑定监听
  * @author Administrator
  */
+@Slf4j
 public abstract class AbstractNettyServer implements JNetServer{
 	
-	private static final InternalLogger log = NetLogFactory.getLogger(AbstractNettyServer.class); 
 	protected final InetSocketAddress local;
 	private String name="NettyServer";
 	protected ServerSocketChannel serverCahnel;
