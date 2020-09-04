@@ -41,6 +41,7 @@ public class NettyClientConfig {
 	public NettyClientConfig(Class<? extends SocketChannel> channelClass,EventLoopGroup ioWorkers) {
 		this.channelClass = channelClass;
 		this.ioWorkers = ioWorkers;
+		initBooterOptions(optionConfig());
 	}
 	public NettyClientConfig() {
 		this(0);
@@ -61,6 +62,7 @@ public class NettyClientConfig {
 		}
 		this.channelClass = channelClass;
 		this.ioWorkers = workerGroup;
+		initBooterOptions(optionConfig());
 	}
 	
 	public Class<? extends SocketChannel> getChannelClass() {
@@ -103,7 +105,6 @@ public class NettyClientConfig {
 	{
 		booter.group(ioWorkers);
 		booter.channel(channelClass);
-		initBooterOptions(optionConfig());
 	}
 	
 	/**
@@ -111,8 +112,7 @@ public class NettyClientConfig {
 	 */
 	protected  void initBooterOptions(OptionConfiger configer)
 	{
-		configer.option(ChannelOption.SO_KEEPALIVE, true);
-		configer.option(ChannelOption.TCP_NODELAY, true);
+		
 	}
 	
 	public OptionConfiger optionConfig()
