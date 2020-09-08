@@ -41,7 +41,7 @@ public class NettyClientConfig {
 	public NettyClientConfig(Class<? extends SocketChannel> channelClass,EventLoopGroup ioWorkers) {
 		this.channelClass = channelClass;
 		this.ioWorkers = ioWorkers;
-		initBooterOptions(optionConfig());
+		init();
 	}
 	public NettyClientConfig() {
 		this(0);
@@ -62,7 +62,7 @@ public class NettyClientConfig {
 		}
 		this.channelClass = channelClass;
 		this.ioWorkers = workerGroup;
-		initBooterOptions(optionConfig());
+		init();
 	}
 	
 	public Class<? extends SocketChannel> getChannelClass() {
@@ -100,19 +100,19 @@ public class NettyClientConfig {
 	Bootstrap getBooter() {
 		return booter;
 	}
-	
-	protected void booterInit()
-	{
+
+	private void init(){
 		booter.group(ioWorkers);
 		booter.channel(channelClass);
+		initBooterOptions(optionConfig());
 	}
-	
+
 	/**
 	 * 初始化客户端配置
 	 */
 	protected  void initBooterOptions(OptionConfiger configer)
 	{
-		
+
 	}
 	
 	public OptionConfiger optionConfig()
@@ -186,10 +186,6 @@ public class NettyClientConfig {
 	{
 		ChannelFuture cf;
 		synchronized (booter) {
-			if(booter.config().group()==null)
-			{
-				booterInit();
-			}
 			final CountDownLatch latch=new CountDownLatch(1);
 			ChannelHandler handler=initHandlerAdapter(init);
 			booter.handler(handler);
