@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.config.ConfigurationSource;
@@ -35,7 +36,8 @@ public class Log4jUtil {
 			{
 				if(context instanceof org.apache.logging.log4j.core.LoggerContext){
 					org.apache.logging.log4j.core.LoggerContext ctx=(org.apache.logging.log4j.core.LoggerContext)context;
-					ctx.setConfigLocation(new File(logConfigpath).toURI());
+					URI uri = new File(logConfigpath).toURI();
+					ctx.setConfigLocation(uri);
 					ctx.reconfigure();//重新初始化Log4j2的配置上下文
 				}
 			}else
