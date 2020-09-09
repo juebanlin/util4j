@@ -6,9 +6,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.ConfigurationSource;
 import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.spi.LoggerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,11 +30,14 @@ public class Log4jUtil {
 	public static void initLogConfig(String logConfigpath)
 	{
 		try {
-			LoggerContext context =(LoggerContext)LogManager.getContext(false);
+			LoggerContext context =LogManager.getContext(false);
 			if(context!=null)
 			{
-				 context.setConfigLocation(new File(logConfigpath).toURI());
-			     context.reconfigure();//重新初始化Log4j2的配置上下文
+				if(context instanceof org.apache.logging.log4j.core.LoggerContext){
+					org.apache.logging.log4j.core.LoggerContext ctx=(org.apache.logging.log4j.core.LoggerContext)context;
+					ctx.setConfigLocation(new File(logConfigpath).toURI());
+					ctx.reconfigure();//重新初始化Log4j2的配置上下文
+				}
 			}else
 			{
 				ConfigurationSource source = new ConfigurationSource(new FileInputStream(logConfigpath));
@@ -56,11 +59,14 @@ public class Log4jUtil {
 	public static void reInitLogConfig(String logConfigpath)
 	{
 		try {
-			 LoggerContext context =(LoggerContext)LogManager.getContext(false);
-		     context.setConfigLocation(new File(logConfigpath).toURI());
-		     context.reconfigure(); //重新初始化Log4j2的配置上下文
-		     Logger log=LoggerFactory.getLogger(Log4jUtil.class);
-			 log.info("日志配置重新初始化完成:"+logConfigpath);
+			 LoggerContext context =LogManager.getContext(false);
+			if(context instanceof org.apache.logging.log4j.core.LoggerContext){
+				org.apache.logging.log4j.core.LoggerContext ctx=(org.apache.logging.log4j.core.LoggerContext)context;
+				ctx.setConfigLocation(new File(logConfigpath).toURI());
+				ctx.reconfigure();//重新初始化Log4j2的配置上下文
+				Logger log=LoggerFactory.getLogger(Log4jUtil.class);
+				log.info("日志配置重新初始化完成:"+logConfigpath);
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}  
