@@ -302,7 +302,7 @@
 						<goals>
 							<goal>sign</goal>
 						</goals>
-						<!-- 改为maven settings配置 
+						<!-- 改为由maven settings.xml文件配置
                         <configuration> 
                         	<homedir>${gpg.homedir}</homedir>
                         	<executable>gpg</executable>  
@@ -345,20 +345,6 @@
 						<id>attach-sources</id>
 						<goals>
 							<goal>jar-no-fork</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-gpg-plugin</artifactId>
-				<version>1.6</version>
-				<executions>
-					<execution>
-						<id>sign-artifacts</id>
-						<phase>verify</phase>
-						<goals>
-							<goal>sign</goal>
 						</goals>
 					</execution>
 				</executions>
