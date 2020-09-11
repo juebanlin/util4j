@@ -46,7 +46,7 @@ public abstract class HeartAbleConnectionListener<T> implements JConnectionIdleL
 	}
 
 	public final void setGlobalHeartEnable(boolean heartEnable) {
-		this.globalHeartEnable = globalHeartEnable;
+		this.globalHeartEnable = heartEnable;
 	}
 	
 	/**
