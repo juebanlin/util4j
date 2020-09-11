@@ -113,13 +113,14 @@ public abstract class HeartAbleConnectionListener<T> implements JConnectionIdleL
 		}
 		HeartConfig heartConfig = getHeartConfig(connection);
 		if(heartConfig!=null){
-			heartConfig.setReadTimeOutCount(heartConfig.getReadTimeOutCountLimit()+1);
-			if(heartConfig.getReadTimeOutCount()>=heartConfig.getReadTimeOutCountLimit())
+			int count=heartConfig.getReadTimeOutCount()+1;
+			if(count>=heartConfig.getReadTimeOutCountLimit())
 			{
 				_log.warn("读超时达到上限,heartConfig:"+heartConfig+",conn:"+connection+",LastReadTimeMills="+connection.getAttribute(KEY_LAST_READ_TIME_MILLS));
 				onReadTimeOutContLimit(connection);
 				return ;
 			}
+			heartConfig.setReadTimeOutCount(count);
 			_log.trace("读超时,hc:"+heartConfig+",发送心跳请求:"+connection);
 			doSendHeartReq(connection);
 		}
