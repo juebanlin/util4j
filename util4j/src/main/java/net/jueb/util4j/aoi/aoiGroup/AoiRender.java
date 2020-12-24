@@ -88,16 +88,22 @@ public class AoiRender {
         }
     }
 
-    public void showImg(BufferedImage image) {
-        JFrame jf = new JFrame();
+    public <T extends AoiEntity> void update(float limitX, float limitY, AoiResult<T> result, String info){
+        BufferedImage image = render(limitX, limitY, result, info);
+        jLabel.setIcon(new ImageIcon(image));
+        jLabel.updateUI();
+    }
+
+    JFrame jf = new JFrame();
+    JScrollPane scrollPanel = new JScrollPane();
+    JLabel jLabel = new JLabel();
+
+    public void init(){
         jf.setTitle("图示");
         jf.setSize(W, H);
         jf.setLocationRelativeTo(null);
         jf.setDefaultCloseOperation(3);
-        JScrollPane scrollPanel = new JScrollPane();
         jf.add(scrollPanel, BorderLayout.CENTER);
-        JLabel jLabel = new JLabel();
-        jLabel.setIcon(new ImageIcon(image));
         scrollPanel.setViewportView(jLabel);
         scrollPanel.setVisible(true);
         jf.setVisible(true);

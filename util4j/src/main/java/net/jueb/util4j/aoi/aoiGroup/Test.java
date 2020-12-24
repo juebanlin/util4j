@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
+import java.util.concurrent.Executors;
 
 public class Test {
 
@@ -22,16 +23,6 @@ public class Test {
         private float aoiY;
 
         private float aoiRange;
-
-        private transient Object aoiGroup;
-
-        public int hashCode() {
-            return Long.hashCode(aoiId);
-        }
-
-        public boolean equals(DemoAoiEntity e) {
-            return e.aoiId == aoiId;
-        }
     }
 
     private List<DemoAoiEntity> buildList(int num,float worldX,float worldY,float rangeMin,float rangeMax){
@@ -48,10 +39,9 @@ public class Test {
         return entityList;
     }
 
-    public AoiResult<DemoAoiEntity> run(List<DemoAoiEntity> input, float worldX, float worldY){
+    public AoiResult<DemoAoiEntity> run(List<DemoAoiEntity> input, float worldX, float worldY,float aoiGridSize){
         // 初始化AOI
-        float aoiSIZE = 32f;//AOI网格宽度，理论上应该跟实体直径差不多大。
-        Aoi aoi = new Aoi(input.size(),worldX, worldY, aoiSIZE);
+        Aoi aoi = new Aoi(input.size(),worldX, worldY, aoiGridSize);
         // 生成实体，并加入aoi
         return aoi.input(input);
     }
@@ -64,27 +54,49 @@ public class Test {
      * @param rangeMin 半径最小
      * @param rangeMax 半径最大
      */
-    public void test(int num,float worldX,float worldY,float rangeMin,float rangeMax){
+    public void test(int num,float worldX,float worldY,float rangeMin,float rangeMax,float gridSize){
         List<DemoAoiEntity> input=buildList(num,worldX,worldY,rangeMin,rangeMax);
-        System.out.println("输入任意内容开始:");
-        new Scanner(System.in).nextLine();
+//        System.out.println("输入任意内容开始:");
+//        new Scanner(System.in).nextLine();
         long time, use;
         String info = "";
         AoiResult<DemoAoiEntity> result=null;
         for (int i = 0; i < 10; i++) {
             time = System.currentTimeMillis();
-            result = run(input, worldX, worldY);
+            result = run(input, worldX, worldY,gridSize);
             use = System.currentTimeMillis() - time;
             // 显示结果
             info = String.format("%dms, group=%d", use, result.groups.size());
             System.out.println(info);
+
         }
         AoiRender renderer = new AoiRender(1024,1024);
-        BufferedImage image = renderer.render(worldX,worldY,result, info);
-        renderer.showImg(image);
-//        renderer.save(image);
+        renderer.init();
+        renderer.update(worldX,worldY,result, info);
     }
 
+
+    public void test2(int num,float worldX,float worldY,float rangeMin,float rangeMax,float gridSize){
+        System.out.println("输入任意内容开始:");
+        new Scanner(System.in).nextLine();
+        AoiRender renderer = new AoiRender(1024,1024);
+        renderer.init();
+        Executors.newSingleThreadExecutor().submit(()->{
+            long time, use;
+            String info = "";
+            AoiResult<DemoAoiEntity> result=null;
+            for (int i = 0; i < 10; i++) {
+                List<DemoAoiEntity> input=buildList(num,worldX,worldY,rangeMin,rangeMax);
+                time = System.currentTimeMillis();
+                result = run(input, worldX, worldY,gridSize);
+                use = System.currentTimeMillis() - time;
+                // 显示结果
+                info = String.format("%dms, group=%d", use, result.groups.size());
+                System.out.println(info);
+                renderer.update(worldX,worldY,result, info);
+            }
+        });
+    }
 
 
     /**
@@ -92,6 +104,8 @@ public class Test {
      */
     public static void main(String[] args) {
         Test test = new Test();
-        test.test(20000,5120,5120,5,15);
+        float gridSize=32f;
+        gridSize=64;
+        test.test(20000,5120,5120,5,15,gridSize);
     }
 }

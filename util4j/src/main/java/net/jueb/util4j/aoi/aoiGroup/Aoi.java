@@ -13,14 +13,23 @@ import java.util.Set;
 
 public class Aoi<T extends AoiEntity> {
 
-    private float size;
+    private float gridSize;
 
     private float invSize;
 
+    /**
+     * 横向格子数量
+     */
     private int w;
 
+    /**
+     * 纵向格子数量
+     */
     private int h;
 
+    /**
+     * 总格子数量
+     */
     private int len;
 
     private Set<Long> tmp;
@@ -44,8 +53,8 @@ public class Aoi<T extends AoiEntity> {
     private Map<T,AoiGroup> entity_group;
 
     @Getter
-    @Setter(AccessLevel.PACKAGE)
-    class AoiGroup {
+    @Setter
+    private class AoiGroup {
         boolean drop;
         final Set<T> entitys = new HashSet<>();
         public void add(T e) {
@@ -54,11 +63,20 @@ public class Aoi<T extends AoiEntity> {
         }
     }
 
-    public Aoi(int num,float width, float height, float size) {
-        this.size = size;
-        this.invSize = 1f / size;
-        this.w = (int) Math.ceil(width * invSize) + 2;
-        this.h = (int) Math.ceil(height * invSize) + 2;
+    /**
+     *
+     * @param num
+     * @param worldWidth
+     * @param worldHeight
+     * @param gridSize AOI网格宽度，理论上应该跟实体直径差不多大。
+     */
+    public Aoi(int num,float worldWidth, float worldHeight, float gridSize) {
+        this.gridSize = gridSize;
+        this.invSize = 1f / this.gridSize;
+//        this.w = (int) Math.ceil(worldWidth * invSize) + 2;
+//        this.h = (int) Math.ceil(worldHeight * invSize) + 2;
+        this.w = (int) Math.ceil(worldWidth * invSize) + 2;
+        this.h = (int) Math.ceil(worldHeight * invSize) + 2;
         this.len = w * h;
         tmp = new HashSet<>();
         areas = new AoiArea[len];
