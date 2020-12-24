@@ -82,7 +82,7 @@ public class Test {
         AoiRender renderer = new AoiRender(1024,1024);
         BufferedImage image = renderer.render(worldX,worldY,result, info);
         renderer.showImg(image);
-        renderer.save(image);
+//        renderer.save(image);
     }
 
 

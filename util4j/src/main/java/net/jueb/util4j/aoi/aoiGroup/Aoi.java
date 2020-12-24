@@ -46,14 +46,10 @@ public class Aoi<T extends AoiEntity> {
     @Getter
     @Setter(AccessLevel.PACKAGE)
     class AoiGroup {
-        int id;
         boolean drop;
-//        final Set<Long> ids = new HashSet<>();
         final Set<T> entitys = new HashSet<>();
         public void add(T e) {
-//            ids.add(e.getAoiId());
             entitys.add(e);
-//            e.setAoiGroup(this);
             setAoiGroup(e,this);
         }
     }
@@ -74,7 +70,6 @@ public class Aoi<T extends AoiEntity> {
     public AoiResult<T> input(List<T> list){
         for (int i = 0; i < list.size(); i++) {
             T aoiEntity = list.get(i);
-//            aoiEntity.setAoiGroup(null);
             enter(aoiEntity);
         }
         return buildResult(list);
@@ -100,13 +95,10 @@ public class Aoi<T extends AoiEntity> {
     }
 
     private AoiGroup getAoiGroup(T aoiEntity){
-//        AoiGroup g1 = aoiEntity.getAoiGroup();
-//        return g1;
         return entity_group.get(aoiEntity);
     }
 
     private void setAoiGroup(T aoiEntity,AoiGroup aoiGroup){
-//        aoiEntity.setAoiGroup(aoiGroup);
         entity_group.put(aoiEntity,aoiGroup);
     }
 
@@ -155,9 +147,6 @@ public class Aoi<T extends AoiEntity> {
                 continue;
             }
             // 分组相同，不需要检测了
-//            if (it.getAoiGroup() != null && it.getAoiGroup() == current.getAoiGroup()) {
-//                continue;
-//            }
             AoiGroup aoiGroup = getAoiGroup(it);
             if (aoiGroup != null && aoiGroup == getAoiGroup(current)) {
                 continue;
@@ -191,8 +180,6 @@ public class Aoi<T extends AoiEntity> {
      * @param other
      */
     private void mergeGroup(T self, T other) {
-//        AoiGroup selfGroup = self.getAoiGroup();
-//        AoiGroup otherGroup = other.getAoiGroup();
         AoiGroup selfGroup = getAoiGroup(self);
         AoiGroup otherGroup = getAoiGroup(other);
         if (selfGroup == null) {
@@ -200,7 +187,6 @@ public class Aoi<T extends AoiEntity> {
                 //双方都没有组,创建组
                 AoiGroup group = new AoiGroup();
                 groups.add(group);
-                group.setId(groups.size());
                 group.add(self);
                 group.add(other);
             } else {
@@ -219,18 +205,12 @@ public class Aoi<T extends AoiEntity> {
                 return;
             } else {
                 // 这个实体碰到了2个不同的组，意味着这两组实体通过它连接成了一组。
-//                for (Long id : otherGroup.getIds()) {
-//                    T o = entityMap.get(id);
-//                    selfGroup.add(o);
-//                }
                 for (T o : otherGroup.entitys) {
                     //这个组包括other本身和其它在这个组的都加入到当前对象组
                     selfGroup.add(o);
                 }
                 // 干掉原来的分组
                 otherGroup.setDrop(true);
-//                otherGroup.getIds().clear();
-//                groups.remove(otherGroup);
             }
         }
     }
