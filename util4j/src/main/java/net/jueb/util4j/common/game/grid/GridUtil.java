@@ -12,6 +12,30 @@ public class GridUtil {
     private static final  int OFFSET = (int) Math.pow(10, GRID_LOC_DIG);
 
     /**
+     * 绝对坐标转格子X轴Y轴位置
+     * @param x
+     * @param y
+     * @param gridWidthLength
+     * @param gridHeightLength
+     * @return
+     */
+    public static int[] posToGridLoc(float x,float y,float gridWidthLength,float gridHeightLength){
+        int gridX = posxToGridLocX(x,gridWidthLength);
+        int gridY = posyToGridLocY(y,gridHeightLength);
+        return new int[]{gridX,gridY};
+    }
+
+    public static int posxToGridLocX(float x,float gridWidthLength){
+        int gridX = Math.max(0, (int) Math.floor(x / gridWidthLength));//x轴格子坐标
+        return gridX;
+    }
+
+    public static int posyToGridLocY(float y,float gridHeightLength){
+        int gridY = Math.max(0, (int) Math.floor(y / gridHeightLength));//y轴格子坐标
+        return gridY;
+    }
+
+    /**
      * 索引坐标位置转换为单个数字
      *
      * @param x

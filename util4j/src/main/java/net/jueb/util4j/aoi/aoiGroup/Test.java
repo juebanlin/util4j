@@ -70,9 +70,11 @@ public class Test {
             System.out.println(info);
 
         }
-        AoiRender renderer = new AoiRender(1024,1024);
+        AoiRender renderer = new AoiRender(1920,1080,2.0f);
         renderer.init();
-        renderer.update(worldX,worldY,result, info);
+        renderer.setScale(2.0f);//缩放2倍展示
+        BufferedImage image = renderer.update(worldX, worldY, result, info);
+//        renderer.save(image);
     }
 
 
@@ -105,7 +107,7 @@ public class Test {
     public static void main(String[] args) {
         Test test = new Test();
         float gridSize=32f;
-        gridSize=64;
-        test.test(20000,5120,5120,5,15,gridSize);
+        gridSize=64f;
+        test.test(20000,5120,5120,3,15,gridSize);
     }
 }

@@ -79,8 +79,8 @@ public interface IGridMeshService {
 	 * @return
 	 */
 	default Grid getGrid(float x, float y) {
-		int gridX = Math.max(0, (int) Math.floor(x / getGridWidthLength()));//x轴格子坐标
-		int gridY = Math.max(0, (int) Math.floor(y / getGridHeightLength()));//y轴格子坐标
+		int gridX = GridUtil.posxToGridLocX(x,getGridWidthLength());
+		int gridY = GridUtil.posyToGridLocY(y,getGridHeightLength());
 		Grid grid = new Grid(gridX, gridY, this);
 		return grid;
 	}
@@ -216,29 +216,35 @@ public interface IGridMeshService {
 	}
 
 	default List<Integer> getGridIdList(float x, float y, float xRange, float yRange) {
-		List<Integer> indexes = new ArrayList<>();
-		int id = getGridId(x, y);
-		int[] locXy = GridUtil.numberToLoc(id);
-		int gridX = locXy[0];
-		int gridY = locXy[1];
+		float gridWidthLength=getGridWidthLength();
+		float gridHeightLength=getGridHeightLength();
+
+		int gridNumWithWidth=getGridNumWithWidth();
+		int gridNumWithHeight=getGridNumWithHeight();
+
+		int gridX = GridUtil.posxToGridLocX(x,gridWidthLength);
+		int gridY = GridUtil.posyToGridLocY(y,gridHeightLength);
+
 		//以格子的4个边界为起点的range(需要去掉range在格子中所占用的长度)
-		float fixRange_Left = xRange - (x % getGridWidthLength());//朝左的长度
-		float fixRange_Right = xRange - (getGridWidthLength() - x % getGridWidthLength());//朝右的长度
-		float fixRange_Up = yRange - (getGridHeightLength() - y % getGridHeightLength());//朝上的长度
-		float fixRange_Down = yRange - (y % getGridHeightLength());//朝下的长度
+		float fixRange_Left = xRange - (x % gridWidthLength);//朝左的长度
+		float fixRange_Right = xRange - (gridWidthLength - x % gridWidthLength);//朝右的长度
+		float fixRange_Up = yRange - (gridHeightLength - y % gridHeightLength);//朝上的长度
+		float fixRange_Down = yRange - (y % gridHeightLength);//朝下的长度
 		//4个方向的边界延伸所占用的格子数
-		int RangeXLNum = (int) Math.ceil(fixRange_Left / getGridWidthLength());//x左边
-		int RangeXRNum = (int) Math.ceil(fixRange_Right / getGridWidthLength());//x右边
-		int RangeYUNum = (int) Math.ceil(fixRange_Up / getGridHeightLength());//y上边
-		int RangeYDNum = (int) Math.ceil(fixRange_Down / getGridHeightLength());//y下边
+		int RangeXLNum = (int) Math.ceil(fixRange_Left / gridWidthLength);//x左边
+		int RangeXRNum = (int) Math.ceil(fixRange_Right / gridWidthLength);//x右边
+		int RangeYUNum = (int) Math.ceil(fixRange_Up / gridHeightLength);//y上边
+		int RangeYDNum = (int) Math.ceil(fixRange_Down / gridHeightLength);//y下边
 		//占用的所有格子的范围
 		int ox = gridX - RangeXLNum;
 		int oy = gridY - RangeYDNum;
 		int ex = gridX + RangeXRNum;
 		int ey = gridY + RangeYUNum;
+
+		List<Integer> indexes = new ArrayList<>();
 		for (int gx = ox; gx <= ex; gx++) {
 			for (int gy = oy; gy <= ey; gy++) {
-				if (gx < 0 || gx >= getGridNumWithWidth() || gy < 0 || gy >= getGridNumWithHeight()) {//越界
+				if (gx < 0 || gx >= gridNumWithWidth || gy < 0 || gy >= gridNumWithHeight) {//越界
 					continue;
 				}
 				//格子数坐标转换为id索引

@@ -1,5 +1,8 @@
 package net.jueb.util4j.aoi.aoiGroup;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
@@ -22,14 +25,38 @@ public class AoiRender {
     private Color noGroupColor = Color.BLACK;
 
     /**
-     * 窗口分辨率
-     *
-     * @param w
-     * @param h
+     * 缩放,对象和图片尺寸一起缩放
      */
-    public AoiRender(int w, int h) {
-        this.W = w;
-        this.H = h;
+    @Setter
+    @Getter
+    private float scale=1.0f;
+
+    /**
+     * 等比缩放 图片尺寸不变,对象发生变化
+     */
+    @Getter
+    @Setter
+    private boolean scaleWithWorld;
+
+    /**
+     *
+     * @param windowWidth
+     * @param windowHeight
+     */
+    public AoiRender(int windowWidth, int windowHeight) {
+       this(windowWidth,windowHeight,1.0f);
+    }
+
+    /**
+     *
+     * @param windowWidth
+     * @param windowHeight
+     * @param scale
+     */
+    public AoiRender(int windowWidth, int windowHeight,float scale) {
+        this.W = windowWidth;
+        this.H = windowHeight;
+        this.scale=scale;
     }
 
     /**
@@ -39,30 +66,31 @@ public class AoiRender {
      * @param info
      * @return
      */
-    public <T extends AoiEntity> BufferedImage render(float limitX, float limitY, AoiResult<T> result, String info) {
-        boolean scale = false;
+    public <T extends AoiEntity> BufferedImage buildImg(float limitX, float limitY, AoiResult<T> result, String info) {
         //对象缩放
-        float xscale = 1f;
-        float yscale = 1f;
-        int width = (int) limitX;
-        int height = (int) limitY;
-        if (scale) {
-            //对象缩放
+        float xscale = scale;
+        float yscale = scale;
+        int imageWidth = (int)Math.ceil((limitX*xscale));
+        int imageHeight = (int)Math.ceil((limitY*yscale));
+        if (scaleWithWorld) {
+            //等比缩放 图片尺寸不变,对象发生变化
             xscale = W / limitX;
             yscale = H / limitY;
+            imageWidth = (int)Math.ceil((limitX));
+            imageHeight = (int)Math.ceil((limitY));
         }
-        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR);
+        BufferedImage image = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_3BYTE_BGR);
         Graphics2D g = (Graphics2D) image.getGraphics();
         g.setColor(bgColor);
-        g.fillRect(0, 0, width, height);
-
+        g.fillRect(0, 0, imageWidth, imageHeight);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         drowList(result.noGroups, noGroupColor, xscale, yscale, g,false);
         for (int i = 0; i < result.groups.size(); i++) {
             List<T> group = result.groups.get(i);
             Random rand = new Random();
-            int red = rand.nextInt(244);
-            int green = rand.nextInt(244);
-            int blue = rand.nextInt(244);
+            int red = rand.nextInt(244)+1;
+            int green = rand.nextInt(244)+1;
+            int blue = rand.nextInt(244)+1;
             Color color = new Color(red, green, blue);
             drowList(group, color, xscale, yscale, g,true);
         }
@@ -88,10 +116,11 @@ public class AoiRender {
         }
     }
 
-    public <T extends AoiEntity> void update(float limitX, float limitY, AoiResult<T> result, String info){
-        BufferedImage image = render(limitX, limitY, result, info);
+    public <T extends AoiEntity> BufferedImage update(float limitX, float limitY, AoiResult<T> result, String info){
+        BufferedImage image = buildImg(limitX, limitY, result, info);
         jLabel.setIcon(new ImageIcon(image));
         jLabel.updateUI();
+        return image;
     }
 
     JFrame jf = new JFrame();

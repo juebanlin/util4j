@@ -1,36 +1,31 @@
 package net.jueb.util4j.aoi.aoiGroup;
 
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.function.IntPredicate;
 
 public class Aoi<T extends AoiEntity> {
 
-    private float gridSize;
+    private float gridWidth;
 
-    private float invSize;
+    private float gridHeight;
 
     /**
      * 横向格子数量
      */
-    private int w;
+    private int wNum;
 
     /**
      * 纵向格子数量
      */
-    private int h;
+    private int hNum;
 
     /**
      * 总格子数量
      */
-    private int len;
+    private int num;
 
     private Set<Long> tmp;
 
@@ -63,24 +58,28 @@ public class Aoi<T extends AoiEntity> {
         }
     }
 
+
+    public Aoi(int num,float worldWidth, float worldHeight, float gridSize) {
+        this(num,worldWidth,worldHeight,gridSize,gridSize);
+    }
+
     /**
      *
-     * @param num
+     * @param entityNum
      * @param worldWidth
      * @param worldHeight
-     * @param gridSize AOI网格宽度，理论上应该跟实体直径差不多大。
+     * @param gridWidth AOI网格宽度，理论上应该跟实体直径差不多大。
+     * @param gridHeight AOI网格高度，理论上应该跟实体直径差不多大。
      */
-    public Aoi(int num,float worldWidth, float worldHeight, float gridSize) {
-        this.gridSize = gridSize;
-        this.invSize = 1f / this.gridSize;
-//        this.w = (int) Math.ceil(worldWidth * invSize) + 2;
-//        this.h = (int) Math.ceil(worldHeight * invSize) + 2;
-        this.w = (int) Math.ceil(worldWidth * invSize) + 2;
-        this.h = (int) Math.ceil(worldHeight * invSize) + 2;
-        this.len = w * h;
+    public Aoi(int entityNum,float worldWidth, float worldHeight, float gridWidth,float gridHeight) {
+        this.gridWidth = gridWidth;
+        this.gridHeight = gridHeight;
+        this.wNum = (int) Math.ceil(worldWidth / this.gridWidth);//向上取整
+        this.hNum = (int) Math.ceil(worldHeight / this.gridHeight);
+        this.num = wNum * hNum;
         tmp = new HashSet<>();
-        areas = new AoiArea[len];
-        groups = new ArrayList<>(num / 2 + 1);// 最差情况两两分组
+        areas = new AoiArea[this.num];
+        groups = new ArrayList<>(entityNum / 2 + 1);// 最差情况两两分组
         entityMap = new HashMap<>();
         entity_group=new HashMap<>();
     }
@@ -128,33 +127,75 @@ public class Aoi<T extends AoiEntity> {
         addGroup(e);
     }
 
+
+    private boolean forInGrid(T current, IntPredicate grid){
+        boolean hasArea = false;
+        float x=current.getAoiX();
+        float y=current.getAoiY();
+        int gridX = Math.max(0, (int) Math.floor(x / gridWidth));//x轴格子坐标
+        int gridY = Math.max(0, (int) Math.floor(y / gridHeight));//y轴格子坐标
+        float xRange=current.getAoiRange();
+        float yRange=current.getAoiRange();
+        //以格子的4个边界为起点的range(需要去掉range在格子中所占用的长度)
+        float fixRange_Left = xRange - (x % gridWidth);//朝左的长度
+        float fixRange_Right = xRange - (gridWidth - x % gridWidth);//朝右的长度
+        float fixRange_Up = yRange - (gridHeight - y % gridHeight);//朝上的长度
+        float fixRange_Down = yRange - (y % gridHeight);//朝下的长度
+        //4个方向的边界延伸所占用的格子数
+        int RangeXLNum = (int) Math.ceil(fixRange_Left / gridWidth);//x左边
+        int RangeXRNum = (int) Math.ceil(fixRange_Right / gridWidth);//x右边
+        int RangeYUNum = (int) Math.ceil(fixRange_Up / gridHeight);//y上边
+        int RangeYDNum = (int) Math.ceil(fixRange_Down / gridHeight);//y下边
+        //占用的所有格子的范围
+        int ox = gridX - RangeXLNum;
+        int oy = gridY - RangeYDNum;
+        int ex = gridX + RangeXRNum;
+        int ey = gridY + RangeYUNum;
+        for (int gx = ox; gx <= ex; gx++) {
+            for (int gy = oy; gy <= ey; gy++) {
+                if (gx < 0 || gx >= wNum || gy < 0 || gy >= hNum) {//越界
+                    continue;
+                }
+                //格子数坐标转换为id索引
+                int idx = gx + gy * wNum;
+                if(grid.test(idx)){
+                    hasArea=true;
+                }
+            }
+        }
+        return hasArea;
+    }
+
     /**
      * 对实体进行相交检测，将重合的实体分为一组。
      * 
      * @param current
      */
     private void addGroup(T current) {
-        boolean hasArea = false;
-
-        int x = (int) Math.ceil(current.getAoiX() * invSize) + 1;
-        int y = (int) Math.ceil(current.getAoiY() * invSize) + 1;
-
-        for (int dx = x - 2; dx <= x + 2; dx++) {
-            for (int dy = y - 2; dy <= y + 2; dy++) {
-                if (dx < 0 || dy < 0 || dx >= w || dy >= h) {
-                    continue;
-                }
-
-                int idx = dx + dy * w;
-                AoiArea area = areas[idx];
-                if (area == null) {
-                    continue;
-                }
-
-                tmp.addAll(area);
-                hasArea = true;// 检测到一个area，flag标识为true
+        boolean hasArea=forInGrid(current,idx->{
+            AoiArea area = areas[idx];
+            if (area == null) {
+                return false;
             }
-        }
+            tmp.addAll(area);
+            return true;
+        });
+//        int rangeNum=2;//TODO 根据对象尺寸决定
+//        for (int dx = gridX - rangeNum; dx <= gridX + rangeNum; dx++) {
+//            for (int dy = gridY - rangeNum; dy <= gridY + rangeNum; dy++) {
+//                if (dx < 0 || dy < 0 || dx >= wNum || dy >= hNum) {
+//                    continue;
+//                }
+//                int idx = dx + dy * wNum;
+//                AoiArea area = areas[idx];
+//                if (area == null) {
+//                    continue;
+//                }
+//
+//                tmp.addAll(area);
+//                hasArea = true;// 检测到一个area，flag标识为true
+//            }
+//        }
         if (!hasArea) {// 没有area，跳出
             return;
         }
@@ -187,7 +228,7 @@ public class Aoi<T extends AoiEntity> {
         float dy = a.getAoiY() - b.getAoiY();
         float dx = a.getAoiX() - b.getAoiX();
         float dr = a.getAoiRange() + b.getAoiRange();
-        return dx * dx + dy * dy <= dr * dr;
+        return Math.abs(Math.pow(dx,2)) + Math.abs(Math.pow(dy,2)) <= Math.pow(dr,2);
     }
 
 
@@ -234,21 +275,29 @@ public class Aoi<T extends AoiEntity> {
     }
 
     private void put(T e) {
-        int xmin = (int) Math.ceil((e.getAoiX() - e.getAoiRange()) * invSize);
-        int ymin = (int) Math.ceil((e.getAoiY() - e.getAoiRange()) * invSize);
+//        int xmin = (int) Math.ceil((e.getAoiX() - e.getAoiRange()) /gridWidth);
+//        int ymin = (int) Math.ceil((e.getAoiY() - e.getAoiRange()) /gridHeight);
+//
+//        int xmax = (int) Math.ceil((e.getAoiX() + e.getAoiRange()) /gridWidth);
+//        int ymax = (int) Math.ceil((e.getAoiY() + e.getAoiRange()) /gridHeight);
+//
+//        if (xmin != xmax || ymin != ymax) {
+//            for (int dx = xmin; dx <= xmax; dx++) {
+//                for (int dy = ymin; dy <= ymax; dy++) {
+//                    if (dx < 0 || dy < 0 || dx >= wNum || dy >= hNum) {
+//                        continue;
+//                    }
+//                    fillAreaId(dx, dy, e.getAoiId());
+//                }
+//            }
+//        } else {
+//            fillAreaId(xmin, ymin, e.getAoiId());
+//        }
 
-        int xmax = (int) Math.ceil((e.getAoiX() + e.getAoiRange()) * invSize);
-        int ymax = (int) Math.ceil((e.getAoiY() + e.getAoiRange()) * invSize);
-
-        if (xmin != xmax || ymin != ymax) {
-            for (int dx = xmin; dx <= xmax; dx++) {
-                for (int dy = ymin; dy <= ymax; dy++) {
-                    fillAreaId(dx, dy, e.getAoiId());
-                }
-            }
-        } else {
-            fillAreaId(xmin, ymin, e.getAoiId());
-        }
+        forInGrid(e,idx->{
+            fillAreaId(idx,e.getAoiId());
+            return true;
+        });
     }
 
     /**
@@ -258,7 +307,16 @@ public class Aoi<T extends AoiEntity> {
      * @param id
      */
     private void fillAreaId(int x, int y, long id) {
-        int idx = x + y * w;
+        int idx = x + y * wNum;
+        fillAreaId(idx,id);
+    }
+    /**
+     * 填充区域ID
+     * @param x
+     * @param y
+     * @param id
+     */
+    private void fillAreaId(int idx, long id) {
         if (areas[idx] == null) {
             areas[idx] = new AoiArea();
         }
