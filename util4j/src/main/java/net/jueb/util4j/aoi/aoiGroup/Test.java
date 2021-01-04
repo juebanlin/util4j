@@ -83,11 +83,12 @@ public class Test {
         new Scanner(System.in).nextLine();
         AoiRender renderer = new AoiRender(1024,1024);
         renderer.init();
+        renderer.setScale(2.0f);//缩放2倍展示
         Executors.newSingleThreadExecutor().submit(()->{
             long time, use;
             String info = "";
             AoiResult<DemoAoiEntity> result=null;
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 100; i++) {
                 List<DemoAoiEntity> input=buildList(num,worldX,worldY,rangeMin,rangeMax);
                 time = System.currentTimeMillis();
                 result = run(input, worldX, worldY,gridSize);
@@ -96,6 +97,11 @@ public class Test {
                 info = String.format("%dms, group=%d", use, result.groups.size());
                 System.out.println(info);
                 renderer.update(worldX,worldY,result, info);
+                try {
+                    Thread.sleep(1000);
+                }catch (Exception e){
+
+                }
             }
         });
     }
@@ -107,7 +113,7 @@ public class Test {
     public static void main(String[] args) {
         Test test = new Test();
         float gridSize=32f;
-        gridSize=64f;
-        test.test(20000,5120,5120,3,15,gridSize);
+        gridSize=32f;
+        test.test2(20000,5120,5120,3,15,gridSize);
     }
 }

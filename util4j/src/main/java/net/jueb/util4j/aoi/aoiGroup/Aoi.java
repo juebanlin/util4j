@@ -27,8 +27,9 @@ public class Aoi<T extends AoiEntity> {
      */
     private int num;
 
-    private Set<Long> tmp;
-
+    /**
+     * 区域格子
+     */
     private AoiArea[] areas;
 
     /**
@@ -46,6 +47,9 @@ public class Aoi<T extends AoiEntity> {
      * 实体和组的关系
      */
     private Map<T,AoiGroup> entity_group;
+
+
+    private Set<Long> idTmps;
 
     @Getter
     @Setter
@@ -77,7 +81,7 @@ public class Aoi<T extends AoiEntity> {
         this.wNum = (int) Math.ceil(worldWidth / this.gridWidth);//向上取整
         this.hNum = (int) Math.ceil(worldHeight / this.gridHeight);
         this.num = wNum * hNum;
-        tmp = new HashSet<>();
+        idTmps = new HashSet<>();
         areas = new AoiArea[this.num];
         groups = new ArrayList<>(entityNum / 2 + 1);// 最差情况两两分组
         entityMap = new HashMap<>();
@@ -87,7 +91,7 @@ public class Aoi<T extends AoiEntity> {
     public AoiResult<T> input(List<T> list){
         for (int i = 0; i < list.size(); i++) {
             T aoiEntity = list.get(i);
-            enter(aoiEntity);
+            enter(aoiEntity,aoiEntity.getAoiId());
         }
         return buildResult(list);
     }
@@ -119,14 +123,20 @@ public class Aoi<T extends AoiEntity> {
         entity_group.put(aoiEntity,aoiGroup);
     }
 
-    public void enter(T e) {
-        entityMap.put(e.getAoiId(), e);
+    public void enter(T e,Long id) {
+        entityMap.put(id, e);
         // 放入area
-        put(e);
+        put(e,id);
         // 加入分组
-        addGroup(e);
+        addGroup(e,id);
     }
 
+    private void put(T e, Long id) {
+        forInGrid(e,idx->{
+            fillAreaId(idx,id);
+            return true;
+        });
+    }
 
     private boolean forInGrid(T current, IntPredicate grid){
         boolean hasArea = false;
@@ -171,51 +181,35 @@ public class Aoi<T extends AoiEntity> {
      * 
      * @param current
      */
-    private void addGroup(T current) {
+    private void addGroup(T current,Long currentId) {
         boolean hasArea=forInGrid(current,idx->{
             AoiArea area = areas[idx];
             if (area == null) {
                 return false;
             }
-            tmp.addAll(area);
+            idTmps.addAll(area);
             return true;
         });
-//        int rangeNum=2;//TODO 根据对象尺寸决定
-//        for (int dx = gridX - rangeNum; dx <= gridX + rangeNum; dx++) {
-//            for (int dy = gridY - rangeNum; dy <= gridY + rangeNum; dy++) {
-//                if (dx < 0 || dy < 0 || dx >= wNum || dy >= hNum) {
-//                    continue;
-//                }
-//                int idx = dx + dy * wNum;
-//                AoiArea area = areas[idx];
-//                if (area == null) {
-//                    continue;
-//                }
-//
-//                tmp.addAll(area);
-//                hasArea = true;// 检测到一个area，flag标识为true
-//            }
-//        }
         if (!hasArea) {// 没有area，跳出
             return;
         }
-        for (Long id : tmp) {
-            T it = entityMap.get(id);
+        for (Long id : idTmps) {
             // 相同实体
-            if (it.getAoiId() == current.getAoiId()) {
+            if (id.equals(currentId)) {
                 continue;
             }
+            T entity = entityMap.get(id);
             // 分组相同，不需要检测了
-            AoiGroup aoiGroup = getAoiGroup(it);
+            AoiGroup aoiGroup = getAoiGroup(entity);
             if (aoiGroup != null && aoiGroup == getAoiGroup(current)) {
                 continue;
             }
             // 碰撞检测
-            if (isCollision(current,it)) {
-                mergeGroup(current, it);
+            if (isCollision(current,entity)) {
+                mergeGroup(current, entity);
             }
         }
-        tmp.clear();
+        idTmps.clear();
     }
 
     /**
@@ -274,49 +268,12 @@ public class Aoi<T extends AoiEntity> {
         }
     }
 
-    private void put(T e) {
-//        int xmin = (int) Math.ceil((e.getAoiX() - e.getAoiRange()) /gridWidth);
-//        int ymin = (int) Math.ceil((e.getAoiY() - e.getAoiRange()) /gridHeight);
-//
-//        int xmax = (int) Math.ceil((e.getAoiX() + e.getAoiRange()) /gridWidth);
-//        int ymax = (int) Math.ceil((e.getAoiY() + e.getAoiRange()) /gridHeight);
-//
-//        if (xmin != xmax || ymin != ymax) {
-//            for (int dx = xmin; dx <= xmax; dx++) {
-//                for (int dy = ymin; dy <= ymax; dy++) {
-//                    if (dx < 0 || dy < 0 || dx >= wNum || dy >= hNum) {
-//                        continue;
-//                    }
-//                    fillAreaId(dx, dy, e.getAoiId());
-//                }
-//            }
-//        } else {
-//            fillAreaId(xmin, ymin, e.getAoiId());
-//        }
-
-        forInGrid(e,idx->{
-            fillAreaId(idx,e.getAoiId());
-            return true;
-        });
-    }
-
     /**
      * 填充区域ID
-     * @param x
-     * @param y
+     * @param idx
      * @param id
      */
-    private void fillAreaId(int x, int y, long id) {
-        int idx = x + y * wNum;
-        fillAreaId(idx,id);
-    }
-    /**
-     * 填充区域ID
-     * @param x
-     * @param y
-     * @param id
-     */
-    private void fillAreaId(int idx, long id) {
+    private void fillAreaId(int idx, Long id) {
         if (areas[idx] == null) {
             areas[idx] = new AoiArea();
         }

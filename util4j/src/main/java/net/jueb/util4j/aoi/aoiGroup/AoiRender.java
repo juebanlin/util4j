@@ -118,8 +118,12 @@ public class AoiRender {
 
     public <T extends AoiEntity> BufferedImage update(float limitX, float limitY, AoiResult<T> result, String info){
         BufferedImage image = buildImg(limitX, limitY, result, info);
-        jLabel.setIcon(new ImageIcon(image));
-        jLabel.updateUI();
+        SwingUtilities.invokeLater(()->{
+            jf.setTitle(info);
+            ImageIcon imageIcon = new ImageIcon(image);
+            jLabel.setIcon(imageIcon);
+            jLabel.repaint();
+        });
         return image;
     }
 
