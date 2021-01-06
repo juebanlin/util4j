@@ -8,18 +8,18 @@ public interface BitTree<V> {
 	 * @param value
 	 * @return
 	 */
-	public V write(int bitNumber,V value);
+	V write(int bitNumber,V value);
 	/**
 	 * 读取数据
-	 * @param key
+	 * @param bitNumber
 	 * @return
 	 */
-	public V read(int bitNumber);
+	V read(int bitNumber);
 	
     void forEach(BitConsumer<V> consumer);
     
     @FunctionalInterface
-    public static interface BitConsumer<V>{
+	interface BitConsumer<V>{
     	void accept(int bitNumber,V value);
     }
 }

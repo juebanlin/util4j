@@ -4,8 +4,8 @@ import java.util.Scanner;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import net.jueb.util4j.collection.map.btree.BTree;
-import net.jueb.util4j.collection.map.btree.BTree.MaskEnum;
+import net.jueb.util4j.collection.map.btree.impl.BitTreeImpl;
+import net.jueb.util4j.collection.map.btree.impl.BitTreeImpl.MaskEnum;
 
 public class TestBtree {
 
@@ -39,7 +39,7 @@ public class TestBtree {
 	
 	public void test(MaskEnum mask)
 	{
-		BTree<Byte> mtree=new BTree<>(mask);
+		BitTreeImpl<Byte> mtree=new BitTreeImpl<>(mask);
 		long t=System.currentTimeMillis();
 		for(int i=0;i<num;i++)
 		{

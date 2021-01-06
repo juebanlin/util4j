@@ -1,4 +1,4 @@
-package net.jueb.util4j.collection.bitPathTree;
+package net.jueb.util4j.collection.bitPathTree.intpath;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -23,7 +23,7 @@ public interface BitIntPathEntry<K,V> extends Iterable<Entry<K,V>>{
 	
 	/**
 	 * 读取数据
-	 * @param key
+	 * @param bitNumber
 	 * @return
 	 */
 	Entry<K,V> read(int bitNumber);

@@ -1,4 +1,4 @@
-package net.jueb.util4j.collection.bitPathTree;
+package net.jueb.util4j.collection.bitPathTree.intpath;
 
 /**
  * 分段掩码
@@ -13,7 +13,7 @@ public enum BitMaskEnum{
 	MASK_1111_1111_1111_1111(0xFFFF),
 	;
 	private final int value;
-	private BitMaskEnum(int value) {
+	BitMaskEnum(int value) {
 		this.value=value;
 	}
 	public int getValue() {

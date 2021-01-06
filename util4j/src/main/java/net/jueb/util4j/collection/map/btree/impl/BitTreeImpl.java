@@ -1,4 +1,6 @@
-package net.jueb.util4j.collection.map.btree;
+package net.jueb.util4j.collection.map.btree.impl;
+
+import net.jueb.util4j.collection.map.btree.BitTree;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -10,7 +12,7 @@ import java.util.Stack;
  * beta for NodeMap5
  * @author juebanlin
  */
-public class BTree<V> implements BitTree<V>{
+public class BitTreeImpl<V> implements BitTree<V> {
 	
 	private static final int BIT_NUMS=32;//总bit位数量
 	private final MapConfig config;
@@ -19,11 +21,11 @@ public class BTree<V> implements BitTree<V>{
 	
 	private int size;
 	
-	public BTree() {
+	public BitTreeImpl() {
 		this(MaskEnum.MASK_1111_1111);
 	}
 	
-	public BTree(MaskEnum mask) {
+	public BitTreeImpl(MaskEnum mask) {
 		int tmp=mask.getValue();
 		int num=0;
 		while(tmp!=0)
@@ -252,7 +254,7 @@ public class BTree<V> implements BitTree<V>{
 	/**
 	 * 取整数某二进制位的值
 	 * @param number
-	 * @param pos 0开始
+	 * @param layout 0开始
 	 * @return
 	 */
 	protected int getMaskValue(int number,int layout)
@@ -453,7 +455,7 @@ public class BTree<V> implements BitTree<V>{
 	}
 	
 	public static void main(String[] args) {
-		BTree<String> b=new BTree<>();
+		BitTreeImpl<String> b=new BitTreeImpl<>();
 		for(int i=0;i<10;i++)
 		{
 			b.write(i,"i="+i);

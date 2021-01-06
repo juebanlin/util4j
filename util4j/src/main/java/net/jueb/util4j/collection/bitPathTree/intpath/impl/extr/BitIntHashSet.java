@@ -1,16 +1,25 @@
-package net.jueb.util4j.collection.bitPathTree.impl;
+package net.jueb.util4j.collection.bitPathTree.intpath.impl.extr;
 
 import java.util.AbstractSet;
 import java.util.Iterator;
 
-import net.jueb.util4j.collection.bitPathTree.BitIntPathData;
+import net.jueb.util4j.collection.bitPathTree.intpath.BitIntPathData;
+import net.jueb.util4j.collection.bitPathTree.intpath.impl.BIPData;
 
-public class BIPDataHashSet<V> extends AbstractSet<V>{
+/**
+ * 相同hash的key没有做共存
+ */
+@Deprecated
+public class BitIntHashSet<V> extends AbstractSet<V>{
 
 	private final BitIntPathData<V> data;
 	
-	public BIPDataHashSet(BitIntPathData<V> data) {
+	public BitIntHashSet(BitIntPathData<V> data) {
 		this.data=data;
+	}
+
+	public BitIntHashSet() {
+		this(new BIPData<>());
 	}
 	
 	static final int hash(Object key) {

@@ -1,4 +1,4 @@
-package net.jueb.util4j.collection.bitPathTree.impl;
+package net.jueb.util4j.collection.bitPathTree.intpath.impl.extr;
 
 import java.util.AbstractMap;
 import java.util.AbstractSet;
@@ -7,15 +7,26 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import net.jueb.util4j.collection.bitPathTree.BitIntPathEntry;
+import net.jueb.util4j.collection.bitPathTree.intpath.BitIntPathEntry;
+import net.jueb.util4j.collection.bitPathTree.intpath.impl.BIPEntry;
 
-public class BIPEntryHashMap<K,V> extends AbstractMap<K, V>{
+/**
+ * 相同hash的key没有做共存
+ * @param <K>
+ * @param <V>
+ */
+@Deprecated
+public class BitIntHashMap<K,V> extends AbstractMap<K, V>{
 	
 	private final BitIntPathEntry<K, V> bipe;
 	
-	public BIPEntryHashMap(BitIntPathEntry<K, V> bipe) {
+	public BitIntHashMap(BitIntPathEntry<K, V> bipe) {
 		super();
 		this.bipe = bipe;
+	}
+
+	public BitIntHashMap() {
+		this(new BIPEntry<>());
 	}
 	
 	static final int hash(Object key) {

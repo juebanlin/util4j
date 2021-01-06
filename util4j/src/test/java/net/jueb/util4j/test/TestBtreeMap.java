@@ -4,9 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
-import net.jueb.util4j.collection.bitPathTree.BitMaskEnum;
-import net.jueb.util4j.collection.bitPathTree.impl.BIPEntry;
-import net.jueb.util4j.collection.bitPathTree.impl.BIPEntryHashMap;
+import net.jueb.util4j.collection.bitPathTree.intpath.BitMaskEnum;
+import net.jueb.util4j.collection.bitPathTree.intpath.impl.BIPEntry;
+import net.jueb.util4j.collection.bitPathTree.intpath.impl.extr.BitIntHashMap;
 
 public class TestBtreeMap {
 
@@ -42,11 +42,11 @@ public class TestBtreeMap {
 	public static void main(String[] args) {
 		Scanner sc=new Scanner(System.in);
 		TestBtreeMap tb=new TestBtreeMap();
-		tb.testMap(new BIPEntryHashMap<>(new BIPEntry<>(BitMaskEnum.MASK_1111_1111)));
+		tb.testMap(new BitIntHashMap<>(new BIPEntry<>(BitMaskEnum.MASK_1111_1111)));
 		tb.testMap(new HashMap<>());
 		System.gc();
 		sc.nextLine();
-		tb.testMap(new BIPEntryHashMap<>(new BIPEntry<>(BitMaskEnum.MASK_1111_1111)));
+		tb.testMap(new BitIntHashMap<>(new BIPEntry<>(BitMaskEnum.MASK_1111_1111)));
 		tb.testMap(new HashMap<>());
 		sc.nextLine();
 	}

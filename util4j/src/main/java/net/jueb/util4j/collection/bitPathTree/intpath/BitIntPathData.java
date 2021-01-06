@@ -1,10 +1,11 @@
-package net.jueb.util4j.collection.bitPathTree;
+package net.jueb.util4j.collection.bitPathTree.intpath;
 
 import java.util.Iterator;
 import java.util.function.Consumer;
 
 /**
  *  基于路径的单键值存储树
+ *  相同key的value会被替换
  * @author jaci
  * @param <V>
  */
@@ -20,7 +21,7 @@ public interface BitIntPathData<V> extends Iterable<V>{
 	
 	/**
 	 * 读取数据
-	 * @param key
+	 * @param bitNumber
 	 * @return
 	 */
 	V read(int bitNumber);

@@ -1,34 +1,35 @@
-package net.jueb.util4j.collection.bitPathTree.impl;
+package net.jueb.util4j.collection.bitPathTree.intpath.impl;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import net.jueb.util4j.collection.bitPathTree.BitIntPathData;
-import net.jueb.util4j.collection.bitPathTree.BitMaskEnum;
+import net.jueb.util4j.collection.bitPathTree.intpath.BitIntPathEntry;
+import net.jueb.util4j.collection.bitPathTree.intpath.BitMaskEnum;
 
 /**
  * 优化节点非必要属性的内存占用
  * 分解层数越小,内存占用越低,速度越快
- * 减少了key的存储,占用内存更小速度更快
+ * beta for NodeMap5
  * @author juebanlin
  */
-public class BIPData<V> implements BitIntPathData<V>{
+public class BIPEntry<K,V> implements BitIntPathEntry<K,V>{
 	
 	private static final int BIT_NUMS=32;//总bit位数量
 	private final MapConfig config;
-	private final LayOutNode<V> root;
+	private final LayOutNode<K,V> root;
 	private final int[] posCache;
 	private int size;
-	private Node<V> firstAdd;//最先加入的节点
-	private Node<V> lastAdd;//最后一次加入的节点
+	private Node<K,V> firstAdd;//最先加入的节点
+	private Node<K,V> lastAdd;//最后一次加入的节点
 	
-	public BIPData() {
+	public BIPEntry() {
 		this(BitMaskEnum.MASK_1111_1111);
 	}
 	
-	public BIPData(BitMaskEnum mask) {
+	public BIPEntry(BitMaskEnum mask) {
 		int tmp=mask.getValue();
 		int num=0;
 		while(tmp!=0)
@@ -45,7 +46,7 @@ public class BIPData<V> implements BitIntPathData<V>{
 			posCache[i]=maskLen*i;
 		}
 		config=new MapConfig(mask.getValue(), maskLen, layout, nodeSize);
-		root=new LayOutNode<V>();
+		root=new LayOutNode<K,V>();
 	}
 
 	class MapConfig{
@@ -96,72 +97,77 @@ public class BIPData<V> implements BitIntPathData<V>{
 		}
 	}
 
-	interface Node<V>{
+	interface Node<K,V> extends Entry<K,V>{
 		
-		public Node<V>[] getSub();
-		
-		public void setSub(Node<V> sub[]);
-		
-		public int getNodeSize();
-		
-		public int getNumber();
-		
-		default V getValue() {
-			return null;
-		}
-		default V setValue(V value) {
-			return null;
-		}
-		
-		public void setPre(Node<V> node);
-		public void setNext(Node<V> node);
-		/**
-		 * 前一个
-		 * @return
-		 */
-		public Node<V> getPre();
-		/**
-		 * 后一个
-		 * @return
-		 */
-		public Node<V> getNext();
+		Node<K,V>[] getSub();
+		void setSub(Node<K,V> sub[]);
+		int getNodeSize();
+		int getNumber();
+		void setKey(K key);
+		void setPre(Node<K,V> node);
+		void setNext(Node<K,V> node);
+		Node<K,V> getPre();
+		Node<K,V> getNext();
 	}
 	
-	abstract class AbstractNode<V1> implements Node<V1>
+	abstract class AbstractNode<K1,V1> implements Node<K1,V1>
 	{
         public boolean equals(Object o) {
-        	 if (!(o instanceof Node))
+        	 if (!(o instanceof Map.Entry))
                  return false;
-        	 Node<?> e = (Node<?>)o;
-             return (getValue()==null ? e.getValue()==null : getValue().equals(e.getValue()));
+             Map.Entry<?,?> e = (Map.Entry<?,?>)o;
+             return (getKey()==null ? e.getKey()==null : getKey().equals(e.getKey())) &&
+                (getValue()==null ? e.getValue()==null : getValue().equals(e.getValue()));
         }
 
         public int hashCode() {
+            int keyHash = (getKey()==null ? 0 : getKey().hashCode());
             int valueHash = (getValue()==null ? 0 : getValue().hashCode());
-            return valueHash;
+            return keyHash ^ valueHash;
         }
 
         public String toString() {
-            return "value =" + getValue();
+            return getKey() + "=" + getValue();
         }
 
 		@Override
 		public int getNodeSize() {
 			return config.getNodeSize();
 		}
+	}
+	
+	/**
+	 * 层节点
+	 * @author juebanlin
+	 * @param <K1>
+	 * @param <V1>
+	 */
+	class LayOutNode<K1,V1> extends AbstractNode<K1,V1>{
 		
+		@SuppressWarnings("unchecked")
+		private Node<K1,V1>[] sub=new Node[getNodeSize()];
+		
+		@Override
+		public Node<K1,V1>[] getSub() {
+			return sub;
+		}
+
+		@Override
+		public void setSub(Node<K1,V1>[] sub) {
+			this.sub=sub;
+		}
+
 		@Override
 		public int getNumber() {
 			throw new UnsupportedOperationException();
 		}
-		
+
 		@Override
-		public Node<V1>[] getSub() {
+		public void setKey(K1 key) {
 			throw new UnsupportedOperationException();
 		}
-		
 		@Override
-		public void setSub(Node<V1>[] sub) {
+		public K1 getKey() {
 			throw new UnsupportedOperationException();
 		}
 
@@ -174,59 +180,40 @@ public class BIPData<V> implements BitIntPathData<V>{
 		public V1 setValue(V1 value) {
 			throw new UnsupportedOperationException();
 		}
-		
+
 		@Override
-		public void setNext(Node<V1> node) {
+		public void setNext(Node<K1, V1> node) {
 			throw new UnsupportedOperationException();
-		}
-		
-		@Override
-		public void setPre(Node<V1> node) {
-			throw new UnsupportedOperationException();
-		}
-		@Override
-		public Node<V1> getNext() {
-			throw new UnsupportedOperationException();
-		}
-		
-		@Override
-		public Node<V1> getPre() {
-			throw new UnsupportedOperationException();
-		}
-	}
-	
-	/**
-	 * 层节点
-	 * @author juebanlin
-	 * @param <T>
-	 */
-	class LayOutNode<V1> extends AbstractNode<V1>{
-		
-		@SuppressWarnings("unchecked")
-		private Node<V1>[] sub=new Node[getNodeSize()];
-		
-		@Override
-		public Node<V1>[] getSub() {
-			return sub;
 		}
 
 		@Override
-		public void setSub(Node<V1>[] sub) {
-			this.sub=sub;
+		public void setPre(Node<K1, V1> node) {
+			throw new UnsupportedOperationException();
+		}
+		@Override
+		public Node<K1, V1> getNext() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Node<K1, V1> getPre() {
+			throw new UnsupportedOperationException();
 		}
 	}
 
 	/**
 	 * 可存储数据的节点
 	 * @author juebanlin
-	 * @param <T>
+	 * @param <K1>
+	 * @param <V1>
 	 */
-	class DataNode<V1> extends AbstractNode<V1>{
+	class DataNode<K1,V1> extends AbstractNode<K1,V1>{
 		private final int number;
+		private K1 key;
 		private V1 value;
 		//用于迭代使用
-		private Node<V1> pre;
-		private Node<V1> next;
+		private Node<K1,V1> pre;
+		private Node<K1,V1> next;
 		
 		public DataNode(int number) {
 			this.number=number;
@@ -235,35 +222,51 @@ public class BIPData<V> implements BitIntPathData<V>{
 		public int getNumber() {
 			return number;
 		}
-		
+		@Override
+		public void setKey(K1 key) {
+			this.key=key;
+		}
+		@Override
+		public K1 getKey() {
+			return key;
+		}
 		@Override
 		public V1 getValue() {
 			return value;
 		}
+		
 		@Override
 		public V1 setValue(V1 value) {
 			V1 old=this.value;
 			this.value=value;
 			return old;
 		}
-		public Node<V1> getPre() {
+		public Node<K1, V1> getPre() {
 			return pre;
 		}
-		public void setPre(Node<V1> pre) {
+		public void setPre(Node<K1, V1> pre) {
 			this.pre = pre;
 		}
-		public Node<V1> getNext() {
+		public Node<K1, V1> getNext() {
 			return next;
 		}
-		public void setNext(Node<V1> next) {
+		public void setNext(Node<K1, V1> next) {
 			this.next = next;
 		}
-	}
 
-	private Node<V> buildLayOutNode() {
-		return new LayOutNode<V>();
+		@Override
+		public Node<K1,V1>[] getSub() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void setSub(Node<K1,V1>[] sub) {
+			throw new UnsupportedOperationException();
+		}
 	}
-	
+	private Node<K,V> buildLayOutNode() {
+		return new LayOutNode<K,V>();
+	}
 	/**
 	 * 抵达节点
 	 * @param number
@@ -271,20 +274,16 @@ public class BIPData<V> implements BitIntPathData<V>{
 	 * @param currentNode
 	 * @return
 	 */
-	protected Node<V> arraivedNode(int number,int layout,Node<V> currentNode,boolean create)
+	protected Node<K,V> arraivedNode(int number,int layout,Node<K,V> currentNode,boolean create)
 	{
 		if(layout<0)
 		{//超出范围
 			return null;
 		}
-		if(layout==0)
-		{
-			return currentNode;
-		}
 		layout--;
 		int p=getMaskValue(number,layout);
-		Node<V>[] sub=currentNode.getSub();
-		Node<V> node=sub[p];
+		Node<K,V>[] sub=currentNode.getSub();
+		Node<K,V> node=sub[p];
 		if(node==null)
 		{
 			if(!create)
@@ -292,13 +291,17 @@ public class BIPData<V> implements BitIntPathData<V>{
 				return null;
 			}
 			if(layout==0)
-			{//layout=0的node具有data属性
-				node=new DataNode<V>(number);
+			{//到达终点
+				node=new DataNode<K,V>(number);
 			}else
 			{
 				node=buildLayOutNode();
 			}
 			sub[p]=node;
+		}
+		if(layout==0)
+		{//到达终点
+			return node;
 		}
 		return arraivedNode(number, layout,node,create);
 	}
@@ -310,7 +313,7 @@ public class BIPData<V> implements BitIntPathData<V>{
 	 * @param currentNode
 	 * @return
 	 */
-	protected Node<V> cleanNodePath(int number,int layout,Node<V> currentNode)
+	protected Node<K,V> cleanNodePath(int number,int layout,Node<K,V> currentNode)
 	{
 		if(layout<0)
 		{//超出范围
@@ -318,8 +321,8 @@ public class BIPData<V> implements BitIntPathData<V>{
 		}
 		layout--;
 		int p=getMaskValue(number,layout);
-		Node<V>[] sub=currentNode.getSub();
-		Node<V> node=sub[p];
+		Node<K,V>[] sub=currentNode.getSub();
+		Node<K,V> node=sub[p];
 		if(node==null)
 		{//不可达
 			return null;
@@ -329,7 +332,7 @@ public class BIPData<V> implements BitIntPathData<V>{
 			sub[p]=null;
 			return node;
 		}
-		Node<V> next=cleanNodePath(number, layout,node);
+		Node<K,V> next=cleanNodePath(number, layout,node);
 		return next;
 	}
 	
@@ -338,13 +341,13 @@ public class BIPData<V> implements BitIntPathData<V>{
 	 * @param bitNumber
 	 * @return
 	 */
-	protected Node<V> cleanNode(int bitNumber)
+	protected Node<K,V> cleanNode(int bitNumber)
 	{
-		Node<V> node=cleanNodePath(bitNumber, config.layout, root);
+		Node<K,V> node=cleanNodePath(bitNumber, config.layout, root);
 		if(node!=null)
 		{
-			Node<V> pre=node.getPre();
-			Node<V> next=node.getNext();
+			Node<K,V> pre=node.getPre();
+			Node<K,V> next=node.getNext();
 			if(pre!=null)
 			{
 				pre.setNext(next);
@@ -369,7 +372,7 @@ public class BIPData<V> implements BitIntPathData<V>{
 	/**
 	 * 取整数某二进制位的值
 	 * @param number
-	 * @param pos 0开始
+	 * @param layout 0开始
 	 * @return
 	 */
 	protected int getMaskValue(int number,int layout)
@@ -377,7 +380,7 @@ public class BIPData<V> implements BitIntPathData<V>{
 		return (number & (config.mask<<posCache[layout]))>>>posCache[layout];
 	}		
 
-	protected final LayOutNode<V> getRootNode() {
+	protected final LayOutNode<K,V> getRootNode() {
 		return root;
 	}
 
@@ -391,15 +394,16 @@ public class BIPData<V> implements BitIntPathData<V>{
 	}
 
 	@Override
-	public V write(int bitNumber,V value) {
-		Node<V> node=arraivedNode(bitNumber, config.layout, root, true);
-		V oldValue=node.getValue();
+	public Entry<K,V> write(int bitNumber,K key, V value) {
+		Node<K,V> node=arraivedNode(bitNumber, config.layout, root, true);
 		if(node.getPre()!=null)
 		{//仅仅是覆盖值
+			node.setKey(key);
 			node.setValue(value);
-			return oldValue;
+			return node;
 		}
 		//新键值
+		node.setKey(key);
 		node.setValue(value);
 		if(firstAdd==null)
 		{
@@ -412,27 +416,17 @@ public class BIPData<V> implements BitIntPathData<V>{
 		}
 		lastAdd=node;
 		size++;
-		return oldValue;
+		return node;
 	}
 
 	@Override
-	public V read(int bitNumber) {
-		Node<V> node=arraivedNode(bitNumber, config.layout, root, false);
-		if(node==null)
-		{
-			return null;
-		}
-		return node.getValue();
+	public Entry<K,V> read(int bitNumber) {
+		return arraivedNode(bitNumber, config.layout, root, false);
 	}
 	
 	@Override
-	public V clean(int bitNumber) {
-		Node<V> node=cleanNode(bitNumber);
-		if(node!=null)
-		{
-			return node.getValue();
-		}
-		return null;
+	public Entry<K, V> clean(int bitNumber) {
+		return cleanNode(bitNumber);
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -450,23 +444,26 @@ public class BIPData<V> implements BitIntPathData<V>{
 	}
 	
 	@Override
-	public Iterator<V> iterator() {
-		return new Iterator<V>() {
-			Node<V> node=firstAdd;
+	public Iterator<Entry<K, V>> iterator() {
+		return new Iterator<Map.Entry<K,V>>() {
+			Node<K,V> node=firstAdd;
+			
 			@Override
 			public boolean hasNext() {
 				return node!=null;
 			}
+
 			@Override
-			public V next() {
+			public Entry<K, V> next() {
 				if(node==null)
 				{
 					return null;
 				}
-				V result=node.getValue();
+				Node<K,V> result=node;
 				node=node.getNext();
 				return result;
 			}
+			
 			@Override
 			public void remove() {
 				if(node!=null)
@@ -478,41 +475,37 @@ public class BIPData<V> implements BitIntPathData<V>{
 	}
 	
 	@Override
-	public void forEach(Consumer<? super V> action)  {
-		Node<V> node=firstAdd;
+	public void forEach(BiConsumer<K,V> consumer) {
+		Node<K,V> node=firstAdd;
 		for(;node!=null;)
 		{
-			action.accept(node.getValue());
+			consumer.accept(node.getKey(),node.getValue());
+			node=node.getNext();
+		}
+	}
+	
+	public void forEach(Consumer<? super Entry<K, V>> consumer) {
+		Node<K,V> node=firstAdd;
+		for(;node!=null;)
+		{
+			consumer.accept(node);
 			node=node.getNext();
 		}
 	}
 	
 	public static void main(String[] args) {
-		BitIntPathData<String> b=new BIPData<>(BitMaskEnum.MASK_1111);
-		for(int i=0;i<10;i++)
+		BitIntPathEntry<Integer,String> b=new BIPEntry<>();
+		for(int i=1;i<=5;i++)
 		{
-			b.write(i,"i="+i);
-		
+			b.write(i,i,"i="+i);
 		}
-		long t=System.nanoTime();
-		Map<Integer,String> map=new HashMap<>(); 
-		map.put(100000000,"");
-		map.put(200000000,"");
-		map.put(300000000,"");
-		map.put(400000000,"");
-		map.put(500000000,"");
-		t=System.nanoTime()-t;
-		System.out.println(t);
-		t=System.nanoTime();
-		b.write(100000000,"");
-		b.write(200000000,"");
-		b.write(300000000,"");
-		b.write(400000000,"");
-		b.write(500000000,"");
-		t=System.nanoTime()-t;
-		System.out.println(t);
-//		b.forEach((v)->{
-//			System.out.println(v);
-//		});
+		b.clean(1);
+		b.clean(3);
+		b.forEach((k,v)->{
+			System.out.println(k+":"+v);
+		});
+		b.forEach((e)->{
+			System.out.println(e.getKey()+":"+e.getValue());
+		});
 	}
 }
