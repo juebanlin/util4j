@@ -1,12 +1,10 @@
 package net.jueb.util4j.collection.bitPathTree.intpath.impl;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.function.Consumer;
-
 import net.jueb.util4j.collection.bitPathTree.intpath.BitIntPathData;
 import net.jueb.util4j.collection.bitPathTree.intpath.BitMaskEnum;
+
+import java.util.Iterator;
+import java.util.function.Consumer;
 
 /**
  * 优化节点非必要属性的内存占用
@@ -270,9 +268,10 @@ public class BIPData<V> implements BitIntPathData<V>{
 	 * @param number
 	 * @param layout
 	 * @param currentNode
+	 * @param isWrite 是否是写操作
 	 * @return
 	 */
-	protected Node<V> arraivedNode(int number,int layout,Node<V> currentNode,boolean create)
+	protected Node<V> arraivedNode(int number,int layout,Node<V> currentNode,boolean isWrite)
 	{
 		if(layout<0)
 		{//超出范围
@@ -288,7 +287,7 @@ public class BIPData<V> implements BitIntPathData<V>{
 		Node<V> node=sub[p];
 		if(node==null)
 		{
-			if(!create)
+			if(!isWrite)
 			{//如果不是新建路径则返回null表示不可达
 				return null;
 			}
@@ -301,7 +300,7 @@ public class BIPData<V> implements BitIntPathData<V>{
 			}
 			sub[p]=node;
 		}
-		return arraivedNode(number, layout,node,create);
+		return arraivedNode(number, layout,node,isWrite);
 	}
 	
 	/**
@@ -486,34 +485,5 @@ public class BIPData<V> implements BitIntPathData<V>{
 			action.accept(node.getValue());
 			node=node.getNext();
 		}
-	}
-	
-	public static void main(String[] args) {
-		BitIntPathData<String> b=new BIPData<>(BitMaskEnum.MASK_1111);
-		for(int i=0;i<10;i++)
-		{
-			b.write(i,"i="+i);
-		
-		}
-		long t=System.nanoTime();
-		Map<Integer,String> map=new HashMap<>(); 
-		map.put(100000000,"");
-		map.put(200000000,"");
-		map.put(300000000,"");
-		map.put(400000000,"");
-		map.put(500000000,"");
-		t=System.nanoTime()-t;
-		System.out.println(t);
-		t=System.nanoTime();
-		b.write(100000000,"");
-		b.write(200000000,"");
-		b.write(300000000,"");
-		b.write(400000000,"");
-		b.write(500000000,"");
-		t=System.nanoTime()-t;
-		System.out.println(t);
-//		b.forEach((v)->{
-//			System.out.println(v);
-//		});
 	}
 }
