@@ -314,20 +314,4 @@ public class RsaUtil extends SecurityUtil{
         }  
         return false;  
     }  
-    
-    public static void main(String[] args) throws Exception {
-//    	String myPrivateKey="MIICdQIBADANBgkqhkiG9w0BAQEFAASCAl8wggJbAgEAAoGBAN/kHfRAw77p6FvgaFdg/VA4sLpZZ7zT364bM1k4qjOM7HtORyYPw8ZKKF+aTp8Xe7kD9ZWYKV2qPhUF1X/Ex6DuzCjNSqeoPfGhyvfmD/UVgWnmlw12qdpfxNTmhCHvdx4ZP1/N+woM5WKTzsZcuug1Uv2GaKT0TpjsaJSqD+iNAgMBAAECgYA6Kkdl51VzSc1l4Rz6ZmYo6zFumD+NHPYlg0eJzGDbV6cwOZveVYYlA6sNe0clqbIo1NB+drN4c/wA9i0LLpI1zqRV66suddRx5i2xi+zhFYwfiOSxsJq80lz2hhAun4fnhjhjLNbsHxQiZdYcvbrt4NhKMox09lSsYC4mdiWT+QJBAPW3ZbWnLQ5HhroCPYsg1HnB7+4odHqT4xd17WbmEw8Nnhruf4lgeFG1sWAVt1HTI/yTuYv6MaQcc9d29IZGZ9sCQQDpQuIvtZw00WdJlU8+5qHKMMUqE66ll+JWBi19aVy8h1hjHhBk7enXVFt/jlF5JynWUfB8mg/LWEPcwxhU7HG3AkBo8Tj5SjsN/DJoQwix4QWeMtwcJR8KMxssK+uGpQDCzxgVfILv00nP6/+jf+LZiYm3GAiI5gRJiPVYsq9gobU9AkAzUSWVvWyaKh+BDroaan7ZjpUxxpa7k4iVyFIlrxJZ36TQWYLd0YGKf+KJU3QVJUqM/gXcQ8CJyedUIA+wTzxNAkBd23lHqvnUqseTdkIpLe5zEJUSoyK5mk2zM7H4xYl4FowM5Uy9YzQROZyfrkajiTjF0V97FK3OjzGrY8DfbL+q";
-		String plaftormPkey="MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC92UTOaQHUmLO/1+sCkpfvRGhmq8p0f3ZyBqkAriMkrG73p+To7Q2+jmTZDHLZERbfpUFBpA/so4qLKXYCXdOsTacCXjpu3lnnfqwBDid+vt++0dKoXpXbO1GBQ1eXdvV0SdcyIEkCIn+U8/0+hi5C8jowAg3gbpk7qe4MIDAN1QIDAQAB";
-    	String signStr="amount=100&app_id=9&app_order_id=1143071604131622012131&app_user_id=4d8d258d38a6a9e26a2eefe5ebb813c5&notify_time=1460535986&order_id=20160413142597314816&payment_time=1460535965&status=STATUS_SUCCESS&subject=1元特权";
-		String sign="nnQRmuufHpQ2I7HTQulqFcLo4mf7TdcHz82tPyEqe1v/HYJndLLDO9sWZxHobe/gS9/tsXZxFzAI61VIp62KEoLnN58rK2/UsAbF9cEAETOi3RuQoJZmKc3BwlqtnCJJFKvvaMyULvZv/uWCjjnM+bCelt970g/tGQYhS+kYqLY=";
-		boolean signOk=false;
-		try {
-			RsaUtil rsa=new RsaUtil();
-			PublicKey pkey=rsa.getPublicKey_X509Encoded(RsaUtil.Base64Decode(plaftormPkey));
-			signOk=rsa.signVerify(signStr.getBytes(),RsaUtil.Base64Decode(sign),pkey);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		System.out.println(signOk);
-	}
 }
