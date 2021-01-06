@@ -5,6 +5,7 @@ import net.jueb.util4j.collection.bitPathTree.intpath.BitMaskEnum;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 
 public class TestBIPData {
 
@@ -13,11 +14,11 @@ public class TestBIPData {
             long aw;
             long ar;
             long af;
-            long t=System.currentTimeMillis();
             BIPData<String> b=new BIPData<>(BitMaskEnum.MASK_1111_1111_1111_1111);
             if(i==0){
                 System.out.println(b.getConfig().toString());
             }
+            long t=System.currentTimeMillis();
             for(int x=0;x<num;x++)
             {
                 b.write(x,"i="+x);
@@ -72,7 +73,10 @@ public class TestBIPData {
     }
 
     public static void main(String[] args) {
-        testW(10,1000000);
+        new Scanner(System.in).nextLine();
+        testW(1,1000000);
+        testW(5,1000000);
+        new Scanner(System.in).nextLine();
 //		b.forEach((v)->{
 //			System.out.println(v);
 //		});

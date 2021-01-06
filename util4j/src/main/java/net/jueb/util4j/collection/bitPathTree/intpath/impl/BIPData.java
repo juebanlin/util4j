@@ -16,8 +16,9 @@ public class BIPData<V> implements BitIntPathData<V>{
 	
 	private static final int BIT_NUMS=32;//总bit位数量
 	private final MapConfig config;
-	private final LayOutNode<V> root;
+	private final LayNode<V> root;
 	private final int[] posCache;
+	private final int[] posCache2;
 	private int size;
 	private Node<V> firstAdd;//最先加入的节点
 	private Node<V> lastAdd;//最后一次加入的节点
@@ -34,16 +35,19 @@ public class BIPData<V> implements BitIntPathData<V>{
 			tmp=tmp>>>1;
 			num++;
 		}
-		int maskLen=num;
+		int maskLen=num;//bit长度
 		int nodeSize=2<<maskLen-1;//层节点数量
 		int layout=BIT_NUMS/maskLen;//分解层级
+		config=new MapConfig(mask.getValue(), maskLen, layout, nodeSize);
+		root=new LayNode<V>();
+
 		posCache=new int[layout];//层级数组
+		posCache2=new int[layout];//层级数组
 		for(int i=0;i<layout;i++)
 		{
 			posCache[i]=maskLen*i;
+			posCache2[i]=mask.getValue()<<posCache[i];
 		}
-		config=new MapConfig(mask.getValue(), maskLen, layout, nodeSize);
-		root=new LayOutNode<V>();
 	}
 
 	class MapConfig{
@@ -58,17 +62,17 @@ public class BIPData<V> implements BitIntPathData<V>{
 		/**
 		 * 分层(多少个掩码组合)
 		 */
-		private final int layout;
+		private final int lay;
 		/**
 		 * 占位掩码的二进制容量
 		 */
 		private final int nodeSize;
 		
-		public MapConfig(int mask, int maskLen, int layout, int nodeSize) {
+		public MapConfig(int mask, int maskLen, int lay, int nodeSize) {
 			super();
 			this.mask = mask;
 			this.maskLen = maskLen;
-			this.layout = layout;
+			this.lay = lay;
 			this.nodeSize = nodeSize;
 		}
 	
@@ -80,8 +84,8 @@ public class BIPData<V> implements BitIntPathData<V>{
 			return maskLen;
 		}
 	
-		public int getLayout() {
-			return layout;
+		public int getLay() {
+			return lay;
 		}
 	
 		public int getNodeSize() {
@@ -90,7 +94,7 @@ public class BIPData<V> implements BitIntPathData<V>{
 	
 		@Override
 		public String toString() {
-			return "MapConfig [bitNum=" + maskLen + ", layout=" + layout + ", nodeSize=" + nodeSize + "]";
+			return "MapConfig [bitNum=" + maskLen + ", layout=" + lay + ", nodeSize=" + nodeSize + "]";
 		}
 	}
 
@@ -99,9 +103,9 @@ public class BIPData<V> implements BitIntPathData<V>{
 		Node<V>[] getSub();
 		
 		void setSub(Node<V> sub[]);
-		
+
 		int getNodeSize();
-		
+
 		int getNumber();
 		
 		default V getValue() {
@@ -125,36 +129,36 @@ public class BIPData<V> implements BitIntPathData<V>{
 		Node<V> getNext();
 	}
 	
-	abstract class AbstractNode<V1> implements Node<V1>
-	{
-        public boolean equals(Object o) {
-        	 if (!(o instanceof Node))
-                 return false;
-        	 Node<?> e = (Node<?>)o;
-             return (getValue()==null ? e.getValue()==null : getValue().equals(e.getValue()));
-        }
-
-        public int hashCode() {
-            int valueHash = (getValue()==null ? 0 : getValue().hashCode());
-            return valueHash;
-        }
-
-        public String toString() {
-            return "value =" + getValue();
-        }
-
-		@Override
-		public int getNodeSize() {
-			return config.getNodeSize();
-		}
-	}
+//	abstract class AbstractNode<V1> implements Node<V1>
+//	{
+//		public boolean equals(Object o) {
+//			if (!(o instanceof Node))
+//				return false;
+//			Node<?> e = (Node<?>)o;
+//			return (getValue()==null ? e.getValue()==null : getValue().equals(e.getValue()));
+//		}
+//
+//		public int hashCode() {
+//			int valueHash = (getValue()==null ? 0 : getValue().hashCode());
+//			return valueHash;
+//		}
+//
+//		public String toString() {
+//			return "value =" + getValue();
+//		}
+//
+//		@Override
+//		public int getNodeSize() {
+//			return config.getNodeSize();
+//		}
+//	}
 	
 	/**
 	 * 层节点
 	 * @author juebanlin
 	 * @param <V1>
 	 */
-	class LayOutNode<V1> extends AbstractNode<V1>{
+	class LayNode<V1> implements Node<V1>{
 		
 		@SuppressWarnings("unchecked")
 		private Node<V1>[] sub=new Node[getNodeSize()];
@@ -203,6 +207,27 @@ public class BIPData<V> implements BitIntPathData<V>{
 		public Node<V1> getPre() {
 			throw new UnsupportedOperationException();
 		}
+
+		public boolean equals(Object o) {
+			if (!(o instanceof Node))
+				return false;
+			Node<?> e = (Node<?>)o;
+			return (getValue()==null ? e.getValue()==null : getValue().equals(e.getValue()));
+		}
+
+		public int hashCode() {
+			int valueHash = (getValue()==null ? 0 : getValue().hashCode());
+			return valueHash;
+		}
+
+		public String toString() {
+			return "value =" + getValue();
+		}
+
+		@Override
+		public int getNodeSize() {
+			return config.getNodeSize();
+		}
 	}
 
 	/**
@@ -210,7 +235,7 @@ public class BIPData<V> implements BitIntPathData<V>{
 	 * @author juebanlin
 	 * @param <V1>
 	 */
-	class DataNode<V1> extends AbstractNode<V1>{
+	class DataNode<V1> implements Node<V1>{
 		private final int number;
 		private V1 value;
 		//用于迭代使用
@@ -257,12 +282,30 @@ public class BIPData<V> implements BitIntPathData<V>{
 		public void setSub(Node<V1>[] sub) {
 			throw new UnsupportedOperationException();
 		}
+
+		public boolean equals(Object o) {
+			if (!(o instanceof Node))
+				return false;
+			Node<?> e = (Node<?>)o;
+			return (getValue()==null ? e.getValue()==null : getValue().equals(e.getValue()));
+		}
+
+		public int hashCode() {
+			int valueHash = (getValue()==null ? 0 : getValue().hashCode());
+			return valueHash;
+		}
+
+		public String toString() {
+			return "value =" + getValue();
+		}
+
+		@Override
+		public int getNodeSize() {
+			return config.getNodeSize();
+		}
 	}
 
-	private Node<V> buildLayOutNode() {
-		return new LayOutNode<V>();
-	}
-	
+
 	/**
 	 * 抵达节点
 	 * @param number
@@ -293,10 +336,10 @@ public class BIPData<V> implements BitIntPathData<V>{
 			}
 			if(layout==0)
 			{//layout=0的node具有data属性
-				node=new DataNode<V>(number);
+				node=new DataNode<>(number);
 			}else
 			{
-				node=buildLayOutNode();
+				node=new LayNode<>();
 			}
 			sub[p]=node;
 		}
@@ -340,7 +383,7 @@ public class BIPData<V> implements BitIntPathData<V>{
 	 */
 	protected Node<V> cleanNode(int bitNumber)
 	{
-		Node<V> node=cleanNodePath(bitNumber, config.layout, root);
+		Node<V> node=cleanNodePath(bitNumber, config.lay, root);
 		if(node!=null)
 		{
 			Node<V> pre=node.getPre();
@@ -369,15 +412,19 @@ public class BIPData<V> implements BitIntPathData<V>{
 	/**
 	 * 取整数某二进制位的值
 	 * @param number
-	 * @param layout
+	 * @param lay
 	 * @return
 	 */
-	protected int getMaskValue(int number,int layout)
+	protected int getMaskValue(int number,int lay)
 	{
-		return (number & (config.mask<<posCache[layout]))>>>posCache[layout];
-	}		
+//		int bitPos=config.maskLen*lay;
+//		return (number & (config.mask<<bitPos))>>>bitPos;
 
-	protected final LayOutNode<V> getRootNode() {
+//		return (number & (config.mask<<posCache[lay]))>>>posCache[lay];
+		return (number & posCache2[lay])>>>posCache[lay];
+	}
+
+	protected final LayNode<V> getRootNode() {
 		return root;
 	}
 
@@ -392,7 +439,7 @@ public class BIPData<V> implements BitIntPathData<V>{
 
 	@Override
 	public V write(int bitNumber,V value) {
-		Node<V> node=arraivedNode(bitNumber, config.layout, root, true);
+		Node<V> node=arraivedNode(bitNumber, config.lay, root, true);
 		V oldValue=node.getValue();
 		if(node.getPre()!=null)
 		{//仅仅是覆盖值
@@ -417,7 +464,7 @@ public class BIPData<V> implements BitIntPathData<V>{
 
 	@Override
 	public V read(int bitNumber) {
-		Node<V> node=arraivedNode(bitNumber, config.layout, root, false);
+		Node<V> node=arraivedNode(bitNumber, config.lay, root, false);
 		if(node==null)
 		{
 			return null;
