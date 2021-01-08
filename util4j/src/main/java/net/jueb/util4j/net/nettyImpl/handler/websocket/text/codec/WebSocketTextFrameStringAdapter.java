@@ -36,9 +36,7 @@ public class WebSocketTextFrameStringAdapter extends MessageToMessageCodec<WebSo
 		if(paramINBOUND_IN instanceof TextWebSocketFrame)
 		{
 			TextWebSocketFrame msg=(TextWebSocketFrame)paramINBOUND_IN;
-			String text=msg.text();
 			paramList.add(msg.text());
-			log.debug("TextWebSocketFrame to text:"+text);
 		}
 	}
 
@@ -49,6 +47,5 @@ public class WebSocketTextFrameStringAdapter extends MessageToMessageCodec<WebSo
 	protected void encode(ChannelHandlerContext paramChannelHandlerContext,
 			String paramOUTBOUND_IN, List<Object> paramList) throws Exception {
 		paramList.add(new TextWebSocketFrame(paramOUTBOUND_IN));
-		log.debug("text to TextWebSocketFrame,text:"+paramOUTBOUND_IN);
 	}
 }

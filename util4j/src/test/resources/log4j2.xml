@@ -6,7 +6,7 @@
         <!--文件日志级别 --> 
         <property name="LOG_LEVEL_FILE">info</property>
         <!-- 控制台日志级别 -->
-        <property name="LOG_LEVEL_CONSOLE">debug</property>  
+        <property name="LOG_LEVEL_CONSOLE">info</property>
         <!-- logstash网络日志输出 -->
         <property name="LOG_LEVEL_SOKCET_HOST">47.99.210.227</property>         
         <property name="LOG_LEVEL_SOKCET_PORT">5602</property>    
@@ -73,22 +73,22 @@
 		  }
 		}
         -->
-      <Gelf name="Logstash" host="udp:${LOG_LEVEL_SOKCET_HOST}" port="${LOG_LEVEL_SOKCET_PORT}" version="1.1" extractStackTrace="true"
-              filterStackTrace="true" mdcProfiling="true" includeFullMdc="true" maximumMessageSize="8192"
-              originHost="%host{fqdn}" additionalFieldTypes="fieldName1=String,fieldName2=Double,fieldName3=Long">
-            <Field name="timestamp" pattern="%d{dd MMM yyyy HH:mm:ss,SSS}" />
-            <Field name="level" pattern="%level" />
-            <Field name="simpleClassName" pattern="%c{1}" />
-            <Field name="className" pattern="%logger{36}" />
-            <Field name="thread" pattern="%t:%r" />
-            <!-- This is a static field -->
-            <Field name="fieldName2" literal="fieldValue2" />
+<!--      <Gelf name="Logstash" host="udp:${LOG_LEVEL_SOKCET_HOST}" port="${LOG_LEVEL_SOKCET_PORT}" version="1.1" extractStackTrace="true"-->
+<!--              filterStackTrace="true" mdcProfiling="true" includeFullMdc="true" maximumMessageSize="8192"-->
+<!--              originHost="%host{fqdn}" additionalFieldTypes="fieldName1=String,fieldName2=Double,fieldName3=Long">-->
+<!--            <Field name="timestamp" pattern="%d{dd MMM yyyy HH:mm:ss,SSS}" />-->
+<!--            <Field name="level" pattern="%level" />-->
+<!--            <Field name="simpleClassName" pattern="%c{1}" />-->
+<!--            <Field name="className" pattern="%logger{36}" />-->
+<!--            <Field name="thread" pattern="%t:%r" />-->
+<!--            &lt;!&ndash; This is a static field &ndash;&gt;-->
+<!--            <Field name="fieldName2" literal="fieldValue2" />-->
 
-            <!-- This is a field using MDC -->
-            <Field name="mdcField2" mdc="mdcField2" /> 
-            <DynamicMdcFields regex="mdc.*" />
-            <DynamicMdcFields regex="(mdc|MDC)fields" />
-      </Gelf>
+<!--            &lt;!&ndash; This is a field using MDC &ndash;&gt;-->
+<!--            <Field name="mdcField2" mdc="mdcField2" /> -->
+<!--            <DynamicMdcFields regex="mdc.*" />-->
+<!--            <DynamicMdcFields regex="(mdc|MDC)fields" />-->
+<!--      </Gelf>-->
     </appenders>  
     <loggers>
     	<!-- 同步日志
@@ -111,12 +111,12 @@
     		<appender-ref ref="Console" />
     		<appender-ref ref="LogFile" />
     		<appender-ref ref="ErrorLogFile" />
-    		<appender-ref ref="Logstash" />
+<!--    		<appender-ref ref="Logstash" />-->
     	</AsyncLogger>
     	<!-- 所有包范围的日志都以trace级别输出控制台 -->
    	 	<AsyncRoot level="trace">  
             <appender-ref ref="Console" /><!--所有包的日志输出会到LogFile,除了特别声明的logger-->
-            <appender-ref ref="Logstash" />
+<!--            <appender-ref ref="Logstash" />-->
         </AsyncRoot> 
     </loggers>  
 </configuration>
