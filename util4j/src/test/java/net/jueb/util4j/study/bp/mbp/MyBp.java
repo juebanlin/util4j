@@ -30,7 +30,7 @@ public class MyBp {
 	
     /**
      * 2.训练数据集
-     * @param TrainData
+     * @param trainData
      *            训练数据
      * @param target
      *            目标
@@ -45,8 +45,8 @@ public class MyBp {
     
     /**
      * 正向传播
-     * @param TrainData
-     * @param target
+     * @param trainData
+     * @param forword_output
      */
     protected void forword(double[] trainData,double[] forword_output)
     {

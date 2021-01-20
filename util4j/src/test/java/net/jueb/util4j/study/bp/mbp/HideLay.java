@@ -54,9 +54,9 @@ public class HideLay {
 	
     /**
      * 获取网络层的输出
-     * @param x
+     * @param input
      *            输入矩阵
-     * @param net_out
+     * @param output
      *            接收网络层的输出数组
      */
 	private void get_net_out(double[] input, double[] output) {
@@ -69,7 +69,7 @@ public class HideLay {
     
     /**
      * 更新输出的误差
-     * @param output
+     * @param forwordOutput
      *            预测输出值
      * @param target
      *            目标值
@@ -84,13 +84,7 @@ public class HideLay {
 
     /**
      * 获取隐含层的误差
-     * @param NeLaErr
-     *            下一层的误差
-     * @param Nextw
-     *            下一层的权值
-     * @param output 下一层的输入
-     * @param error
-     *            本层误差数组
+     * @param next
      */
     public void updateError(HideLay next) {
         for (int k = 0; k < nodes.length; k++) 

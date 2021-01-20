@@ -22,8 +22,7 @@ public class Node {
 	
     /**
      * 获取单个节点的输出
-     * @param x
-     *            输入矩阵
+     * @param input 输入矩阵
      * @return 输出值
      */
 	public double get_node_out(double[] input) {
