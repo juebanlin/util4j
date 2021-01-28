@@ -27,7 +27,23 @@ public interface QueueExecutor extends Executor{
 	 * @return
 	 */
 	int size();
-	
+
+	/**
+	 * 被线程处理的次数
+	 * @return
+	 */
+	default long handleCount(){
+		return 0;
+	}
+
+	/**
+	 * 单次被处理的最大任务数量
+	 * @return
+	 */
+	default long maxProcessCount(){
+		return 0;
+	}
+
 	void setAlias(String alias);
 	
 	String getAlias();

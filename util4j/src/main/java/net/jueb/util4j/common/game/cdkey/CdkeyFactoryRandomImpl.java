@@ -1,6 +1,7 @@
 package net.jueb.util4j.common.game.cdkey;
 
 import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class CdkeyFactoryRandomImpl implements CdkeyFactory{
 
@@ -18,6 +19,8 @@ public class CdkeyFactoryRandomImpl implements CdkeyFactory{
 	     */
 	    private static final Random RANDOM = new Random();
 
+	    public static boolean USE_THREAD_RANDOM=true;
+
 	    /**
 	     * <p><code>RandomStringUtils</code> instances should NOT be constructed in
 	     * standard programming. Instead, the class should be used as
@@ -29,6 +32,14 @@ public class CdkeyFactoryRandomImpl implements CdkeyFactory{
 	    public RandomStringUtils() {
 	      super();
 	    }
+
+	    public static Random getRandom(){
+	    	if(!USE_THREAD_RANDOM){
+	    		return RANDOM;
+			}
+			ThreadLocalRandom threadLocalRandom = ThreadLocalRandom.current();
+			return threadLocalRandom;
+		}
 
 	    // Random
 	    //-----------------------------------------------------------------------
@@ -136,7 +147,7 @@ public class CdkeyFactoryRandomImpl implements CdkeyFactory{
 	     * @return the random string
 	     */
 	    public static String random(int count, int start, int end, boolean letters, boolean numbers) {
-	        return random(count, start, end, letters, numbers, null, RANDOM);
+	        return random(count, start, end, letters, numbers, null, getRandom());
 	    }
 
 	    /**
@@ -160,7 +171,7 @@ public class CdkeyFactoryRandomImpl implements CdkeyFactory{
 	     *  <code>(end - start) + 1</code> characters in the set array.
 	     */
 	    public static String random(int count, int start, int end, boolean letters, boolean numbers, char[] chars) {
-	        return random(count, start, end, letters, numbers, chars, RANDOM);
+	        return random(count, start, end, letters, numbers, chars, getRandom());
 	    }
 
 	    /**
@@ -272,7 +283,7 @@ public class CdkeyFactoryRandomImpl implements CdkeyFactory{
 	     */
 	    public static String random(int count, String chars) {
 	        if (chars == null) {
-	            return random(count, 0, 0, false, false, null, RANDOM);
+	            return random(count, 0, 0, false, false, null, getRandom());
 	        }
 	        return random(count, chars.toCharArray());
 	    }
@@ -291,9 +302,9 @@ public class CdkeyFactoryRandomImpl implements CdkeyFactory{
 	     */
 	    public static String random(int count, char[] chars) {
 	        if (chars == null) {
-	            return random(count, 0, 0, false, false, null, RANDOM);
+	            return random(count, 0, 0, false, false, null, getRandom());
 	        }
-	        return random(count, 0, chars.length, false, false, chars, RANDOM);
+	        return random(count, 0, chars.length, false, false, chars, getRandom());
 	    }
 	    
 	}

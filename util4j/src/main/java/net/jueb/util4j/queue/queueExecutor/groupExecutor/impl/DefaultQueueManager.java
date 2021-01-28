@@ -1,5 +1,6 @@
 package net.jueb.util4j.queue.queueExecutor.groupExecutor.impl;
 
+import lombok.extern.slf4j.Slf4j;
 import net.jueb.util4j.queue.queueExecutor.QueueFactory;
 import net.jueb.util4j.queue.queueExecutor.executor.QueueExecutor;
 import net.jueb.util4j.queue.queueExecutor.executor.impl.RunnableQueueExecutorEventWrapper;
@@ -8,14 +9,14 @@ import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupManager;
 
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+@Slf4j
 public class DefaultQueueManager extends AbstractQueueMaganer implements QueueGroupManager{
 
 	private final Map<String,TaskQueue> queues=new HashMap<>();
-	private final AtomicLong totalCompleteTask=new AtomicLong();
-	
+
 	private final Object addLock=new Object();
 
 	private volatile KeyGroupEventListener listener;
@@ -87,14 +88,16 @@ public class DefaultQueueManager extends AbstractQueueMaganer implements QueueGr
 		return qe;
 	}
 
-
-
 	/**
 	 * 获取总完成任务数量
 	 * @return
 	 */
 	public long getToalCompletedTaskCount() {
-	    return totalCompleteTask.get();
+		long value=0;
+		for (TaskQueue queue : queues.values()) {
+			value+=queue.getCompletedTaskCount();
+		}
+	    return value;
 	}
 
 	@Override
@@ -102,7 +105,7 @@ public class DefaultQueueManager extends AbstractQueueMaganer implements QueueGr
 		TaskQueue tq=queues.get(index);
 		if(tq!=null)
 		{
-			return tq.getCompletedTaskCount().get();
+			return tq.getCompletedTaskCount();
 		}
 		return 0;
 	}
@@ -151,7 +154,7 @@ public class DefaultQueueManager extends AbstractQueueMaganer implements QueueGr
 	 * @param key
 	 * @param handleTask
 	 */
-	protected void onQueueHandleTask(String key,Runnable handleTask)
+	protected void onQueueProcessTaskBuild(String key, Runnable handleTask)
 	{
 		KeyGroupEventListener tmp=listener;
 		if(tmp!=null)
@@ -164,24 +167,33 @@ public class DefaultQueueManager extends AbstractQueueMaganer implements QueueGr
 	 * 插槽队列
 	 * @author juebanlin
 	 */
-	private class TaskQueue extends RunnableQueueExecutorEventWrapper implements Runnable{
+	private class TaskQueue extends RunnableQueueExecutorEventWrapper{
+
+		public final static int STATUS_IDLE=0;
+		public final static int STATUS_WAIT_PROCESS=1;
+		public final static int STATUS_PROCESS=2;
+
+		private final AtomicInteger status=new AtomicInteger(STATUS_IDLE);
+
 		/**
 		 *队列索引
 		 */
 		private final String index;
-		/**
-	     * 此队列是否锁定/是否被线程占用
-	     * 次属性仅供本类持有
-	     */
-	    private final AtomicBoolean isLock = new AtomicBoolean(false);
-	    
-	    private final AtomicBoolean processLock = new AtomicBoolean(false);
-	    
+
 	    /**
 	     * 此队列完成的任务数量
 	     */
-		private final AtomicLong completedTaskCount = new AtomicLong(0);
-		
+		private long completedTaskCount;
+		/**
+		 * 任务唤起次数
+		 */
+		private long wakeCount;
+
+		/**
+		 * 单次最大处理任务数量
+		 */
+		private long maxProcessSize;
+
 		public TaskQueue(String index,Queue<Runnable> queue) {
 			super(queue);
 			this.index=index;
@@ -192,15 +204,26 @@ public class DefaultQueueManager extends AbstractQueueMaganer implements QueueGr
 		 * 初始化状态
 		 */
 		public void init(){
-			isLock.set(false);
-			completedTaskCount.set(0);
 			super.clear();
+			completedTaskCount=0;
+			wakeCount=0;
+			maxProcessSize=0;
 		}
 		
-		public AtomicLong getCompletedTaskCount() {
+		public long getCompletedTaskCount() {
 			return completedTaskCount;
 		}
-	
+
+		@Override
+		public long handleCount() {
+			return wakeCount;
+		}
+
+		@Override
+		public long maxProcessCount() {
+			return maxProcessSize;
+		}
+
 		@Override
 		protected void onAddBefore() {
 			
@@ -210,82 +233,94 @@ public class DefaultQueueManager extends AbstractQueueMaganer implements QueueGr
 		protected void onAddAfter(boolean offeredSucceed) {
 			if(offeredSucceed)
 			{
-				if(isLock.compareAndSet(false, true))
-			 	{//一个处理任务产生
-					onQueueHandleTask(index,this);
-			 	}
+				if(status.get()!=STATUS_IDLE){
+					return;
+				}
+				wakeIfIdle();
+			}
+		}
+
+
+		private void wakeIfIdle(){
+			if(status.compareAndSet(STATUS_IDLE,STATUS_WAIT_PROCESS)){
+				onQueueProcessTaskBuild(index,this::processQueueTasks);
+				wakeCount++;
+			}
+		}
+
+		/**
+		 * 处理任务
+		 * 此方法被委托线程执行
+		 */
+		protected void processQueueTasks(){
+			if(!status.compareAndSet(STATUS_WAIT_PROCESS,STATUS_PROCESS)){
+				if(status.compareAndSet(STATUS_PROCESS,STATUS_PROCESS)){
+					log.error("队列processStart状态错误,其它线程正在处理,{}:{}",index,status);
+					return;
+				}
+				log.error("队列processStart状态错误,{}:{}",index,status);
+//				wakeIfIdle();
+				return;
+			}
+			try {
+				TaskQueue queue=this;
+				doProcessQueueTasks(queue);
+			}finally {
+				if(!status.compareAndSet(STATUS_PROCESS,STATUS_IDLE)){
+					log.error("队列processEnd状态错误,{}:{}",index,status);
+//					wakeIfIdle();
+				}
+			}
+		}
+
+		/**
+		 * 处理队列任务
+		 * @param queue
+		 */
+		private void doProcessQueueTasks(TaskQueue queue) {
+			Thread thread=Thread.currentThread();
+			int num=0;
+			try {
+				for (;;)
+				{
+					if(batchCount>0 && num>=batchCount){
+						//停止处理队列
+						break;
+					}
+					Runnable task = queue.poll();
+					if(task == null)
+					{//停止处理队列
+						break;
+					}
+					beforeExecute(thread, task);
+					boolean succeed = false;
+					try {
+						num++;
+						task.run();
+						queue.completedTaskCount++;
+						succeed = true;
+						afterExecute(task, null);
+					} catch (RuntimeException e) {
+						if (!succeed) {
+							afterExecute(task, e);
+						}
+						throw e;
+					}
+				}
+			}finally {
+				if(num>maxProcessSize){
+					maxProcessSize=num;
+				}
 			}
 		}
 
 		protected void beforeExecute(Thread thread, Runnable task) {
-			
-		}
-	
-		protected void afterExecute(Runnable task,RuntimeException object) {
-			
+
 		}
 
-		@Override
-		public void run() {
-			TaskQueue queue=this;
-			if(queue.processLock.compareAndSet(false, true))
-			{//如果此runnable未被执行则执行,已执行则不可再次执行(防止task事件被多个监听,有且只能有一个消费者可以获得执行能力)
-				Runnable task=null;
-				try {
-					task=handleQueueTask(queue);
-				} finally {
-					queue.processLock.set(false);
-					queue.isLock.set(false);
-					if(task!=null && isLock.compareAndSet(false, true)){
-						//如果onAddAfter没有触发,那么就由当前线程再次处理
-						task.run();
-					}
-				}
-			}
+		protected void afterExecute(Runnable task,RuntimeException object) {
+
 		}
-		
-		/**
-		 * 处理队列任务
-         * @param queue
-         */
-        private Runnable handleQueueTask(TaskQueue queue) {
-        	Thread thread=Thread.currentThread();
-        	int num=0;
-        	for (;;) 
-            {
-				if(batchCount>0 && num>=batchCount){
-					//停止处理队列
-					if(queue.peek()!=null){
-						//抛出事件,下次处理
-						return ()->{
-							onQueueHandleTask(index,this);
-						};
-					}
-					break;
-				}
-        		Runnable task = queue.poll();
-            	if(task == null)
-                {//停止处理队列
-            		break;
-                }
-            	beforeExecute(thread, task);
-                boolean succeed = false;
-                try {
-                	num++;
-                    task.run();
-                    queue.getCompletedTaskCount().incrementAndGet();
-                    totalCompleteTask.incrementAndGet();
-                    succeed = true;
-                    afterExecute(task, null);
-                } catch (RuntimeException e) {
-                    if (!succeed) {
-                        afterExecute(task, e);
-                    }
-                    throw e;
-                }
-            }
-        	return null;
-        }
 	}
 	
 	public static class Builder{
