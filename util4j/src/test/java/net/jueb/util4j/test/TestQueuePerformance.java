@@ -20,6 +20,10 @@ import java.util.concurrent.atomic.AtomicLong;
 @Slf4j
 public class TestQueuePerformance {
 
+    public static interface TestQueues{
+         Executor getQueue(String ket);
+    }
+
     /**
      * 一个简单的非并发阻塞计算任务
      * @return
@@ -115,7 +119,7 @@ public class TestQueuePerformance {
      * @param queueCount 队列数量
      * @param queues
      */
-    public void test(final long timeMillsLimit, final QueueGroupExecutor queues, final int queueCount, int threadNum) throws InterruptedException {
+    public void test(final long timeMillsLimit, final TestQueues queues, final int queueCount, int threadNum) throws InterruptedException {
         ExecutorService workerpool = Executors.newFixedThreadPool(threadNum);
         final long endTime = System.currentTimeMillis() + timeMillsLimit;
         TpsStatus tpsStatus = new TpsStatus();
@@ -128,7 +132,7 @@ public class TestQueuePerformance {
                     for (long l = 0; l < count; l++) {
                         final int queueIndex = random.nextInt(queueCount);
                         Runnable task = buildTask();
-                        QueueExecutor queueExecutor = queues.getQueueExecutor(queueIndex + "");
+                        Executor queueExecutor = queues.getQueue(queueIndex + "");
                         tpsStatus.onQueueIn(queueIndex);
                         queueExecutor.execute(() -> {
                             try {
@@ -197,16 +201,28 @@ public class TestQueuePerformance {
         //多队列多线程测试
         {
             QueueGroupExecutor ft = buildStageByMpMc1(1, maxCore);
+            TestQueues testQueues=new TestQueues(){
+                @Override
+                public Executor getQueue(String key) {
+                    return ft.getQueueExecutor(key);
+                }
+            };
             System.out.println("#########1");
-            tq.test(1000 * 60, ft, maxCore, maxCore);//1000W随机分配到10个队列
+            tq.test(1000 * 60, testQueues, maxCore, maxCore);//1000W随机分配到10个队列
             QueueExecutor queueExecutor = ft.getQueueExecutor("0");
             log.info("队列事件次数:{},最大单次事件处理任务数量:{}",queueExecutor.handleCount(),queueExecutor.maxProcessCount());
         }
 
         {
 //            QueueGroupExecutor ft = buildStageByMpMc3(1, maxCore);
+//            TestQueues testQueues=new TestQueues(){
+//                @Override
+//                public Executor getQueue(String key) {
+//                    return ft.getQueueExecutor(key);
+//                }
+//            };
 //            System.out.println("#########1");
-//            tq.test(1000 * 60, ft, maxCore, maxCore);//1000W随机分配到10个队列
+//            tq.test(1000 * 60, testQueues, maxCore, maxCore);//1000W随机分配到10个队列
 //            QueueExecutor queueExecutor = ft.getQueueExecutor("0");
 //            log.info("队列事件次数:{},最大单次事件处理任务数量:{}",queueExecutor.handleCount(),queueExecutor.maxProcessCount());
         }
