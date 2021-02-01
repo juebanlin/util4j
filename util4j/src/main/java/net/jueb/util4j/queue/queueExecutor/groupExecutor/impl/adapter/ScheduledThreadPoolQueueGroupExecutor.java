@@ -14,17 +14,14 @@ import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupManager.KeyGr
 public class ScheduledThreadPoolQueueGroupExecutor extends ScheduledThreadPoolExecutor implements QueueGroupExecutorService{
 
     private final QueueGroupManager kqm;
-    
-    protected void init()
-    {
-    	this.kqm.setGroupEventListener(new KeyGroupEventListener() {
-			@Override
-			public void onQueueHandleTask(String key, Runnable handleTask) {
-				//当sqm有可以处理某队列的任务产生时,丢到系统队列,当系统队列
-				execute(handleTask);
-			}
+
+	protected void init()
+	{
+		this.kqm.setGroupEventListener((key,task)->{
+			//当sqm有可以处理某队列的任务产生时,丢到系统队列,当系统队列
+			execute(task);
 		});
-    }
+	}
 	
 	public ScheduledThreadPoolQueueGroupExecutor(int corePoolSize, ThreadFactory threadFactory,RejectedExecutionHandler handler,
 			QueueGroupManager kqm) {

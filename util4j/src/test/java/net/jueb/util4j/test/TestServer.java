@@ -1,6 +1,7 @@
 package net.jueb.util4j.test;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelInitializer;
@@ -11,7 +12,8 @@ import net.jueb.util4j.net.nettyImpl.listener.HeartAbleConnectionListener;
 import net.jueb.util4j.net.nettyImpl.server.NettyServer;
 import net.jueb.util4j.net.nettyImpl.server.NettyServerConfig;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupExecutor;
-import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.NioQueueGroupExecutor;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.DefaultQueueManager;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.adapter.ThreadPoolQueueGroupExecutor;
 
 public class TestServer {
 	public class GameMsg{
@@ -24,7 +26,7 @@ public class TestServer {
 		}
 	}
 	public static void main(String[] args) {
-		final QueueGroupExecutor qe=new NioQueueGroupExecutor();
+		final QueueGroupExecutor qe=new ThreadPoolQueueGroupExecutor(1,2,new LinkedBlockingQueue<>(),new DefaultQueueManager());
 		final short mainQueue=1;
 		final ChannelHandler logicHandler=new DefaultIdleListenerHandler<GameMsg>(new HeartAbleConnectionListener<GameMsg>(){
 			@Override

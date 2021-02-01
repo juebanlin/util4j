@@ -3,21 +3,15 @@ package net.jueb.util4j.queue.queueExecutor.groupExecutor.impl;
 import java.io.IOException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Queue;
-import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 
 import net.jueb.util4j.lock.waiteStrategy.BlockingWaitConditionStrategy;
 import net.jueb.util4j.queue.queueExecutor.QueueFactory;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupExecutorService;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +24,7 @@ import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupManager.KeyGr
 import net.jueb.util4j.queue.queueExecutor.queue.RunnableQueueEventWrapper;
 import net.jueb.util4j.thread.NamedThreadFactory;
 
-public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
+public class DefaultQueueGroupExecutor extends AbstractExecutorService implements QueueGroupExecutorService {
     
 	protected Logger log=LoggerFactory.getLogger(getClass());
 	
@@ -174,12 +168,9 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
         this.waitConditionStrategy=waitConditionStrategy;
         this.assistExecutor=assistExecutor;
         this.queueMananger=queueMananger;
-        this.queueMananger.setGroupEventListener(new KeyGroupEventListener() {
-			@Override
-			public void onQueueHandleTask(String queue, Runnable handleTask) {
-				//当sqm有可以处理某队列的任务产生时,丢到系统队列,当系统队列
-				systemExecute(handleTask);
-			}
+		this.queueMananger.setGroupEventListener((key,task)->{
+			//当sqm有可以处理某队列的任务产生时,丢到系统队列,当系统队列
+			systemExecute(task);
 		});
         this.systemQueue=new SystemQueue(bossQueue);
     }
@@ -334,6 +325,15 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 	    }
 	}
 
+	@NotNull
+	@Override
+	public List<Runnable> shutdownNow() {
+		shutdown();
+		List<Runnable> tasks=new ArrayList<>(systemQueue);
+		systemQueue.clear();
+		return tasks;
+	}
+
 	/**
 	 * 同步关闭
 	 */
@@ -361,6 +361,9 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 	 * 唤醒工作线程(如果还没超过最大工作线程)
 	 */
 	public void addWorkerIfNecessary(){
+		if (idleWorkers.get() > 0) {
+			return;
+		}
 		if(assistExecutor!=null)
 		{
 			assistExecutor.execute(this::doAddWorker);
@@ -377,6 +380,7 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
         if (idleWorkers.get() == 0) {
             synchronized (workers) {
             	if (workers.size() >= getMaximumPoolSize()) {
+            		//超过最大值
                     return;
                 }
                 if (workers.isEmpty() || (idleWorkers.get() == 0)) {
@@ -431,7 +435,7 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 			log.info("WorkerExitTask Run");
 		}
 	};
-	
+
 	protected interface WorkerExitTask extends Runnable{
 		
 	}
@@ -488,7 +492,7 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
         }
         
         /**
-                  * 等待任务
+		 * 等待任务
          * @param time 最大超时时间
          * @param unit
          * @return
@@ -501,7 +505,7 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
         }
         
         /**
-                  * 线程结束
+		 * 线程结束
          */
         void runEnd(){
         	
@@ -533,14 +537,14 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
                 		}
                 		continue;//继续寻找任务
                 	}
-                	idleWorkers.decrementAndGet();//活动线程-1
+                	idleWorkers.decrementAndGet();//待命线程-1
 					try {
 						addWorkerIfNecessary();//预备一个线程,如果有新任务则可立马执行
 						lastRunTaskTime=System.currentTimeMillis();
 						task.run();
 					} finally {
-						//不管异常与否都+1,如果有异常导致退出循环,则循环外会活动线程-1
-						idleWorkers.incrementAndGet();//活动线程+1
+						//不管异常与否都+1,如果有异常导致退出循环,则循环外会待命线程-1
+						idleWorkers.incrementAndGet();//待命线程+1
 						if(task ==exitTask || task instanceof WorkerExitTask) 
 						{//如果是退出任务则退出,不管执行是否异常
 							log.debug("退出线程,from WorkerExitTask:"+task);
@@ -552,7 +556,7 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
                 synchronized (workers) {
                     workers.remove(this);
                     workers.notifyAll();
-                    idleWorkers.decrementAndGet();//异常或者正常退出都会活动线程-1
+                    idleWorkers.decrementAndGet();//异常或者正常退出都会待命线程-1
                 }
                 runEnd();
             }
@@ -627,6 +631,11 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
     	}
 	}
 
+	@Override
+	public void execute(@NotNull Runnable command) {
+		systemExecute(command);
+	}
+
 	public QueueGroupManager getQueueGroupManager() {
 		return queueMananger;
 	}
@@ -655,7 +664,8 @@ public class DefaultQueueGroupExecutor implements QueueGroupExecutor{
 	public Iterator<KeyElement<QueueExecutor>> keyIterator() {
 		return queueMananger.keyIterator();
 	}	
-	
+
+
 	public static class Builder{
 		int corePoolSize=DEFAULT_INITIAL_THREAD_POOL_SIZE;
 		int maximumPoolSize=DEFAULT_MAX_THREAD_POOL;

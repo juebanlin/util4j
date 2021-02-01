@@ -4,29 +4,21 @@ import lombok.extern.slf4j.Slf4j;
 import net.jueb.util4j.common.game.cdkey.CdkeyFactoryRandomImpl;
 import net.jueb.util4j.lock.waiteStrategy.BlockingWaitConditionStrategy;
 import net.jueb.util4j.lock.waiteStrategy.SleepingWaitConditionStrategy;
+import net.jueb.util4j.lock.waiteStrategy.YieldingWaitConditionStrategy;
 import net.jueb.util4j.queue.queueExecutor.QueueFactory;
-import net.jueb.util4j.queue.queueExecutor.RunnableQueue;
 import net.jueb.util4j.queue.queueExecutor.executor.QueueExecutor;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupExecutor;
-import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupManager;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.DefaultQueueGroupExecutor;
 import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.DefaultQueueManager;
-import net.jueb.util4j.queue.queueExecutor.queue.RunnableQueueWrapper;
-import net.jueb.util4j.queue.taskQueue.Task;
-import net.jueb.util4j.queue.taskQueue.TaskQueueExecutor;
-import net.jueb.util4j.security.AesUtil;
-import org.apache.commons.lang.RandomStringUtils;
-import org.apache.commons.lang.math.RandomUtils;
-import org.jctools.queues.MpscLinkedQueue;
+import net.jueb.util4j.queue.queueExecutor.groupExecutor.impl.adapter.ThreadPoolQueueGroupExecutor;
+import org.jctools.queues.atomic.MpmcAtomicArrayQueue;
 
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.LockSupport;
 
 @Slf4j
-public class TestDefaultQueues2 {
+public class TestQueuePerformance {
 
     /**
      * 一个简单的非并发阻塞计算任务
@@ -163,7 +155,7 @@ public class TestDefaultQueues2 {
     }
 
 
-    protected static QueueGroupExecutor buildStageByMpMc(int threadMin, int threadMax) {
+    protected static QueueGroupExecutor buildStageByMpMc1(int threadMin, int threadMax) {
         //多生产多消费者队列(线程竞争队列)
         Queue<Runnable> bossQueue = new ConcurrentLinkedQueue<>();
         DefaultQueueGroupExecutor.Builder b = new DefaultQueueGroupExecutor.Builder();
@@ -171,36 +163,64 @@ public class TestDefaultQueues2 {
         return b.setMaxPoolSize(threadMax)
                 .setCorePoolSize(threadMin)
                 .setQueueGroupManagerr(new DefaultQueueManager(QueueFactory.MPSC_QUEUE_FACTORY))
-                .setKeepAliveTime(3, TimeUnit.SECONDS)
+                .setKeepAliveTime(10, TimeUnit.SECONDS)
                 .setBossQueue(bossQueue)
+//                .setAssistExecutor(Executors.newSingleThreadExecutor())
                 .setWaitConditionStrategy(new BlockingWaitConditionStrategy()).build();
+    }
+    protected static QueueGroupExecutor buildStageByMpMc2(int threadMin, int threadMax) {
+        //多生产多消费者队列(线程竞争队列)
+        Queue<Runnable> bossQueue = new MpmcAtomicArrayQueue<>(Short.MAX_VALUE);//容量=积压上限=取决于队列总数+其它非队列事件任务
+        DefaultQueueGroupExecutor.Builder b = new DefaultQueueGroupExecutor.Builder();
+        b.setAssistExecutor(Executors.newSingleThreadExecutor());
+        return b.setMaxPoolSize(threadMax)
+                .setCorePoolSize(threadMin)
+                .setQueueGroupManagerr(new DefaultQueueManager(QueueFactory.MPSC_QUEUE_FACTORY))
+                .setKeepAliveTime(10, TimeUnit.SECONDS)
+                .setBossQueue(bossQueue)
+//                .setAssistExecutor(Executors.newSingleThreadExecutor())
+                .setWaitConditionStrategy(new SleepingWaitConditionStrategy()).build();
+    }
+
+    protected static QueueGroupExecutor buildStageByMpMc3(int threadMin, int threadMax) {
+        //多生产多消费者队列(线程竞争队列)
+        DefaultQueueManager queueExecutors = new DefaultQueueManager(QueueFactory.MPSC_QUEUE_FACTORY);
+        ThreadPoolQueueGroupExecutor threadPoolQueueGroupExecutor=new ThreadPoolQueueGroupExecutor(threadMin,threadMax,new LinkedBlockingQueue<>(),queueExecutors);
+        return threadPoolQueueGroupExecutor;
     }
 
     public static void main(String[] args) throws InterruptedException {
-        TestDefaultQueues2 tq = new TestDefaultQueues2();
-        Thread.sleep(3000);
-        System.out.println("队列测试开始");
-        /**
-         * 多队列多线程测试
-         */
-        QueueGroupExecutor ft = buildStageByMpMc(2, 8);
-        System.out.println("#########1");
-        tq.test(1000 * 60, ft, 8, 8);//1000W随机分配到10个队列
-        QueueExecutor queueExecutor = ft.getQueueExecutor("0");
-        log.info(queueExecutor.handleCount()+"-"+queueExecutor.maxProcessCount());
-//        所有队列每秒共处理任务:6486921,队列平均每秒吞吐:648692
-//        总任务in:329957870 out:329957448
-//        单个队列每秒    :[647878, 648773, 650353, 649312, 648036, 649389, 648005, 648428, 649274, 647470]
-//        单个队列累计in  :[32998175, 32992722, 32993563, 32995935, 32995988, 33000259, 33004883, 32990645, 32998104, 32987947]
-//        单个队列累计out :[32998127, 32992691, 32993539, 32995904, 32995987, 33000262, 33004871, 32990645, 32998012, 32987921]
-//        单个队列积压    :[71, 52, 60, 52, 17, 16, 19, 36, 99, 39]
+        TestQueuePerformance tq = new TestQueuePerformance();
+        System.out.println("输入任意内容开始");
+        new Scanner(System.in).nextLine();
+        int maxCore=Runtime.getRuntime().availableProcessors();
+        //多队列多线程测试
+        {
+            QueueGroupExecutor ft = buildStageByMpMc1(1, maxCore);
+            System.out.println("#########1");
+            tq.test(1000 * 60, ft, maxCore, maxCore);//1000W随机分配到10个队列
+            QueueExecutor queueExecutor = ft.getQueueExecutor("0");
+            log.info("队列事件次数:{},最大单次事件处理任务数量:{}",queueExecutor.handleCount(),queueExecutor.maxProcessCount());
+        }
 
-//        所有队列每秒共处理任务:7097526,队列平均每秒吞吐:887190
-//        总任务in:425484376 out:425484337
-//        单个队列每秒    :[887458, 887239, 887940, 887287, 886649, 886094, 888684, 886178]
-//        单个队列累计in  :[53174881, 53180889, 53193796, 53171070, 53189552, 53197105, 53193505, 53184004]
-//        单个队列累计out :[53174895, 53180897, 53193809, 53171074, 53189558, 53197108, 53193496, 53183991]
-//        单个队列积压    :[3, 10, 6, 4, 11, 5, 21, 18]
+        {
+//            QueueGroupExecutor ft = buildStageByMpMc3(1, maxCore);
+//            System.out.println("#########1");
+//            tq.test(1000 * 60, ft, maxCore, maxCore);//1000W随机分配到10个队列
+//            QueueExecutor queueExecutor = ft.getQueueExecutor("0");
+//            log.info("队列事件次数:{},最大单次事件处理任务数量:{}",queueExecutor.handleCount(),queueExecutor.maxProcessCount());
+        }
+
+        // buildStageByMpMc1
+//        所有队列每秒共处理任务:8136162,队列平均每秒吞吐:1017020
+//        总任务in:481443385 out:481442932
+//        单个队列每秒    :[1016124, 1017687, 1016200, 1017774, 1016949, 1018026, 1015636, 1017761]
+//        单个队列累计in  :[60174418, 60177475, 60182350, 60162423, 60183844, 60187188, 60190837, 60185207]
+//        单个队列累计out :[60174388, 60177480, 60182280, 60162331, 60183860, 60187189, 60190841, 60185071]
+//        单个队列积压    :[50, 21, 89, 100, 2, 14, 14, 148]
+//        21-02-01 14:36:17.764 [main:68849] INFO  net.jueb.util4j.test.TestQueuePerformance - 844650-20331
+
+        //test2
 
         Thread.sleep(10000000);
     }
