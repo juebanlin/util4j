@@ -201,12 +201,7 @@ public class TestQueuePerformance {
         //多队列多线程测试
         {
             QueueGroupExecutor ft = buildStageByMpMc1(1, maxCore);
-            TestQueues testQueues=new TestQueues(){
-                @Override
-                public Executor getQueue(String key) {
-                    return ft.getQueueExecutor(key);
-                }
-            };
+            TestQueues testQueues= key -> ft.getQueueExecutor(key);
             System.out.println("#########1");
             tq.test(1000 * 60, testQueues, maxCore, maxCore);//1000W随机分配到10个队列
             QueueExecutor queueExecutor = ft.getQueueExecutor("0");
@@ -214,13 +209,8 @@ public class TestQueuePerformance {
         }
 
         {
-//            QueueGroupExecutor ft = buildStageByMpMc3(1, maxCore);
-//            TestQueues testQueues=new TestQueues(){
-//                @Override
-//                public Executor getQueue(String key) {
-//                    return ft.getQueueExecutor(key);
-//                }
-//            };
+            QueueGroupExecutor ft = buildStageByMpMc3(1, maxCore);
+            TestQueues testQueues= key -> ft.getQueueExecutor(key);
 //            System.out.println("#########1");
 //            tq.test(1000 * 60, testQueues, maxCore, maxCore);//1000W随机分配到10个队列
 //            QueueExecutor queueExecutor = ft.getQueueExecutor("0");
