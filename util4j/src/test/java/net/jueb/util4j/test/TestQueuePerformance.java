@@ -166,7 +166,7 @@ public class TestQueuePerformance {
         b.setAssistExecutor(Executors.newSingleThreadExecutor());
         return b.setMaxPoolSize(threadMax)
                 .setCorePoolSize(threadMin)
-                .setQueueGroupManagerr(new DefaultQueueManager(QueueFactory.MPSC_QUEUE_FACTORY))
+                .setQueueGroupManagerr(new DefaultQueueManager(QueueFactory.MPSC_QUEUE_FACTORY,0))
                 .setKeepAliveTime(10, TimeUnit.SECONDS)
                 .setBossQueue(bossQueue)
 //                .setAssistExecutor(Executors.newSingleThreadExecutor())
@@ -203,14 +203,14 @@ public class TestQueuePerformance {
             QueueGroupExecutor ft = buildStageByMpMc1(1, maxCore);
             TestQueues testQueues= key -> ft.getQueueExecutor(key);
             System.out.println("#########1");
-            tq.test(1000 * 60, testQueues, maxCore, maxCore);//1000W随机分配到10个队列
+            tq.test(1000 * 60, testQueues, maxCore/2, maxCore/2);//1000W随机分配到10个队列
             QueueExecutor queueExecutor = ft.getQueueExecutor("0");
             log.info("队列事件次数:{},最大单次事件处理任务数量:{}",queueExecutor.handleCount(),queueExecutor.maxProcessCount());
         }
 
         {
-            QueueGroupExecutor ft = buildStageByMpMc3(1, maxCore);
-            TestQueues testQueues= key -> ft.getQueueExecutor(key);
+//            QueueGroupExecutor ft = buildStageByMpMc3(1, maxCore);
+//            TestQueues testQueues= key -> ft.getQueueExecutor(key);
 //            System.out.println("#########1");
 //            tq.test(1000 * 60, testQueues, maxCore, maxCore);//1000W随机分配到10个队列
 //            QueueExecutor queueExecutor = ft.getQueueExecutor("0");

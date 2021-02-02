@@ -9,7 +9,9 @@ import java.util.concurrent.Executor;
  * @author juebanlin
  */
 public interface QueueExecutor extends Executor{
-	
+
+	String getName();
+
 	/**
 	 * 执行任务
 	 * @param task
@@ -58,11 +60,11 @@ public interface QueueExecutor extends Executor{
 	
 	boolean hasAttribute(String key);
 
-	void setAttribute(String key, Object value);
+	<T> void setAttribute(String key, T value);
 
-	Object getAttribute(String key);
+	<T> T getAttribute(String key);
 
-	Object removeAttribute(String key);
+	<T> T removeAttribute(String key);
 
 	void clearAttributes();
 }

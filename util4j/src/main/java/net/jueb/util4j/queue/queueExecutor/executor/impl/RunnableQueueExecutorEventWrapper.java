@@ -16,11 +16,6 @@ import net.jueb.util4j.queue.queueExecutor.queue.RunnableQueueEventWrapper;
  */
 public abstract class RunnableQueueExecutorEventWrapper extends RunnableQueueEventWrapper implements QueueExecutor {
 
-
-	public RunnableQueueExecutorEventWrapper(Queue<Runnable> queue) {
-		super(queue);
-	}
-
 	@Override
 	public final void execute(Runnable task) {
 		offer(task);
@@ -30,10 +25,22 @@ public abstract class RunnableQueueExecutorEventWrapper extends RunnableQueueEve
 	public final void execute(List<Runnable> tasks) {
 		addAll(tasks);
 	}
-	
+
+	private final String name;
+
 	private String alias;
 	private final Set<String> tags=new HashSet<>();
 	private final Map<String,Object> attributes=new HashMap<String,Object>();
+
+	public RunnableQueueExecutorEventWrapper(Queue<Runnable> queue, String name) {
+		super(queue);
+		this.name = name;
+	}
+
+	public String getName() {
+		return name;
+	}
+
 	public String getAlias() {
 		return alias;
 	}
@@ -62,16 +69,24 @@ public abstract class RunnableQueueExecutorEventWrapper extends RunnableQueueEve
 		return attributes.containsKey(key);
 	}
 
-	public void setAttribute(String key, Object value) {
+	public <T> void setAttribute(String key, T value) {
 		attributes.put(key, value);
 	}
 
-	public Object getAttribute(String key) {
-		return attributes.get(key);
+	public <T> T getAttribute(String key) {
+		Object value = attributes.get(key);
+		if(value==null){
+			return null;
+		}
+		return (T)value ;
 	}
 
-	public Object removeAttribute(String key) {
-		return attributes.remove(key);
+	public <T> T removeAttribute(String key) {
+		Object value = attributes.remove(key);
+		if(value==null){
+			return null;
+		}
+		return (T)value;
 	}
 
 	public void clearAttributes() {

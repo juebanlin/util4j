@@ -9,8 +9,9 @@ import net.jueb.util4j.queue.queueExecutor.groupExecutor.QueueGroupManager;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 public class DefaultQueueManager extends AbstractQueueMaganer implements QueueGroupManager{
@@ -35,7 +36,7 @@ public class DefaultQueueManager extends AbstractQueueMaganer implements QueueGr
 
 	/**
 	 * @param queueFactory
-	 * @param batchCount 队列被线程单次处理的数量,防止在线程不足的情况下一直消费此线程,其它队列得不到处理
+	 * @param batchCount 队列被线程单次处理的数量,防止在线程不足的情况下一直消费某个队列的任务,其它队列得不到处理
 	 */
 	public DefaultQueueManager(QueueFactory queueFactory,int batchCount) {
 		super(queueFactory);
@@ -62,30 +63,29 @@ public class DefaultQueueManager extends AbstractQueueMaganer implements QueueGr
 	}
 	
 	@Override
-	public boolean hasQueueExecutor(String key) {
-		return queues.containsKey(key);
+	public boolean hasQueueExecutor(String name) {
+		return queues.containsKey(name);
 	}
 
-	
-	public QueueExecutor getQueueExecutor(String index) {
-		if (index==null) {
+	public QueueExecutor getQueueExecutor(String name) {
+		if (name==null) {
 			throw new IllegalArgumentException();
 		}
-		QueueExecutor qe=queues.get(index);
-		if(qe==null)
+		QueueExecutor qe=queues.get(name);
+		if(qe!=null)
 		{
-			synchronized (addLock) {
-				if(qe==null)
-				{
-					TaskQueue tq=new TaskQueue(index,getQueueFactory_().buildQueue());
-					tq.setAlias("key_"+index);
-					tq.setAttribute("key", index);
-					queues.put(index,tq);
-					return tq;
-				}
-			}
+			return qe;
 		}
-		return qe;
+		synchronized (addLock) {
+			qe=queues.get(name);
+			if(qe==null)
+			{
+				TaskQueue tq=new TaskQueue(name,getQueueFactory_().buildQueue());
+				queues.put(name,tq);
+				qe=tq;
+			}
+			return qe;
+		}
 	}
 
 	/**
@@ -175,11 +175,6 @@ public class DefaultQueueManager extends AbstractQueueMaganer implements QueueGr
 
 		private final AtomicInteger status=new AtomicInteger(STATUS_IDLE);
 
-		/**
-		 *队列索引
-		 */
-		private final String index;
-
 	    /**
 	     * 此队列完成的任务数量
 	     */
@@ -194,9 +189,8 @@ public class DefaultQueueManager extends AbstractQueueMaganer implements QueueGr
 		 */
 		private long maxProcessSize;
 
-		public TaskQueue(String index,Queue<Runnable> queue) {
-			super(queue);
-			this.index=index;
+		public TaskQueue(String name,Queue<Runnable> queue) {
+			super(queue, name);
 			init();
 		}
 		
@@ -233,19 +227,20 @@ public class DefaultQueueManager extends AbstractQueueMaganer implements QueueGr
 		protected void onAddAfter(boolean offeredSucceed) {
 			if(offeredSucceed)
 			{
-				if(status.get()!=STATUS_IDLE){
-					return;
-				}
 				wakeIfIdle();
 			}
 		}
 
-
-		private void wakeIfIdle(){
-			if(status.compareAndSet(STATUS_IDLE,STATUS_WAIT_PROCESS)){
-				onQueueProcessTaskBuild(index,this::processQueueTasks);
-				wakeCount++;
+		private boolean wakeIfIdle(){
+			if(status.get()!=STATUS_IDLE){
+				return false;
 			}
+			if(status.compareAndSet(STATUS_IDLE,STATUS_WAIT_PROCESS)){
+				onQueueProcessTaskBuild(getName(),this::processQueueTasks);
+				wakeCount++;
+				return true;
+			}
+			return false;
 		}
 
 		/**
@@ -255,36 +250,49 @@ public class DefaultQueueManager extends AbstractQueueMaganer implements QueueGr
 		protected void processQueueTasks(){
 			if(!status.compareAndSet(STATUS_WAIT_PROCESS,STATUS_PROCESS)){
 				if(status.compareAndSet(STATUS_PROCESS,STATUS_PROCESS)){
-					log.error("队列processStart状态错误,其它线程正在处理,{}:{}",index,status);
+					log.error("队列processStart状态错误,其它线程正在处理,{}:{}",getName(),status);
 					return;
 				}
-				log.error("队列processStart状态错误,{}:{}",index,status);
-//				wakeIfIdle();
+				log.error("队列processStart状态错误,{}:{}",getName(),status);
 				return;
 			}
+			//线程接管此队列
+			int numLimit=batchCount;
+			TaskQueue queue=this;
+			boolean limitOrExBreak;
 			try {
-				TaskQueue queue=this;
-				doProcessQueueTasks(queue);
+				limitOrExBreak=doProcessQueueTasks(queue,numLimit);
 			}finally {
 				if(!status.compareAndSet(STATUS_PROCESS,STATUS_IDLE)){
-					log.error("队列processEnd状态错误,{}:{}",index,status);
-//					wakeIfIdle();
+					log.error("队列processEnd状态错误,{}:{}",getName(),status);
 				}
 			}
+			//线程脱离队列绑定
+
+			//如果脱离后队列还有任务(可能是异常或者batchCount导致中断,此时需要手动补一下处理事件),并且没有其它线程占用此队列,则转交给线程池其它线程处理
+			if(limitOrExBreak && !queue.isEmpty()){
+				wakeIfIdle();
+			}
+			//如果不是limitOrExBreak且队列不为空,然后又能执行wakeIfIdle成功,是因为队列添加任务成功后有一个间隙才执行wakeIfIdle.此线程此行就在这个间隙里
 		}
 
 		/**
 		 * 处理队列任务
 		 * @param queue
+		 * @param limitNum 限制处理任务数量
+		 * @return
 		 */
-		private void doProcessQueueTasks(TaskQueue queue) {
-			Thread thread=Thread.currentThread();
+		private boolean doProcessQueueTasks(TaskQueue queue,int limitNum) {
+			boolean limitOrExBreak=false;
 			int num=0;
 			try {
+				Thread thread=Thread.currentThread();
+				QueueUtil.setExecutor(this);
 				for (;;)
 				{
-					if(batchCount>0 && num>=batchCount){
+					if(limitNum>0 && num>=limitNum){
 						//停止处理队列
+						limitOrExBreak=true;
 						break;
 					}
 					Runnable task = queue.poll();
@@ -295,30 +303,35 @@ public class DefaultQueueManager extends AbstractQueueMaganer implements QueueGr
 					beforeExecute(thread, task);
 					boolean succeed = false;
 					try {
-						num++;
 						task.run();
 						queue.completedTaskCount++;
 						succeed = true;
 						afterExecute(task, null);
-					} catch (RuntimeException e) {
+					} catch (Throwable e) {
 						if (!succeed) {
 							afterExecute(task, e);
 						}
-						throw e;
+					}finally {
+						num++;
 					}
 				}
-			}finally {
+			}catch (Throwable e){
+				limitOrExBreak=true;
+			}
+			finally {
 				if(num>maxProcessSize){
 					maxProcessSize=num;
 				}
+				QueueUtil.clearExecutor();
 			}
+			return limitOrExBreak;
 		}
 
 		protected void beforeExecute(Thread thread, Runnable task) {
 
 		}
 
-		protected void afterExecute(Runnable task,RuntimeException object) {
+		protected void afterExecute(Runnable task, Throwable exception) {
 
 		}
 	}
