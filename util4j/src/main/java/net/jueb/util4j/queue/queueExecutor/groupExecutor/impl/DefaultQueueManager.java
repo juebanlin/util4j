@@ -290,6 +290,10 @@ public class DefaultQueueManager extends AbstractQueueMaganer implements QueueGr
 				QueueUtil.setExecutor(this);
 				for (;;)
 				{
+					if(thread.isInterrupted()){
+						limitOrExBreak=true;
+						break;
+					}
 					if(limitNum>0 && num>=limitNum){
 						//停止处理队列
 						limitOrExBreak=true;
