@@ -3,7 +3,7 @@ package net.jueb.util4j.hotSwap.memoryScript;
 public interface MemoryCompiler {
 
     /**
-     * @param className example: com.rgt.slg.gameserver.script.MemoryCompiler
+     * @param className
      * @param javaCodes 源码
      * @return
      * @throws Exception
