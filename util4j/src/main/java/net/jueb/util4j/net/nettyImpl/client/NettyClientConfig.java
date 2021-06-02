@@ -156,7 +156,11 @@ public class NettyClientConfig {
 					public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 						log.info("channelInactive:{}",ctx.channel());
 						if(closeListener!=null){
-							closeListener.accept(ctx);
+							try {
+								closeListener.accept(ctx);
+							}catch (Throwable e){
+								log.error(e.getMessage(),e);
+							}
 						}
 						super.channelInactive(ctx);
 					}

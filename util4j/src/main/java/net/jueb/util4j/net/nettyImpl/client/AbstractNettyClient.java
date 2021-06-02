@@ -2,6 +2,8 @@ package net.jueb.util4j.net.nettyImpl.client;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
+import io.netty.util.Attribute;
+import io.netty.util.AttributeKey;
 import lombok.extern.slf4j.Slf4j;
 import net.jueb.util4j.net.JNetClient;
 
@@ -60,6 +62,8 @@ public abstract class AbstractNettyClient implements JNetClient{
 		return getIoWorkers();
 	}
 
+	static final AttributeKey<Boolean> reConnect = AttributeKey.valueOf("ReConnect");
+
 	/**
 	 * 执行连接调用{@link ChannelFuture executeBooterConnect(InetSocketAddress target)}
 	 * 执行多次会把channel顶掉
@@ -73,27 +77,29 @@ public abstract class AbstractNettyClient implements JNetClient{
 		try {
 			log.info("{}--->{},链接中,isReConnect:{}",getName(),target,isReConnect);
 			ChannelFuture cf=doConnect(target,ctx->{
+				if(ctx.channel().hasAttr(reConnect)){
+					if(!ctx.channel().attr(reConnect).get()){
+						log.error("失败的连接,放弃重连,ch:{}",ctx.channel());
+						return;
+					}
+				}
 				log.info("{}--->{},断线触发重连:{}",getName(),target,ctx);
 				waitReconnect();
 			});
-			if(cf==null)
-			{//如果阻塞则使用系统调度器执行
-				log.info("{}--->{},连接繁忙!稍后重连,isReConnect:{}",getName(),target,isReConnect);
-				return false;
-			}
 			isConnect=cf.isDone() && cf.isSuccess();
 			if(!isConnect)
 			{
-				log.info("{}--->{},连接失败,isReConnect:{}",getName(),target,isReConnect);
+				log.info("{}--->{},连接失败,isReConnect:{},ch:{}",getName(),target,isReConnect,cf.channel());
+				cf.channel().attr(reConnect).set(false);
+				cf.channel().close();
 				return false;
 			}
-//			this.channel=cf.channel();//子类去设置,通过initHandler的channelRegistered去设置更及时
 			//给通道加上断线重连监听器
 //			cf.channel().closeFuture().addListener(future -> {
 //				log.info(getName()+"通道:"+cf.channel()+"断开连接!,是否重连:"+isReconnect());
 //				waitReconnect();//这里不能占用IO线程池
 //			});
-			log.info("{}--->{},连接成功,isReConnect:{}",getName(),target,isReConnect);
+			log.info("{}--->{},连接成功,isReConnect:{},ch:{}",getName(),target,isReConnect,cf.channel());
 		} catch (Throwable e) {
 			log.error(e.getMessage(),e);
 		}
