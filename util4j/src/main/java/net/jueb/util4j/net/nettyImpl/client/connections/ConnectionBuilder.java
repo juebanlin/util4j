@@ -34,7 +34,7 @@ public class ConnectionBuilder extends NettyClientConfig{
 	
 	public static void main(String[] args) {
 		ConnectionBuilder cb=new ConnectionBuilder();
-		ChannelFuture cf=cb.connect(new InetSocketAddress("127.0.0.1", 4000));
+		ChannelFuture cf=cb.connect(new InetSocketAddress("127.0.0.1", 4000)).syncUninterruptibly();
 		System.out.println(cf.channel());
 	}
 }

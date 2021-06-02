@@ -113,7 +113,8 @@ public class NettyClientConfig {
 	 */
 	protected  void initBooterOptions(OptionConfiger configer)
 	{
-
+		//配置连接超时
+		configer.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 30000);
 	}
 	
 	public OptionConfiger optionConfig()
@@ -192,25 +193,9 @@ public class NettyClientConfig {
 	{
 		ChannelFuture cf;
 		synchronized (booter) {
-			final CountDownLatch latch=new CountDownLatch(1);
 			ChannelHandler handler=initHandlerAdapter(init,closeListener);
 			booter.handler(handler);
 			cf=booter.connect(address);
-			cf.addListener(future-> {
-				log.info("connect operationComplete:isDone="+future.isDone()+",isSuccess="+future.isSuccess());
-				if(future.isDone() && future.isSuccess())
-				{
-					latch.countDown();
-				}
-			});
-			try {
-				boolean await = latch.await(getConnectTimeOutMills(), TimeUnit.MILLISECONDS);
-				if(!await){
-					log.error("目标{}连接超时",address);
-				}
-			} catch (Exception e) {
-				log.error(e.getMessage(),e);
-			}
 		}
 		return cf;
 	}

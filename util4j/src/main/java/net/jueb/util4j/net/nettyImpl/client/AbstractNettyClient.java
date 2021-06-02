@@ -2,13 +2,11 @@ package net.jueb.util4j.net.nettyImpl.client;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
-import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
 import lombok.extern.slf4j.Slf4j;
 import net.jueb.util4j.net.JNetClient;
 
 import java.net.InetSocketAddress;
-import java.util.TimerTask;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -62,7 +60,7 @@ public abstract class AbstractNettyClient implements JNetClient{
 		return getIoWorkers();
 	}
 
-	static final AttributeKey<Boolean> reConnect = AttributeKey.valueOf("ReConnect");
+	public static final AttributeKey<Boolean> CancelReConnect = AttributeKey.valueOf("CancelReConnect");
 
 	/**
 	 * 执行连接调用{@link ChannelFuture executeBooterConnect(InetSocketAddress target)}
@@ -77,31 +75,39 @@ public abstract class AbstractNettyClient implements JNetClient{
 		try {
 			log.info("{}--->{},链接中,isReConnect:{}",getName(),target,isReConnect);
 			ChannelFuture cf=doConnect(target,ctx->{
-				if(ctx.channel().hasAttr(reConnect)){
-					if(!ctx.channel().attr(reConnect).get()){
-						log.error("失败的连接,放弃重连,ch:{}",ctx.channel());
+				if(ctx.channel().hasAttr(CancelReConnect)){
+					//不可能到这里,超时的连接失败后又连接上
+					if(!ctx.channel().attr(CancelReConnect).get()){
+						log.error("放弃重连,ch:{}",ctx.channel());
 						return;
 					}
 				}
 				log.info("{}--->{},断线触发重连:{}",getName(),target,ctx);
 				waitReconnect();
 			});
+			/**
+			 * sync()：等待Future直到其完成，如果这个Future失败，则抛出失败原因；
+			 * syncUninterruptibly()：不会被中断的sync()；
+			 * await()：等待Future完成；
+			 * awaitUninterruptibly()：不会被中断的await ()；
+			 */
+			try{
+				cf.syncUninterruptibly();
+			}catch (Throwable e){
+				log.error("{}--->{},连接失败,isReConnect:{},ch:{},{}",getName(),target,isReConnect,cf.channel(),e.getMessage());
+				return false;
+			}
 			isConnect=cf.isDone() && cf.isSuccess();
 			if(!isConnect)
 			{
-				log.info("{}--->{},连接失败,isReConnect:{},ch:{}",getName(),target,isReConnect,cf.channel());
-				cf.channel().attr(reConnect).set(false);
+				log.warn("{}--->{},连接失败,isReConnect:{},ch:{},{}",getName(),target,isReConnect,cf.channel(),cf.cause());
+				cf.channel().attr(CancelReConnect).set(false);
 				cf.channel().close();
 				return false;
 			}
-			//给通道加上断线重连监听器
-//			cf.channel().closeFuture().addListener(future -> {
-//				log.info(getName()+"通道:"+cf.channel()+"断开连接!,是否重连:"+isReconnect());
-//				waitReconnect();//这里不能占用IO线程池
-//			});
 			log.info("{}--->{},连接成功,isReConnect:{},ch:{}",getName(),target,isReConnect,cf.channel());
 		} catch (Throwable e) {
-			log.error(e.getMessage(),e);
+			log.error(target+","+e.getMessage(),e);
 		}
 		return isConnect;
 	}
