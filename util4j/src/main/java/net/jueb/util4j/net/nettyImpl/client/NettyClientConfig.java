@@ -204,7 +204,10 @@ public class NettyClientConfig {
 				}
 			});
 			try {
-				latch.await(getConnectTimeOutMills(),TimeUnit.MILLISECONDS);
+				boolean await = latch.await(getConnectTimeOutMills(), TimeUnit.MILLISECONDS);
+				if(!await){
+					log.error("目标{}连接超时",address);
+				}
 			} catch (Exception e) {
 				log.error(e.getMessage(),e);
 			}
