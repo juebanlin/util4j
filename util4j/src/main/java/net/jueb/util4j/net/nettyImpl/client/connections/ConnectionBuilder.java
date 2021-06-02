@@ -24,12 +24,12 @@ public class ConnectionBuilder extends NettyClientConfig{
 
 	public final ChannelFuture connect(InetSocketAddress address)
 	{
-		return doBooterConnect(address, null);
+		return doBooterConnect(address, null,null);
 	}
 	
 	public final ChannelFuture connect(InetSocketAddress address,ChannelHandler handler)
 	{
-		return doBooterConnect(address,handler);
+		return doBooterConnect(address,handler,null);
 	}
 	
 	public static void main(String[] args) {

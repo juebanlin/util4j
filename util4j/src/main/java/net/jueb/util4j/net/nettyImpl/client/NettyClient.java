@@ -1,6 +1,7 @@
 package net.jueb.util4j.net.nettyImpl.client;
 
 import java.net.InetSocketAddress;
+import java.util.function.Consumer;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -60,10 +61,10 @@ public class NettyClient extends AbstractNettyClient{
 	 * @param target
 	 * @return
 	 */
-	protected final ChannelFuture doConnect(InetSocketAddress target)
+	protected final ChannelFuture doConnect(InetSocketAddress target,Consumer<ChannelHandlerContext> closeListener)
 	{
 		ChannelHandler fixHandler=fixHandlerBeforeConnect(channelInitFix(handler));//修正handler
-		return doBooterConnect(target, fixHandler);
+		return doBooterConnect(target, fixHandler,closeListener);
 	}
 	
 	/**
@@ -102,8 +103,8 @@ public class NettyClient extends AbstractNettyClient{
 	 * @param fixedHandler 修正后的handler
 	 * @return
 	 */
-	protected ChannelFuture doBooterConnect(InetSocketAddress target,final ChannelHandler fixedHandler)
+	protected ChannelFuture doBooterConnect(InetSocketAddress target, final ChannelHandler fixedHandler, Consumer<ChannelHandlerContext> closeListener)
 	{
-		return config.doBooterConnect(target, fixedHandler);
+		return config.doBooterConnect(target, fixedHandler,closeListener);
 	}
 }

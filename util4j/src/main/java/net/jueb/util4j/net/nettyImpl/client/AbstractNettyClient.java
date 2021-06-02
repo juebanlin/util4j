@@ -1,10 +1,7 @@
 package net.jueb.util4j.net.nettyImpl.client;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import lombok.extern.slf4j.Slf4j;
 import net.jueb.util4j.net.JNetClient;
 
@@ -12,6 +9,7 @@ import java.net.InetSocketAddress;
 import java.util.TimerTask;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * 抽象netty客户端 已实现断线重连逻辑
@@ -31,8 +29,7 @@ public abstract class AbstractNettyClient implements JNetClient{
 	protected long timeMills;
 	protected final InetSocketAddress target;
 	private Channel channel;
-	protected final ReconectListener reconectListener=new ReconectListener();
-	
+
 	/**
 	 * 重连调度器
 	 */
@@ -62,39 +59,42 @@ public abstract class AbstractNettyClient implements JNetClient{
 		}
 		return getIoWorkers();
 	}
-	
+
 	/**
 	 * 执行连接调用{@link ChannelFuture executeBooterConnect(InetSocketAddress target)}
 	 * 执行多次会把channel顶掉
-	 * @param target
+	 * @param target 连接目标
+	 * @param isReConnect 是否是重连
 	 * @return
 	 */
-	protected final boolean connect(InetSocketAddress target,boolean reconect)
+	protected final boolean connect(InetSocketAddress target,boolean isReConnect)
 	{
 		boolean isConnect=false;
 		try {
-			log.info("{}--->{},链接中,reconect:{}",getName(),target,reconect);
-			ChannelFuture cf=doConnect(target);
+			log.info("{}--->{},链接中,isReConnect:{}",getName(),target,isReConnect);
+			ChannelFuture cf=doConnect(target,ctx->{
+				log.info("{}--->{},断线触发重连:{}",getName(),target,ctx);
+				waitReconnect();
+			});
 			if(cf==null)
 			{//如果阻塞则使用系统调度器执行
-				log.info("{}--->{},连接繁忙!稍后重连,reconect:{}",getName(),target,reconect);
-				doReconect();//这里不能占用IO线程池
-				return isConnect;
+				log.info("{}--->{},连接繁忙!稍后重连,isReConnect:{}",getName(),target,isReConnect);
+				return false;
 			}
 			isConnect=cf.isDone() && cf.isSuccess();
 			if(!isConnect)
 			{
-				log.info("{}--->{},连接失败,reconect:{}",getName(),target,reconect);
-				doReconect();//这里不能占用IO线程池
-				return isConnect;
+				log.info("{}--->{},连接失败,isReConnect:{}",getName(),target,isReConnect);
+				return false;
 			}
-			//连接成功
-			log.info("{}--->{},连接成功,reconect:{}",getName(),target,reconect);
 //			this.channel=cf.channel();//子类去设置,通过initHandler的channelRegistered去设置更及时
 			//给通道加上断线重连监听器
-			cf.channel().closeFuture().removeListener(reconectListener);
-			cf.channel().closeFuture().addListener(reconectListener);
-		} catch (Exception e) {
+//			cf.channel().closeFuture().addListener(future -> {
+//				log.info(getName()+"通道:"+cf.channel()+"断开连接!,是否重连:"+isReconnect());
+//				waitReconnect();//这里不能占用IO线程池
+//			});
+			log.info("{}--->{},连接成功,isReConnect:{}",getName(),target,isReConnect);
+		} catch (Throwable e) {
 			log.error(e.getMessage(),e);
 		}
 		return isConnect;
@@ -105,7 +105,7 @@ public abstract class AbstractNettyClient implements JNetClient{
 	 * @param target
 	 * @return 链接后的ChannelFuture
 	 */
-	protected abstract ChannelFuture doConnect(InetSocketAddress target);
+	protected abstract ChannelFuture doConnect(InetSocketAddress target,Consumer<ChannelHandlerContext> closeListener);
 	
 	public final Channel getChannel() {
 		return channel;
@@ -116,41 +116,28 @@ public abstract class AbstractNettyClient implements JNetClient{
 	}
 
 	/**
-	 * 执行重连 timer.schedule(new ReConnectTask(), reconectTimeOut);
-	 * 执行多次会把channel顶掉
+	 * 等待重连
 	 */
-	protected final void doReconect()
-	{
-		if(isReconnect())
-		{
-			getReconnectExecutor().schedule(new ReConnectTask(), getReconnectTimeMills(),TimeUnit.MILLISECONDS);//这里不能占用IO线程池
+	protected final void waitReconnect(){
+		if(isReconnect()){
+			Runnable task=()->{
+				log.info("{}--->{},#重连开始……",getName(),target);
+				boolean result=false;
+				try {
+					result=connect(target,true);
+				} catch (Throwable e) {
+					log.error(e.getMessage(),e);
+				}finally {
+					if(!result){
+						log.info("{}--->{},#重连失败,等待下一次重连",getName(),target);
+						waitReconnect();
+					}
+				}
+			};
+			getReconnectExecutor().schedule(task, getReconnectTimeMills(),TimeUnit.MILLISECONDS);//这里不能占用IO线程池
 		}
 	}
-	private class ReconectListener implements ChannelFutureListener
-	{
-		@Override
-		public void operationComplete(ChannelFuture future) throws Exception {
-			log.info(getName()+"通道:"+future.channel()+"断开连接!,是否重连:"+isReconnect());
-			doReconect();//这里不能占用IO线程池
-		}
-	}
-	
-	/**
-	 * 重连接任务
-	 * @author Administrator
-	 */
-	private class ReConnectTask extends TimerTask
-	{
-		@Override
-		public void run() {
-			try {
-				connect(target,true);
-			} catch (Exception e) {
-				log.error(e.getMessage(),e);
-			}
-		}
-	}
-	
+
 	@Override
 	public final  void start() {
 		if(isConnected())

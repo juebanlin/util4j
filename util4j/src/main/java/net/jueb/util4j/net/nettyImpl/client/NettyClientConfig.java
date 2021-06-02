@@ -18,6 +18,7 @@ import net.jueb.util4j.thread.NamedThreadFactory;
 import java.net.InetSocketAddress;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * 默认都是后台线程
@@ -125,20 +126,46 @@ public class NettyClientConfig {
 			}
 		};
 	}
-	
-	
+
 	/**
 	 * 初始化handler适配包装
 	 * @param init
 	 * @return
 	 */
-	protected ChannelHandler initHandlerAdapter(ChannelHandler init)
+	protected ChannelHandler initHandlerAdapter(ChannelHandler init,Consumer<ChannelHandlerContext> closeListener)
 	{
 		ChannelHandler handler=new ShareableChannelInboundHandler() {
 			@Override
 			public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
 				Channel ch=ctx.channel();
 				LogLevel level=getLevel();
+				ch.pipeline().addLast(new ChannelInboundHandlerAdapter(){
+					@Override
+					public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+						log.info("channelRegistered:{}",ctx.channel());
+						super.channelRegistered(ctx);
+					}
+
+					@Override
+					public void channelActive(ChannelHandlerContext ctx) throws Exception {
+						log.info("channelActive:{}",ctx.channel());
+						super.channelActive(ctx);
+					}
+
+					@Override
+					public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+						log.info("channelInactive:{}",ctx.channel());
+						if(closeListener!=null){
+							closeListener.accept(ctx);
+						}
+						super.channelInactive(ctx);
+					}
+					@Override
+					public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
+						log.info("channelUnregistered:{}",ctx.channel());
+						super.channelUnregistered(ctx);
+					}
+				});
 				if(level!=null)
 				{
 					ch.pipeline().addLast(new LoggerHandler(level));
@@ -148,31 +175,6 @@ public class NettyClientConfig {
 				ctx.fireChannelRegistered();//从当前handler往后抛出事件
 			}
 		};
-//		ChannelHandler handler=new ChannelInitializer<Channel>() {
-//			@Override
-//			protected void initChannel(Channel ch) throws Exception {
-//				LogLevel level=getLevel();
-//				if(level!=null)
-//				{
-//					ch.pipeline().addLast(new LoggerHandler(level));
-//				}
-//				ch.pipeline().addLast(init);
-//			}
-//		};
-		/*
-		 * 如果init里面后续有ChannelInitializer则会触发2次channelRegistered
-		 * 导致LoggerHandler会打印2次channelRegistered无法避免,触发玩家自己的init不使用ChannelInitializer
-		ChannelInboundHandlerAdapter handler=new ChannelInboundHandlerAdapter(){
-			@Override
-			public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
-				ctx.pipeline().addLast(new LoggerHandler(getLevel()));
-				ctx.pipeline().addLast(init);
-				ctx.pipeline().remove(this);
-				super.channelRegistered(ctx);
-				
-			}
-		};
-		 */
 		return handler;
 	}
 	
@@ -182,22 +184,19 @@ public class NettyClientConfig {
 	 * @param init
 	 * @return
 	 */
-	protected ChannelFuture doBooterConnect(InetSocketAddress address,final ChannelHandler init)
+	protected ChannelFuture doBooterConnect(InetSocketAddress address,final ChannelHandler init,Consumer<ChannelHandlerContext> closeListener)
 	{
 		ChannelFuture cf;
 		synchronized (booter) {
 			final CountDownLatch latch=new CountDownLatch(1);
-			ChannelHandler handler=initHandlerAdapter(init);
+			ChannelHandler handler=initHandlerAdapter(init,closeListener);
 			booter.handler(handler);
 			cf=booter.connect(address);
-			cf.addListener(new ChannelFutureListener() {
-				@Override
-				public void operationComplete(ChannelFuture future) throws Exception {
-					log.trace("connect operationComplete:isDone="+future.isDone()+",isSuccess="+future.isSuccess());
-					if(future.isDone() && future.isSuccess())
-					{
-						latch.countDown();
-					}
+			cf.addListener(future-> {
+				log.info("connect operationComplete:isDone="+future.isDone()+",isSuccess="+future.isSuccess());
+				if(future.isDone() && future.isSuccess())
+				{
+					latch.countDown();
 				}
 			});
 			try {
