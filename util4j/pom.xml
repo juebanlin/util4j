@@ -81,6 +81,14 @@
 	</pluginRepositories>
 
 	<dependencies>
+
+		<!-- 后面讲解签名转账交易 -->
+		<dependency>
+			<groupId>org.web3j</groupId>
+			<artifactId>core</artifactId>
+			<version>5.0.0</version>
+			<scope>test</scope>
+		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>

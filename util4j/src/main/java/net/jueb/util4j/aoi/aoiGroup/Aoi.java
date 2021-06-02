@@ -4,6 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
 
 public class Aoi<T extends AoiEntity> {
@@ -134,12 +136,10 @@ public class Aoi<T extends AoiEntity> {
     private void put(T e, Long id) {
         forInGrid(e,idx->{
             fillAreaId(idx,id);
-            return true;
         });
     }
 
-    private boolean forInGrid(T current, IntPredicate grid){
-        boolean hasArea = false;
+    private void forInGrid(T current, IntConsumer grid){
         float x=current.getAoiX();
         float y=current.getAoiY();
         int gridX = Math.max(0, (int) Math.floor(x / gridWidth));//x轴格子坐标
@@ -168,12 +168,9 @@ public class Aoi<T extends AoiEntity> {
                 }
                 //格子数坐标转换为id索引
                 int idx = gx + gy * wNum;
-                if(grid.test(idx)){
-                    hasArea=true;
-                }
+                grid.accept(idx);
             }
         }
-        return hasArea;
     }
 
     /**
@@ -182,16 +179,17 @@ public class Aoi<T extends AoiEntity> {
      * @param current
      */
     private void addGroup(T current,Long currentId) {
-        boolean hasArea=forInGrid(current,idx->{
+        forInGrid(current,idx->{
             AoiArea area = areas[idx];
-            if (area == null) {
-                return false;
+            if (area != null) {
+                idTmps.addAll(area);
             }
-            idTmps.addAll(area);
-            return true;
         });
-        if (!hasArea) {// 没有area，跳出
+        if (idTmps.isEmpty()) {// 没有area，跳出
             return;
+        }
+        if (idTmps.size()>at3.get()){
+            at3.set(idTmps.size());
         }
         for (Long id : idTmps) {
             // 相同实体
@@ -201,16 +199,22 @@ public class Aoi<T extends AoiEntity> {
             T entity = entityMap.get(id);
             // 分组相同，不需要检测了
             AoiGroup aoiGroup = getAoiGroup(entity);
+            at1.incrementAndGet();
             if (aoiGroup != null && aoiGroup == getAoiGroup(current)) {
                 continue;
             }
             // 碰撞检测
             if (isCollision(current,entity)) {
                 mergeGroup(current, entity);
+                at2.incrementAndGet();
             }
         }
         idTmps.clear();
     }
+
+    public static AtomicInteger at1=new AtomicInteger(0);
+    public static AtomicInteger at2=new AtomicInteger(0);
+    public static AtomicInteger at3=new AtomicInteger(0);
 
     /**
      * 碰撞检测
