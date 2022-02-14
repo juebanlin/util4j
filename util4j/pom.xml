@@ -129,7 +129,7 @@
 		<dependency>
 			<groupId>io.netty</groupId>
 			<artifactId>netty-all</artifactId>
-			<version>4.1.42.Final</version>
+			<version>4.1.65.Final</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
@@ -163,7 +163,7 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>19.0</version>
+			<version>28.2-jre</version>
 			<optional>true</optional>
 		</dependency>
 		<!-- https://github.com/JCTools/JCTools -->
@@ -214,12 +214,12 @@
 			<version>20160212</version>
 			<optional>true</optional>
 		</dependency>
-		<dependency>
-			<groupId>com.alibaba</groupId>
-			<artifactId>fastjson</artifactId>
-			<version>1.2.31</version>
-			<optional>true</optional>
-		</dependency>
+<!--		<dependency>-->
+<!--			<groupId>com.alibaba</groupId>-->
+<!--			<artifactId>fastjson</artifactId>-->
+<!--			<version>1.2.31</version>-->
+<!--			<optional>true</optional>-->
+<!--		</dependency>-->
 		<!-- https://mvnrepository.com/artifact/com.rabbitmq/amqp-client -->
 		<dependency>
 		    <groupId>com.rabbitmq</groupId>
